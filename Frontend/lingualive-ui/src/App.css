@@ -176,9 +176,9 @@
    ================================ */
 .workspace-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(300px, 0.85fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
 }
 
 /* ================================
@@ -188,6 +188,7 @@
 .composer-panel {
   border-radius: 24px;
   padding: 24px;
+  min-height: 720px;
 }
 
 .panel-heading {
@@ -501,8 +502,8 @@
 .composer-panel {
   display: flex;
   flex-direction: column;
-  position: sticky;
-  top: 24px;
+  position: relative;
+  top: 0;
 }
 
 .tutor-side {
@@ -525,7 +526,7 @@
   position: absolute;
   inset: 18px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(147, 255, 246, 0.36), rgba(147, 255, 246, 0));
+  background: radial-gradient(circle, rgba(84, 220, 255, 0.42), rgba(84, 220, 255, 0));
   filter: blur(11px);
 }
 
@@ -538,21 +539,36 @@
   cursor: pointer;
 }
 
+.tutor-fab::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 22px;
+  border: 1px solid rgba(89, 219, 255, 0.25);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tutor-side-speaking .tutor-fab::after,
+.tutor-side-listening .tutor-fab::after {
+  animation: tutor-ring 1.2s ease-out infinite;
+}
+
 .tutor-chatbot-pic {
   position: relative;
   width: 84px;
   max-width: 100%;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  background: rgba(255, 255, 255, 0.34);
-  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.2));
+  border: 1px solid rgba(104, 210, 255, 0.45);
+  background: radial-gradient(circle at 28% 20%, rgba(255, 255, 255, 0.12), rgba(11, 23, 41, 0.75));
+  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.32));
   transform-origin: center bottom;
   transition: transform 0.2s ease, filter 0.2s ease;
 }
 
 .tutor-fab:hover .tutor-chatbot-pic {
   transform: scale(1.08) rotate(-4deg);
-  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.25));
+  filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.45));
 }
 
 .tutor-chatbot-pic-ready {
@@ -568,8 +584,12 @@
   animation: tutor-float 1.7s ease-in-out infinite;
 }
 
+.tutor-chatbot-pic-speaking {
+  animation: tutor-float 1.2s ease-in-out infinite, tutor-shake 0.24s linear infinite;
+}
+
 .tutor-side-excited .tutor-chatbot-pic {
-  animation: tutor-pop 0.42s ease;
+  animation: tutor-pop 0.42s ease, tutor-wave-arm 0.9s ease-in-out 1;
 }
 
 .tutor-wave {
@@ -641,6 +661,7 @@
   margin-top: 4px;
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .tutor-mini-btn {
@@ -671,10 +692,37 @@
   50% { transform: scale(1.03); }
 }
 
+@keyframes tutor-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-1px) rotate(-0.6deg); }
+  75% { transform: translateX(1px) rotate(0.6deg); }
+}
+
 @keyframes tutor-pop {
   0% { transform: scale(1) rotate(0deg); }
   45% { transform: scale(1.16) rotate(-7deg); }
   100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes tutor-wave-arm {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-8deg); }
+  50% { transform: rotate(7deg); }
+  75% { transform: rotate(-5deg); }
+}
+
+@keyframes tutor-ring {
+  0% {
+    opacity: 0;
+    transform: scale(0.84);
+  }
+  30% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.12);
+  }
 }
 
 @keyframes tutor-wave {
@@ -1001,6 +1049,7 @@
   .chat-panel,
   .composer-panel {
     padding: 20px;
+    min-height: auto;
   }
 
   .tutor-side {

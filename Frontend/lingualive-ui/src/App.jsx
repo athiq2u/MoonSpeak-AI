@@ -7,7 +7,7 @@ const API_URL = `${API_BASE_URL}/speak`;
 const MAX_CHARS = 500;
 const STORAGE_KEY = "lingualive_chat";
 const DEFAULT_LANGUAGE_ID = "en-US";
-const TUTOR_NAME = "Mira";
+const TUTOR_NAME = "Moon";
 
 const LANGUAGE_OPTIONS = [
   {
@@ -460,6 +460,11 @@ function App() {
     requestReply(activeLanguage.suggestions[1] || activeLanguage.demoPrompt);
   };
 
+  const runRoleplayPrompt = () => {
+    triggerTutorExcitement();
+    requestReply(activeLanguage.suggestions[2] || activeLanguage.demoPrompt);
+  };
+
   const startListening = () => {
     if (isLoading || isListening) return;
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -495,7 +500,7 @@ function App() {
         <p className="eyebrow">Powered by Murf Falcon</p>
         <h1>MoonSpeak AI</h1>
         <p className="hero-copy">
-          Meet {TUTOR_NAME}, your female voice tutor powered by Murf Falcon. Pick a language, speak naturally, get a quick coaching reply, and hear it back instantly.
+          Meet {TUTOR_NAME}, your robot voice tutor powered by Murf Falcon. Pick a language, speak naturally, get a quick coaching reply, and hear it back instantly.
         </p>
 
         <div className="use-case-row" aria-label="Supported practice modes">
@@ -613,7 +618,7 @@ function App() {
                 type="button"
                 className="tutor-fab"
                 onClick={triggerTutorExcitement}
-                title="Tap Mira"
+                title="Tap Moon"
                 aria-label="Tap tutor avatar"
               >
                 <img
@@ -633,6 +638,7 @@ function App() {
               <div className="tutor-mini-actions">
                 <button type="button" className="tutor-mini-btn" onClick={runCoachPrompt}>Coach me</button>
                 <button type="button" className="tutor-mini-btn" onClick={runChallengePrompt}>Challenge</button>
+                <button type="button" className="tutor-mini-btn" onClick={runRoleplayPrompt}>Roleplay</button>
               </div>
             </div>
           </aside>
