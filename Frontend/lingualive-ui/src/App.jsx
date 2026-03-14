@@ -9,7 +9,9 @@ const resolvedApiBaseUrl = import.meta.env.VITE_API_BASE_URL
   || (isLocalDevHost ? "/api" : DEFAULT_PRODUCTION_API_BASE_URL);
 const API_BASE_URL = resolvedApiBaseUrl.replace(/\/$/, "");
 const API_URL = `${API_BASE_URL}/speak`;
+const API_HEALTH_URL = `${API_BASE_URL}/`;
 const MAX_CHARS = 500;
+const API_TIMEOUT_MS = 12000;
 const STORAGE_KEY = "lingualive_chat";
 const DEFAULT_LANGUAGE_ID = "en-US";
 const TUTOR_NAME = "Moon";
@@ -278,6 +280,7 @@ function App() {
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [assistantNotice, setAssistantNotice] = useState("");
   const [isTutorExcited, setIsTutorExcited] = useState(false);
+  const [backendStatus, setBackendStatus] = useState(isLocalDevHost ? "checking" : "offline");
 
   const chatEndRef = useRef(null);
   const audioRef = useRef(null);
@@ -500,6 +503,33 @@ function App() {
     }
   }, [audioUrl]);
 
+  const checkBackendConnection = useEffectEvent(async () => {
+    setBackendStatus("checking");
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 5000);
+      const response = await fetch(API_HEALTH_URL, { signal: controller.signal });
+      window.clearTimeout(timeoutId);
+
+      const contentType = response.headers.get("content-type") || "";
+      if (response.ok && contentType.includes("application/json")) {
+        setBackendStatus("online");
+        return true;
+      }
+
+      setBackendStatus("offline");
+      return false;
+    } catch {
+      setBackendStatus("offline");
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    checkBackendConnection();
+  }, [checkBackendConnection]);
+
   const requestReply = async (message) => {
     const trimmedMessage = message.trim();
     if (!trimmedMessage) return;
@@ -514,6 +544,7 @@ function App() {
     setChat(prev => [...prev, { role: "user", text: trimmedMessage }]);
 
     const applyClientFallback = (notice) => {
+      setBackendStatus("offline");
       const clientReply = buildClientFallbackReply(trimmedMessage, chat.slice(-6), selectedLanguage);
       setChat(prev => [
         ...prev,
@@ -533,11 +564,15 @@ function App() {
     };
 
     try {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), API_TIMEOUT_MS);
       const response = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: trimmedMessage, history: chat.slice(-6), language: selectedLanguage }),
+        signal: controller.signal,
       });
+      window.clearTimeout(timeoutId);
 
       const contentType = response.headers.get("content-type") || "";
       const isJsonResponse = contentType.includes("application/json");
@@ -561,6 +596,7 @@ function App() {
       }
 
       const data = responseBody;
+      setBackendStatus("online");
 
       if (!response.ok) {
         throw new Error(data.error || "The server could not process your message.");
@@ -582,7 +618,11 @@ function App() {
     } catch (error) {
       console.error(error);
       const isNetworkError = error instanceof TypeError && /fetch/i.test(error.message || "");
+      const isTimeoutError = error?.name === "AbortError";
       applyClientFallback(
+        isTimeoutError
+          ? "Backend request timed out. Using offline coach mode instead."
+          :
         isNetworkError
           ? "Failed to fetch from API. Using offline coach mode instead."
           : (error.message || "Something went wrong. Using offline coach mode instead.")
@@ -681,12 +721,15 @@ function App() {
           <button className="primary-button hero-demo-button" onClick={runLanguageDemo} type="button">
             Run {activeLanguage.label} Demo
           </button>
+          <button className="secondary-button hero-secondary-button" onClick={checkBackendConnection} type="button">
+            Check Connection
+          </button>
         </div>
 
         <div className="status-row">
-          <span className="status-pill">
-            <span className="status-dot" />
-            Live
+          <span className={`status-pill ${backendStatus === "offline" ? "status-pill-warning" : backendStatus === "checking" ? "status-pill-neutral" : ""}`}>
+            <span className={`status-dot ${backendStatus === "offline" ? "status-dot-warning" : backendStatus === "checking" ? "status-dot-neutral" : ""}`} />
+            {backendStatus === "online" ? "Backend Online" : backendStatus === "checking" ? "Checking API" : "Offline Demo Mode"}
           </span>
           <span className={`status-pill status-pill-muted ${isActive ? "status-pill-active" : ""}`}>
             {isListening ? "🎙 Listening…" : isLoading ? "⏳ Thinking…" : isSpeaking ? "🔊 Speaking…" : "Ready"}

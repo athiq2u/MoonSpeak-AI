@@ -44,6 +44,10 @@ MoonSpeak AI gives users a voice-first tutoring loop:
 - Browser speech recognition support per selected language
 - Local fallback replies when Gemini quota is unavailable
 - Conversation history persisted in the browser
+- Offline coach mode in the frontend when the backend is unavailable
+- Browser voice fallback when streamed backend audio is unavailable
+- Practice missions, coach actions, and live conversation stats for demos
+- Backend connectivity indicator with one-tap connection re-check
 
 ## Demo Flow
 
@@ -80,9 +84,9 @@ flowchart LR
 
 - Frontend: React + Vite
 - Backend: Node.js + Express
-- AI: Gemini `gemini-2.0-flash` with graceful fallback
+- AI: OpenAI first, Gemini second, localized fallback third
 - Voice: Murf Falcon stream first, generated-audio fallback second
-- State handling: recent conversation context and persistent local chat history
+- State handling: recent conversation context, persistent local chat history, and resilient offline UI mode
 - Multilingual support: configurable language catalog across frontend, AI prompts, speech recognition, and TTS routing
 
 ## Judge-Facing Value
@@ -209,8 +213,10 @@ This repository includes a Render Blueprint file at [render.yaml](render.yaml).
 2. Connect this GitHub repository.
 3. Render will detect [render.yaml](render.yaml) and create the backend service.
 4. Set the required environment variables in Render:
+  - `OPENAI_API_KEY`
   - `GEMINI_API_KEY`
   - `MURF_API_KEY`
+  - optional: `OPENAI_MODEL`
   - optional: `MURF_STREAM_URL`
 
 ### Option B: Manual web service
@@ -251,13 +257,48 @@ Query params:
 
 ## Fallback Strategy
 
+- If OpenAI is unavailable, the backend automatically tries Gemini next.
 - If Gemini returns quota or auth errors, MoonSpeak AI switches to localized tutor-style fallback replies.
 - If Murf Falcon streaming fails, the backend attempts generated audio.
 - If a selected locale is unsupported for voice delivery, Murf falls back to the default English voice path.
+- If the deployed backend is unavailable, the frontend switches to offline coach mode and can use the device browser voice.
 
 ## Notes
 
 - If Gemini returns `429 quota-exceeded`, the app automatically falls back to local tutor replies.
+- If OpenAI returns `insufficient_quota`, the app automatically falls back to Gemini or local tutor replies.
+
+## Hackathon Demo Checklist
+
+1. Open the app and confirm the backend status pill shows either `Backend Online` or `Offline Demo Mode`.
+2. Select a language and run one of the built-in practice missions.
+3. Use voice input once and typed input once.
+4. Show the source badge changing between OpenAI, Gemini, local fallback, or offline coach.
+5. Show the live stats strip updating with turns and average reply length.
+
+## Troubleshooting
+
+### Frontend shows HTML or JSON parse errors
+
+- Confirm `VITE_API_BASE_URL` points to a real backend URL in GitHub Actions variables.
+- If the backend is down, the latest frontend build should automatically switch into offline coach mode.
+
+### GitHub Pages works but no real AI responses appear
+
+- Verify your Render backend URL is live.
+- Confirm Render has `OPENAI_API_KEY` or `GEMINI_API_KEY` configured.
+- If provider quota is exhausted, the app will still work through local fallback replies.
+
+### Backend is running locally but frontend still cannot connect
+
+- Start the backend from `Backend` with `npm run start`.
+- Start the frontend from `Frontend/lingualive-ui` with `npm run dev`.
+- In local development, the frontend uses `/api` and proxies to `http://localhost:5000`.
+
+### Voice works inconsistently across browsers
+
+- Browser speech recognition is best supported in Chrome-based browsers.
+- When backend audio is unavailable, browser voice fallback depends on the voices installed on the device.
 - Murf streaming is attempted first. If the selected locale is unavailable, the app falls back to generated audio or default English voice playback.
 - `Backend/.env` is intentionally ignored and should never be committed.
 

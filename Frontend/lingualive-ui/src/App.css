@@ -84,10 +84,18 @@
 
 .hero-actions {
   margin-top: 18px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .hero-demo-button {
   min-width: 220px;
+}
+
+.hero-secondary-button {
+  width: auto;
+  min-width: 180px;
 }
 
 /* ================================
@@ -114,6 +122,18 @@
   font-weight: 600;
 }
 
+.status-pill-warning {
+  background: rgba(255, 184, 107, 0.14);
+  border-color: rgba(255, 184, 107, 0.24);
+  color: #ffd9a6;
+}
+
+.status-pill-neutral {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(245, 247, 255, 0.84);
+}
+
 .status-dot {
   display: inline-block;
   width: 8px;
@@ -122,6 +142,14 @@
   background: #2ecc71;
   flex-shrink: 0;
   animation: pulse-dot 2.2s ease-in-out infinite;
+}
+
+.status-dot-warning {
+  background: #ffb86b;
+}
+
+.status-dot-neutral {
+  background: #cbd5f5;
 }
 
 @keyframes pulse-dot {
@@ -1167,6 +1195,16 @@
 
   .hero-panel {
     padding: 18px;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+  }
+
+  .hero-demo-button,
+  .hero-secondary-button {
+    width: 100%;
+    min-width: 0;
   }
 
   .hero-panel h1 {
