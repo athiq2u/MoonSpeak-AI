@@ -535,43 +535,29 @@
   filter: blur(14px);
 }
 
-.tutor-portrait {
+.tutor-chatbot-pic {
   position: relative;
   z-index: 1;
-  width: 168px;
+  width: 172px;
   max-width: 100%;
-  overflow: visible;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.22);
   filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.22));
   transform-origin: center bottom;
 }
 
-.tutor-portrait-hair-back,
-.tutor-portrait-hair-front {
-  transition: transform 0.28s ease;
+.tutor-chatbot-pic-ready {
+  transform: scale(1);
 }
 
-.tutor-portrait-mouth {
-  fill: #a44f62;
-  transform-box: fill-box;
-  transform-origin: center;
-  transition: all 0.2s ease;
+.tutor-chatbot-pic-thinking {
+  animation: tutor-breathe 1.6s ease-in-out infinite;
 }
 
-.tutor-portrait-mouth-ready {
-  transform: scale(1, 0.85);
-}
-
-.tutor-portrait-mouth-listening {
-  transform: scale(1.08, 0.7);
-}
-
-.tutor-portrait-mouth-thinking {
-  transform: scale(0.88, 0.68);
-}
-
-.tutor-portrait-mouth-speaking {
-  fill: #924355;
-  animation: tutor-talk 0.42s ease-in-out infinite;
+.tutor-chatbot-pic-listening,
+.tutor-chatbot-pic-speaking {
+  animation: tutor-float 1.7s ease-in-out infinite;
 }
 
 .tutor-wave {
@@ -612,21 +598,8 @@
   animation-delay: 0.48s;
 }
 
-.tutor-card-speaking .tutor-portrait,
-.tutor-card-listening .tutor-portrait {
-  animation: tutor-float 1.7s ease-in-out infinite;
-}
-
 .tutor-card-thinking .tutor-aura {
   animation: tutor-glow 1.5s ease-in-out infinite;
-}
-
-.tutor-card-speaking .tutor-portrait-hair-front {
-  transform: translateY(1px);
-}
-
-.tutor-card-listening .tutor-portrait-hair-back {
-  transform: translateY(-1px);
 }
 
 .tutor-kicker {
@@ -703,6 +676,11 @@
 @keyframes tutor-talk {
   0%, 100% { transform: scale(1, 0.82); }
   50% { transform: scale(1.06, 1.18); }
+}
+
+@keyframes tutor-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
 }
 
 @keyframes tutor-wave {
