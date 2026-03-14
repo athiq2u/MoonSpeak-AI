@@ -239,6 +239,69 @@
   color: rgba(238, 242, 255, 0.55);
 }
 
+.left-focus-card {
+  margin-bottom: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, rgba(253, 161, 114, 0.14), rgba(108, 166, 255, 0.1));
+  border-radius: 16px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.left-focus-head {
+  display: grid;
+  gap: 4px;
+}
+
+.left-focus-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffd2b5;
+}
+
+.left-focus-copy {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(246, 250, 255, 0.84);
+  line-height: 1.4;
+}
+
+.left-focus-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.left-focus-btn {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  color: #eef5ff;
+  border-radius: 999px;
+  min-height: 36px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+}
+
+.left-focus-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.28);
+  transform: translateY(-1px);
+}
+
+.left-focus-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .stats-strip {
   display: flex;
   flex-wrap: wrap;

@@ -271,7 +271,6 @@ function App() {
       return [];
     }
   });
-  const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -305,6 +304,20 @@ function App() {
     {
       title: "Confidence Boost",
       prompt: `I feel nervous while speaking ${activeLanguage.label}. Give me one confidence routine and one speaking exercise.`
+    }
+  ]), [activeLanguage]);
+  const leftPanelFocusPrompts = useMemo(() => ([
+    {
+      label: "Icebreaker",
+      prompt: `Give me one natural 2-line conversation starter in ${activeLanguage.label}.`
+    },
+    {
+      label: "Daily Talk",
+      prompt: `Help me explain my day in ${activeLanguage.label} in a natural way.`
+    },
+    {
+      label: "Interview",
+      prompt: "Ask me one interview question and improve my answer in simple, natural language."
     }
   ]), [activeLanguage]);
   const chatStats = useMemo(() => {
@@ -489,7 +502,7 @@ function App() {
     } catch (error) {
       if (error.name !== "AbortError") {
         console.error(error);
-        setErrorMessage("Voice playback could not start. Please try again.");
+        setAssistantNotice("Live voice is taking a short break. You can keep practicing while text coaching stays active.");
         setVoiceDeliveryMode("error");
       }
     } finally {
@@ -534,7 +547,6 @@ function App() {
     const trimmedMessage = message.trim();
     if (!trimmedMessage) return;
 
-    setErrorMessage("");
     setIsLoading(true);
     setAudioUrl("");
     setIsSpeaking(false);
@@ -585,13 +597,13 @@ function App() {
         if (looksLikeHtml) {
           applyClientFallback(
             isLocalDevHost
-              ? "API returned HTML instead of JSON. Make sure the backend server is running on port 5000."
-              : "Backend API is not configured for this deployment yet. Set VITE_API_BASE_URL in GitHub Actions to your live backend URL."
+              ? "Live coach is starting up, so demo mode is active for now."
+              : "Live coach is still being connected for this deployment, so demo mode is active right now."
           );
           return;
         }
 
-        applyClientFallback("API returned an unexpected response format. Using offline coach mode.");
+        applyClientFallback("Live coach is taking a short break, so demo mode is active right now.");
         return;
       }
 
@@ -621,11 +633,11 @@ function App() {
       const isTimeoutError = error?.name === "AbortError";
       applyClientFallback(
         isTimeoutError
-          ? "Backend request timed out. Using offline coach mode instead."
+          ? "Live coach took a little too long, so demo mode is active for now."
           :
         isNetworkError
-          ? "Failed to fetch from API. Using offline coach mode instead."
-          : (error.message || "Something went wrong. Using offline coach mode instead.")
+          ? "Connection is taking a short break, so demo mode is active for now."
+          : "Demo mode is active right now while the live coach resets."
       );
     } finally {
       setIsLoading(false);
@@ -645,7 +657,6 @@ function App() {
     setChat([]);
     cleanupAudioPlayback();
     setAudioUrl("");
-    setErrorMessage("");
     setVoiceDeliveryMode("idle");
     setAssistantNotice("");
   };
@@ -673,10 +684,10 @@ function App() {
     if (isLoading || isListening) return;
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      setErrorMessage("Speech recognition is not supported in this browser. Try Chrome.");
+      setAssistantNotice("Voice input works best in Chrome. You can still use text practice anytime.");
       return;
     }
-    setErrorMessage("");
+    setAssistantNotice("");
     setIsListening(true);
     const recognition = new SpeechRecognition();
     recognition.lang = activeLanguage.recognition;
@@ -688,7 +699,7 @@ function App() {
       requestReply(speechText);
     };
     recognition.onerror = () => {
-      setErrorMessage("Could not capture your voice clearly. Please try again.");
+      setAssistantNotice("I could not catch that clearly. Try speaking once more or use text practice.");
       setIsListening(false);
     };
     recognition.onend = () => setIsListening(false);
@@ -755,6 +766,28 @@ function App() {
             {chat.length > 0 && (
               <button className="clear-button" onClick={clearChat}>Clear</button>
             )}
+          </div>
+
+          <div className="left-focus-card" aria-label="Today's speaking focus">
+            <div className="left-focus-head">
+              <p className="left-focus-kicker">Today's focus</p>
+              <p className="left-focus-copy">
+                Quick warmup ideas for {activeLanguage.label}. Tap one to start instantly.
+              </p>
+            </div>
+            <div className="left-focus-actions">
+              {leftPanelFocusPrompts.map((item) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  className="left-focus-btn"
+                  onClick={() => requestReply(item.prompt)}
+                  disabled={isLoading || isListening}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="stats-strip" aria-live="polite">
@@ -937,12 +970,6 @@ function App() {
             </button>
           </div>
 
-          {errorMessage && (
-            <div className="message-banner message-banner-error" role="alert">
-              ⚠ {errorMessage}
-            </div>
-          )}
-
           {audioUrl && (
             <div className="audio-card">
               <div className="audio-card-header">
@@ -961,7 +988,7 @@ function App() {
                       : voiceDeliveryMode === "connecting"
                         ? "Connecting"
                         : voiceDeliveryMode === "error"
-                          ? "Audio Error"
+                                ? "Voice Pause"
                           : "Ready"}
                 </span>
               </div>
@@ -978,6 +1005,8 @@ function App() {
                         ? "The selected locale and Falcon stream were unavailable, so playback switched to generated English audio."
                       : voiceDeliveryMode === "browser-voice"
                         ? "Backend audio is unavailable, so playback switched to the browser voice on this device."
+                      : voiceDeliveryMode === "error"
+                        ? "Live voice paused for a moment, but coaching is still active."
                       : "Voice playback is ready."}
               </p>
               <audio
