@@ -717,40 +717,74 @@ function App() {
   return (
     <main className="app-shell">
       <header className="hero-panel">
-        <p className="eyebrow">Powered by Murf Falcon</p>
-        <h1>MoonSpeak AI</h1>
-        <p className="hero-copy">
-          Meet {TUTOR_NAME}, your robot voice tutor powered by Murf Falcon. Pick a language, speak naturally, get a quick coaching reply, and hear it back instantly.
-        </p>
+        <div className="hero-grid">
+          <div className="hero-copy-panel">
+            <p className="eyebrow">Powered by Murf Falcon</p>
+            <h1>MoonSpeak AI</h1>
+            <p className="hero-copy">
+              Meet {TUTOR_NAME}, your robot voice tutor powered by Murf Falcon. Pick a language, speak naturally, get a quick coaching reply, and hear it back instantly.
+            </p>
 
-        <div className="use-case-row" aria-label="Supported practice modes">
-          <span className="use-case-pill">14 Language Options</span>
-          <span className="use-case-pill">Falcon Streaming</span>
-          <span className="use-case-pill">Browser Speech Input</span>
-        </div>
+            <div className="use-case-row" aria-label="Supported practice modes">
+              <span className="use-case-pill">14 Language Options</span>
+              <span className="use-case-pill">Falcon Streaming</span>
+              <span className="use-case-pill">Browser Speech Input</span>
+            </div>
 
-        <p className="falcon-note">
-          Current language: {activeLanguage.label}. If a Murf locale is unavailable, audio falls back to the default English voice.
-        </p>
+            <p className="falcon-note">
+              Current language: {activeLanguage.label}. If a Murf locale is unavailable, audio falls back to the default English voice.
+            </p>
 
-        <div className="status-row">
-          <span className="status-pill">
-            <span className="status-dot" />
-            Coach Live
-          </span>
-          <span className={`status-pill status-pill-muted ${isActive ? "status-pill-active" : ""}`}>
-            {isListening ? "🎙 Listening…" : isLoading ? "⏳ Thinking…" : isSpeaking ? "🔊 Speaking…" : "Ready"}
-          </span>
-          <div className={`signal-bars ${isActive ? "signal-bars-active" : ""}`} aria-hidden="true">
-            <span /><span /><span /><span />
+            <div className="status-row">
+              <span className="status-pill">
+                <span className="status-dot" />
+                Coach Live
+              </span>
+              <span className={`status-pill status-pill-muted ${isActive ? "status-pill-active" : ""}`}>
+                {isListening ? "🎙 Listening…" : isLoading ? "⏳ Thinking…" : isSpeaking ? "🔊 Speaking…" : "Ready"}
+              </span>
+              <div className={`signal-bars ${isActive ? "signal-bars-active" : ""}`} aria-hidden="true">
+                <span /><span /><span /><span />
+              </div>
+            </div>
+
+            {assistantNotice && (
+              <div className="message-banner message-banner-info" role="status">
+                {assistantNotice}
+              </div>
+            )}
+          </div>
+
+          <div className="hero-figure" aria-hidden="true">
+            <div className="hero-figure-glow hero-figure-glow-one" />
+            <div className="hero-figure-glow hero-figure-glow-two" />
+            <div className="hero-figure-card">
+              <div className="hero-figure-badge">AI Speaking Coach</div>
+              <div className="hero-figure-avatar-wrap">
+                <div className="hero-figure-ring" />
+                <img
+                  className="hero-figure-avatar"
+                  src={chatbotAvatar}
+                  alt=""
+                />
+              </div>
+              <div className="hero-figure-metrics">
+                <div className="hero-metric-tile">
+                  <span className="hero-metric-label">Language</span>
+                  <strong>{activeLanguage.label}</strong>
+                </div>
+                <div className="hero-metric-tile">
+                  <span className="hero-metric-label">Turns</span>
+                  <strong>{chatStats.turns}</strong>
+                </div>
+                <div className="hero-metric-tile">
+                  <span className="hero-metric-label">Coach Mode</span>
+                  <strong>{isListening ? "Listening" : isLoading ? "Thinking" : isSpeaking ? "Speaking" : "Ready"}</strong>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-
-        {assistantNotice && (
-          <div className="message-banner message-banner-info" role="status">
-            {assistantNotice}
-          </div>
-        )}
       </header>
 
       <div className="workspace-panel">
