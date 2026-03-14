@@ -304,46 +304,6 @@ Query params:
 - If Gemini returns `429 quota-exceeded`, the app automatically falls back to local tutor replies.
 - If OpenAI returns `insufficient_quota`, the app automatically falls back to Gemini or local tutor replies.
 
-## Hackathon Demo Checklist
-
-1. Open the app and confirm the backend status pill shows either `Backend Online` or `Offline Demo Mode`.
-2. Select a language and run one of the built-in practice missions.
-3. Use voice input once and typed input once.
-4. Show the source badge changing between OpenAI, Gemini, local fallback, or offline coach.
-5. Show the live stats strip updating with turns and average reply length.
-
-## Final Production Deployment Checklist
-
-Use this checklist in order before a live demo.
-
-1. Render service settings:
-  - Root Directory: `Backend`
-  - Build Command: `npm install`
-  - Start Command: `npm run start`
-  - Health Check Path: `/healthz`
-2. Render environment variables:
-  - required: `MURF_API_KEY`
-  - at least one AI provider: `OPENAI_API_KEY` or `GEMINI_API_KEY`
-  - optional tuning: `OPENAI_MODEL`, `GEMINI_MODEL`, `MURF_STREAM_URL`
-3. Backend live verification:
-  - open `https://<your-render-service>.onrender.com/healthz`
-  - expected response: JSON with `{"status":"ok"}`
-4. GitHub Pages variable:
-  - set repository Actions variable `VITE_API_BASE_URL` to your Render service URL (without trailing slash)
-5. GitHub Actions deploy verification:
-  - confirm latest `Deploy Frontend To GitHub Pages` workflow run is green
-6. End-to-end production API test:
-  - from browser console or Postman, call `POST https://<your-render-service>.onrender.com/speak`
-  - confirm JSON includes `reply`, `audioStreamUrl`, `replySource`
-7. Live Pages verification:
-  - open `https://athiq2u.github.io/MoonSpeak-AI/`
-  - click `Check Connection` and confirm `Backend Online`
-8. Demo fallback verification:
-  - disable backend temporarily and confirm app shows `Offline Demo Mode` without crashing
-9. Security verification:
-  - rotate any API key that appeared in logs or terminal history
-  - confirm `.env` files are not committed
-
 ## Production Audit (March 2026)
 
 Focused production audit results and fixes:
