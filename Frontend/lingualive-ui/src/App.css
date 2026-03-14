@@ -9,6 +9,7 @@
   max-width: 1400px;
   margin: 0 auto;
   box-sizing: border-box;
+  padding-bottom: max(32px, env(safe-area-inset-bottom));
 }
 
 /* ================================
@@ -210,6 +211,26 @@
   color: rgba(238, 242, 255, 0.55);
 }
 
+.stats-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.stats-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 11px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #d6fff4;
+  background: rgba(143, 255, 230, 0.09);
+  border: 1px solid rgba(143, 255, 230, 0.2);
+}
+
 /* ================================
    Clear Button
    ================================ */
@@ -219,6 +240,7 @@
   border: 1px solid rgba(255, 80, 80, 0.18);
   color: #ffaaaa;
   border-radius: 999px;
+  min-height: 40px;
   padding: 6px 14px;
   font: inherit;
   font-size: 0.82rem;
@@ -330,6 +352,7 @@
   border: 1px solid rgba(255, 255, 255, 0.13);
   color: rgba(238, 242, 255, 0.78);
   border-radius: 999px;
+  min-height: 42px;
   padding: 8px 14px;
   font: inherit;
   font-size: 0.86rem;
@@ -375,6 +398,7 @@
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.06);
   color: #f6f8ff;
+  min-height: 48px;
   padding: 12px 14px;
   font: inherit;
 }
@@ -669,6 +693,7 @@
   background: rgba(143, 255, 230, 0.08);
   color: #d8fff4;
   border-radius: 999px;
+  min-height: 36px;
   padding: 4px 10px;
   font: inherit;
   font-size: 0.72rem;
@@ -772,6 +797,54 @@
   color: rgba(238, 242, 255, 0.62);
 }
 
+.mission-card {
+  margin-bottom: 14px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(136, 245, 216, 0.24);
+  background: linear-gradient(130deg, rgba(84, 220, 255, 0.09), rgba(84, 220, 255, 0.02));
+}
+
+.mission-title {
+  margin: 0 0 10px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9af6de;
+}
+
+.mission-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mission-btn {
+  border: 1px solid rgba(168, 255, 236, 0.28);
+  background: rgba(122, 255, 223, 0.09);
+  color: #d6fff4;
+  border-radius: 12px;
+  min-height: 40px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+}
+
+.mission-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgba(122, 255, 223, 0.16);
+  border-color: rgba(168, 255, 236, 0.44);
+}
+
+.mission-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .composer-input {
   width: 100%;
   min-height: 130px;
@@ -785,6 +858,17 @@
   font-size: 1rem;
   box-sizing: border-box;
   transition: border-color 0.2s ease;
+}
+
+.composer-input,
+.secondary-button,
+.primary-button,
+.mission-btn,
+.tutor-mini-btn,
+.clear-button,
+.chip,
+.language-select {
+  touch-action: manipulation;
 }
 
 .composer-input::placeholder {
@@ -1034,7 +1118,8 @@
    ================================ */
 @media (max-width: 960px) {
   .app-shell {
-    padding: 20px;
+    padding: 18px;
+    padding-bottom: max(18px, env(safe-area-inset-bottom));
   }
 
   .workspace-panel {
@@ -1043,6 +1128,7 @@
 
   .composer-panel {
     position: static;
+    order: -1;
   }
 
   .hero-panel,
@@ -1063,12 +1149,19 @@
 
   .chat-feed {
     min-height: 260px;
+    max-height: none;
+  }
+
+  .mission-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 640px) {
   .app-shell {
     padding: 12px;
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
     gap: 14px;
   }
 
@@ -1076,12 +1169,101 @@
     padding: 18px;
   }
 
+  .hero-panel h1 {
+    font-size: clamp(2rem, 11vw, 2.6rem);
+  }
+
+  .hero-copy {
+    font-size: 0.96rem;
+    line-height: 1.58;
+  }
+
+  .status-row,
+  .stats-strip,
+  .use-case-row {
+    gap: 8px;
+  }
+
+  .status-pill,
+  .stats-chip,
+  .use-case-pill {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .panel-heading {
+    gap: 10px;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .clear-button {
+    width: 100%;
+  }
+
+  .chat-panel,
+  .composer-panel {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .tutor-side {
+    gap: 12px;
+  }
+
+  .tutor-avatar-wrap {
+    min-height: 88px;
+  }
+
+  .tutor-chatbot-pic {
+    width: 72px;
+  }
+
+  .tutor-mini-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .tutor-mini-btn {
+    justify-content: center;
+    min-height: 40px;
+  }
+
+  .voice-launch-card,
+  .mission-card,
+  .audio-card,
+  .empty-state {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .composer-input {
+    min-height: 120px;
+    padding: 14px;
+    font-size: 16px;
+  }
+
   .action-row {
     flex-direction: column;
+    position: sticky;
+    bottom: 0;
+    padding-top: 8px;
+    padding-bottom: max(4px, env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(8, 15, 28, 0), rgba(8, 15, 28, 0.95) 34%);
+  }
+
+  .primary-button,
+  .secondary-button,
+  .mission-btn,
+  .chip,
+  .language-select {
+    min-height: 46px;
   }
 
   .chat-bubble {
     max-width: 95%;
+    padding: 12px 14px;
   }
 
   .suggestion-chips {
@@ -1100,6 +1282,17 @@
   }
 
   .chip {
+    text-align: center;
+  }
+
+  .audio-card-header {
+    align-items: stretch;
+  }
+
+  .delivery-badge,
+  .reply-label {
+    width: 100%;
+    justify-content: center;
     text-align: center;
   }
 }

@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect, useEffectEvent } from "react";
+import { useState, useRef, useEffect, useEffectEvent, useMemo } from "react";
 import "./App.css";
 import chatbotAvatar from "./assets/ai-chatbot.svg";
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
 const API_URL = `${API_BASE_URL}/speak`;
 const MAX_CHARS = 500;
 const STORAGE_KEY = "lingualive_chat";
@@ -225,6 +225,38 @@ function App() {
   const abortControllerRef = useRef(null);
   const tutorExciteTimerRef = useRef(null);
   const activeLanguage = getLanguage(selectedLanguage);
+  const practiceMissions = useMemo(() => ([
+    {
+      title: "Warm Up",
+      prompt: activeLanguage.demoPrompt
+    },
+    {
+      title: "Story Mode",
+      prompt: `Help me tell a short story in ${activeLanguage.label} with better fluency and natural transitions.`
+    },
+    {
+      title: "Interview Drill",
+      prompt: "Give me one realistic interview question, then help me improve my answer with better structure and vocabulary."
+    },
+    {
+      title: "Confidence Boost",
+      prompt: `I feel nervous while speaking ${activeLanguage.label}. Give me one confidence routine and one speaking exercise.`
+    }
+  ]), [activeLanguage]);
+  const chatStats = useMemo(() => {
+    const userMessages = chat.filter((message) => message.role === "user");
+    const aiMessages = chat.filter((message) => message.role === "ai");
+    const totalAiWords = aiMessages.reduce((total, message) => {
+      const wordCount = message.text.trim().split(/\s+/).filter(Boolean).length;
+      return total + wordCount;
+    }, 0);
+
+    return {
+      turns: userMessages.length,
+      aiReplies: aiMessages.length,
+      avgAiWords: aiMessages.length ? Math.round(totalAiWords / aiMessages.length) : 0
+    };
+  }, [chat]);
   const tutorState = isListening
     ? "listening"
     : isLoading
@@ -422,7 +454,12 @@ function App() {
 
     } catch (error) {
       console.error(error);
-      setErrorMessage(error.message || "Something went wrong. Please try again.");
+      const isNetworkError = error instanceof TypeError && /fetch/i.test(error.message || "");
+      setErrorMessage(
+        isNetworkError
+          ? "Failed to fetch from API. Start Backend with 'npm run start' and try again."
+          : (error.message || "Something went wrong. Please try again.")
+      );
     } finally {
       setIsLoading(false);
     }
@@ -550,6 +587,12 @@ function App() {
             )}
           </div>
 
+          <div className="stats-strip" aria-live="polite">
+            <span className="stats-chip">Turns: {chatStats.turns}</span>
+            <span className="stats-chip">AI replies: {chatStats.aiReplies}</span>
+            <span className="stats-chip">Avg words/reply: {chatStats.avgAiWords}</span>
+          </div>
+
           <div className="chat-feed">
             {chat.length === 0 && !isLoading ? (
               <div className="empty-state">
@@ -674,6 +717,26 @@ function App() {
             <p className="voice-copy">
               Speak in {activeLanguage.label}. Typing is still available as backup.
             </p>
+          </div>
+
+          <div className="mission-card">
+            <p className="mission-title">Practice Missions</p>
+            <div className="mission-grid">
+              {practiceMissions.map((mission) => (
+                <button
+                  key={mission.title}
+                  type="button"
+                  className="mission-btn"
+                  onClick={() => {
+                    triggerTutorExcitement();
+                    requestReply(mission.prompt);
+                  }}
+                  disabled={isLoading || isListening}
+                >
+                  {mission.title}
+                </button>
+              ))}
+            </div>
           </div>
 
           <textarea

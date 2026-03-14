@@ -92,6 +92,14 @@ app.post("/speak", async (req, res) => {
     const reply = aiResult.reply;
     console.log(`[${ts}] AI:   "${reply.slice(0, 80)}${reply.length > 80 ? "…" : ""}"`);
 
+    const isFallback = aiResult.source === "local-fallback";
+    const unavailableProviders = Array.isArray(aiResult.fallbackDetails)
+      ? aiResult.fallbackDetails.map((detail) => detail.provider).join(" + ")
+      : "AI providers";
+    const assistantNotice = isFallback
+      ? `${unavailableProviders} unavailable, using local fallback.`
+      : null;
+
     const streamParams = new URLSearchParams({
       text: reply,
       language: safeLanguage
@@ -104,13 +112,12 @@ app.post("/speak", async (req, res) => {
       audioStreamUrl,
       audioMode: "falcon-stream-or-fallback",
       replySource: aiResult.source,
-      isFallback: aiResult.source !== "gemini",
+      isFallback,
       fallbackReason: aiResult.fallbackReason,
+      fallbackDetails: aiResult.fallbackDetails || [],
       language: safeLanguage,
       languageLabel: safeLanguageConfig.label,
-      assistantNotice: aiResult.source !== "gemini"
-        ? "Gemini unavailable, using local fallback."
-        : null
+      assistantNotice
     });
 
   } catch (error) {
