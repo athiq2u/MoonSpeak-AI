@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import "./App.css";
 
-const API_URL = "http://localhost:5000/speak";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+const API_URL = `${API_BASE_URL}/speak`;
 const MAX_CHARS = 500;
 const STORAGE_KEY = "lingualive_chat";
 const DEFAULT_LANGUAGE_ID = "en-US";

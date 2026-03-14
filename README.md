@@ -128,6 +128,10 @@ Optional backend variables:
 
 - `MURF_STREAM_URL`
 
+Frontend variable:
+
+- `VITE_API_BASE_URL` (for example `http://localhost:5000` in local dev, or your deployed backend URL in production)
+
 ## Install
 
 Backend:
@@ -174,6 +178,20 @@ Backend default URL:
 Set-Location Frontend/lingualive-ui
 npm run build
 ```
+
+## GitHub Pages Deployment
+
+This repository includes a GitHub Actions workflow at [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml) that deploys the frontend to GitHub Pages on every push to `main`.
+
+### One-time GitHub setup
+
+1. Open repository settings and enable GitHub Pages with source set to GitHub Actions.
+2. In repository settings, add an Actions variable named `VITE_API_BASE_URL`.
+3. Set `VITE_API_BASE_URL` to your deployed backend URL (for example `https://your-backend-domain.com`).
+
+After that, pushes to `main` will publish the frontend at:
+
+- `https://athiq2u.github.io/MoonSpeak-AI/`
 
 ## API
 
