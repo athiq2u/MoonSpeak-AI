@@ -1,10 +1,16 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import axios from "axios";
 import dotenv from "dotenv";
 import { getLanguageConfig, normalizeLanguage } from "./languageConfig.js";
 
 dotenv.config();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions";
+const genAI = process.env.GEMINI_API_KEY
+  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+  : null;
 
 function pickVariant(seedText, options) {
   const seed = [...seedText].reduce((total, char) => total + char.charCodeAt(0), 0);
@@ -42,9 +48,10 @@ function normalizeHistory(history) {
     }));
 }
 
-function buildModelContents(history, text, languageId) {
+function buildCoachPrompt(languageId) {
   const language = getLanguageConfig(languageId);
-  const introPrompt = `
+
+  return `
 You are a friendly, human-sounding speaking coach for a voice-first language learning app.
 
 Tasks:
@@ -60,6 +67,10 @@ Format:
 Write one short conversational response in plain text.
 Do not use headings, labels, scores, bullet points, or markdown.
 `.trim();
+}
+
+function buildModelContents(history, text, languageId) {
+  const introPrompt = buildCoachPrompt(languageId);
 
   return [
     {
@@ -75,6 +86,87 @@ Do not use headings, labels, scores, bullet points, or markdown.
       parts: [{ text }]
     }
   ];
+}
+
+function buildOpenAIMessages(history, text, languageId) {
+  const prompt = buildCoachPrompt(languageId);
+
+  return [
+    {
+      role: "system",
+      content: prompt
+    },
+    ...history.map((message) => ({
+      role: message.role === "ai" ? "assistant" : "user",
+      content: message.text
+    })),
+    {
+      role: "user",
+      content: text
+    }
+  ];
+}
+
+function makeProviderError(message, status = 503) {
+  const error = new Error(message);
+  error.status = status;
+  return error;
+}
+
+function getHttpStatus(error) {
+  return error?.status || error?.response?.status;
+}
+
+async function generateWithOpenAI(text, history, languageId) {
+  if (!process.env.OPENAI_API_KEY) {
+    throw makeProviderError("OPENAI_API_KEY is missing.", 401);
+  }
+
+  const response = await axios.post(
+    OPENAI_CHAT_URL,
+    {
+      model: OPENAI_MODEL,
+      messages: buildOpenAIMessages(history, text, languageId),
+      temperature: 0.7,
+      max_tokens: 220
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
+      }
+    }
+  );
+
+  const reply = response?.data?.choices?.[0]?.message?.content?.trim();
+
+  if (!reply) {
+    throw makeProviderError("OpenAI returned an empty response.");
+  }
+
+  return reply;
+}
+
+async function generateWithGemini(text, history, languageId) {
+  if (!genAI) {
+    throw makeProviderError("GEMINI_API_KEY is missing.", 401);
+  }
+
+  const model = genAI.getGenerativeModel({
+    model: GEMINI_MODEL
+  });
+
+  const result = await model.generateContent({
+    contents: buildModelContents(history, text, languageId)
+  });
+
+  const reply = result.response.text()?.trim();
+
+  if (!reply) {
+    throw makeProviderError("Gemini returned an empty response.");
+  }
+
+  return reply;
 }
 
 function buildFallbackReply(text, history = [], languageId = "en-US") {
@@ -219,35 +311,44 @@ function buildFallbackReply(text, history = [], languageId = "en-US") {
 export async function generateReply(text, history = [], languageId = "en-US") {
   const normalizedHistory = normalizeHistory(history);
   const safeLanguageId = normalizeLanguage(languageId);
+  const providerErrors = [];
 
   try {
-
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash"
-    });
-
-    const result = await model.generateContent({
-      contents: buildModelContents(normalizedHistory, text, safeLanguageId)
-    });
-
-    const response = result.response.text();
+    const openAIReply = await generateWithOpenAI(text, normalizedHistory, safeLanguageId);
 
     return {
-      reply: response,
+      reply: openAIReply,
+      source: "openai",
+      fallbackReason: null
+    };
+
+  } catch (error) {
+    providerErrors.push(error);
+    console.error("OpenAI Error:", error);
+  }
+
+  try {
+    const geminiReply = await generateWithGemini(text, normalizedHistory, safeLanguageId);
+
+    return {
+      reply: geminiReply,
       source: "gemini",
       fallbackReason: null
     };
 
   } catch (error) {
-
+    providerErrors.push(error);
     console.error("Gemini Error:", error);
-
-    return {
-      reply: buildFallbackReply(text, normalizedHistory, safeLanguageId),
-      source: "local-fallback",
-      fallbackReason: getFallbackReason(error)
-    };
-
   }
+
+  const primaryError = providerErrors.find((error) => getHttpStatus(error) === 429)
+    || providerErrors.find((error) => [401, 403].includes(getHttpStatus(error)))
+    || providerErrors[0];
+
+  return {
+    reply: buildFallbackReply(text, normalizedHistory, safeLanguageId),
+    source: "local-fallback",
+    fallbackReason: getFallbackReason(primaryError)
+  };
 
 }

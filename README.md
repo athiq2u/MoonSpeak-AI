@@ -124,9 +124,15 @@ Required backend variables:
 - `GEMINI_API_KEY`
 - `MURF_API_KEY`
 
+Alternative AI provider:
+
+- `OPENAI_API_KEY` (if set, MoonSpeak AI tries OpenAI first)
+
 Optional backend variables:
 
 - `MURF_STREAM_URL`
+- `OPENAI_MODEL` (default `gpt-4o-mini`)
+- `GEMINI_MODEL` (default `gemini-2.0-flash`)
 
 Frontend variable:
 

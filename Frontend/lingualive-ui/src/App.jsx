@@ -582,7 +582,11 @@ function App() {
                     <span className="chat-role">{message.role === "user" ? "You" : TUTOR_NAME}</span>
                     {message.role === "ai" && (
                       <span className={`chat-source-badge ${message.isFallback ? "chat-source-badge-fallback" : "chat-source-badge-gemini"}`}>
-                        {message.isFallback ? "Local fallback" : "Gemini"}
+                        {message.isFallback
+                          ? "Local fallback"
+                          : message.source === "openai"
+                            ? "OpenAI"
+                            : "Gemini"}
                       </span>
                     )}
                   </div>
