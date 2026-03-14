@@ -2,7 +2,12 @@ import { useState, useRef, useEffect, useEffectEvent, useMemo } from "react";
 import "./App.css";
 import chatbotAvatar from "./assets/ai-chatbot.svg";
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
+const DEFAULT_PRODUCTION_API_BASE_URL = "https://moonspeak-ai-backend.onrender.com";
+const isLocalDevHost = typeof window !== "undefined"
+  && ["localhost", "127.0.0.1"].includes(window.location.hostname);
+const resolvedApiBaseUrl = import.meta.env.VITE_API_BASE_URL
+  || (isLocalDevHost ? "/api" : DEFAULT_PRODUCTION_API_BASE_URL);
+const API_BASE_URL = resolvedApiBaseUrl.replace(/\/$/, "");
 const API_URL = `${API_BASE_URL}/speak`;
 const MAX_CHARS = 500;
 const STORAGE_KEY = "lingualive_chat";
@@ -433,7 +438,26 @@ function App() {
         body: JSON.stringify({ text: trimmedMessage, history: chat.slice(-6), language: selectedLanguage }),
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get("content-type") || "";
+      const isJsonResponse = contentType.includes("application/json");
+      const responseBody = isJsonResponse
+        ? await response.json()
+        : await response.text();
+
+      if (!isJsonResponse) {
+        const looksLikeHtml = typeof responseBody === "string" && /<html|<!doctype/i.test(responseBody);
+        if (looksLikeHtml) {
+          throw new Error(
+            isLocalDevHost
+              ? "API returned HTML instead of JSON. Make sure the backend server is running on port 5000."
+              : "Backend API is not configured for this deployment yet. Set VITE_API_BASE_URL in GitHub Actions to your live backend URL."
+          );
+        }
+
+        throw new Error("API returned an unexpected response format.");
+      }
+
+      const data = responseBody;
 
       if (!response.ok) {
         throw new Error(data.error || "The server could not process your message.");
