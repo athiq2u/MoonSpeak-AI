@@ -1,4 +1,13 @@
 {
+  "name": "lingualive-ai",
+  "private": true,
+  "scripts": {
+    "start": "npm --prefix Backend run start",
+    "start:backend": "npm --prefix Backend run start",
+    "dev": "npm --prefix Frontend/lingualive-ui run dev",
+    "dev:frontend": "npm --prefix Frontend/lingualive-ui run dev",
+    "build": "npm --prefix Frontend/lingualive-ui run build"
+  },
   "dependencies": {
     "openai": "^6.28.0"
   }

@@ -9,7 +9,7 @@ const resolvedApiBaseUrl = import.meta.env.VITE_API_BASE_URL
   || (isLocalDevHost ? "/api" : DEFAULT_PRODUCTION_API_BASE_URL);
 const API_BASE_URL = resolvedApiBaseUrl.replace(/\/$/, "");
 const API_URL = `${API_BASE_URL}/speak`;
-const API_HEALTH_URL = `${API_BASE_URL}/`;
+const API_HEALTH_URL = `${API_BASE_URL}/healthz`;
 const MAX_CHARS = 500;
 const API_TIMEOUT_MS = 12000;
 const STORAGE_KEY = "lingualive_chat";

@@ -7,10 +7,25 @@ dotenv.config();
 
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const AI_PROVIDER_PRIORITY = (process.env.AI_PROVIDER_PRIORITY || "gemini-first").toLowerCase();
 const OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions";
 const genAI = process.env.GEMINI_API_KEY
   ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
   : null;
+
+function buildProviderOrder() {
+  if (AI_PROVIDER_PRIORITY === "openai-first") {
+    return [
+      { name: "openai", fn: generateWithOpenAI },
+      { name: "gemini", fn: generateWithGemini }
+    ];
+  }
+
+  return [
+    { name: "gemini", fn: generateWithGemini },
+    { name: "openai", fn: generateWithOpenAI }
+  ];
+}
 
 function pickVariant(seedText, options, recentReplies = []) {
   const filteredOptions = options.filter((option) => !recentReplies.includes(option));
@@ -438,32 +453,21 @@ export async function generateReply(text, history = [], languageId = "en-US") {
   const safeLanguageId = normalizeLanguage(languageId);
   const providerErrors = [];
 
-  try {
-    const openAIReply = await generateWithOpenAI(text, normalizedHistory, safeLanguageId);
+  const providers = buildProviderOrder();
+  for (const provider of providers) {
+    try {
+      const reply = await provider.fn(text, normalizedHistory, safeLanguageId);
 
-    return {
-      reply: enrichReply(openAIReply, text, safeLanguageId, normalizedHistory),
-      source: "openai",
-      fallbackReason: null
-    };
+      return {
+        reply: enrichReply(reply, text, safeLanguageId, normalizedHistory),
+        source: provider.name,
+        fallbackReason: null
+      };
 
-  } catch (error) {
-    providerErrors.push({ provider: "openai", error });
-    console.error("OpenAI Error:", getProviderErrorSummary("openai", error));
-  }
-
-  try {
-    const geminiReply = await generateWithGemini(text, normalizedHistory, safeLanguageId);
-
-    return {
-      reply: enrichReply(geminiReply, text, safeLanguageId, normalizedHistory),
-      source: "gemini",
-      fallbackReason: null
-    };
-
-  } catch (error) {
-    providerErrors.push({ provider: "gemini", error });
-    console.error("Gemini Error:", getProviderErrorSummary("gemini", error));
+    } catch (error) {
+      providerErrors.push({ provider: provider.name, error });
+      console.error(`${provider.name} Error:`, getProviderErrorSummary(provider.name, error));
+    }
   }
 
   const primaryProviderError = providerErrors.find((entry) => getHttpStatus(entry.error) === 429)

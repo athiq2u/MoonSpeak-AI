@@ -6,7 +6,7 @@ services:
     plan: free
     buildCommand: npm install
     startCommand: npm run start
-    healthCheckPath: /
+    healthCheckPath: /healthz
     envVars:
       - key: NODE_VERSION
         value: 20

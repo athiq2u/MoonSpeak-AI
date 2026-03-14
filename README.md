@@ -142,6 +142,32 @@ Frontend variable:
 
 - `VITE_API_BASE_URL` (for example `http://localhost:5000` in local dev, or your deployed backend URL in production)
 
+## Zero-Cost AI Setup (Recommended)
+
+For free usage, run Gemini first and keep OpenAI disabled.
+
+Local `Backend/.env` template:
+
+```env
+GEMINI_API_KEY=your_real_gemini_key_here
+AI_PROVIDER_PRIORITY=gemini-first
+GEMINI_MODEL=gemini-2.0-flash
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4o-mini
+MURF_API_KEY=your_real_murf_key_here
+MURF_STREAM_URL=
+```
+
+Render environment variables template:
+
+- `GEMINI_API_KEY` = your real Gemini key
+- `AI_PROVIDER_PRIORITY` = `gemini-first`
+- `GEMINI_MODEL` = `gemini-2.0-flash`
+- `OPENAI_API_KEY` = leave empty (or remove)
+- `MURF_API_KEY` = your real Murf key
+
+If free Gemini quota is exhausted, MoonSpeak AI automatically uses local fallback coaching replies.
+
 ## Install
 
 Backend:
@@ -181,6 +207,16 @@ Frontend default URL:
 Backend default URL:
 
 - `http://localhost:5000`
+
+You can also run from the repository root:
+
+```powershell
+npm run start
+npm run dev
+```
+
+- `npm run start` starts the backend from `Backend`
+- `npm run dev` starts the frontend from `Frontend/lingualive-ui`
 
 ## Build
 
@@ -275,6 +311,54 @@ Query params:
 3. Use voice input once and typed input once.
 4. Show the source badge changing between OpenAI, Gemini, local fallback, or offline coach.
 5. Show the live stats strip updating with turns and average reply length.
+
+## Final Production Deployment Checklist
+
+Use this checklist in order before a live demo.
+
+1. Render service settings:
+  - Root Directory: `Backend`
+  - Build Command: `npm install`
+  - Start Command: `npm run start`
+  - Health Check Path: `/healthz`
+2. Render environment variables:
+  - required: `MURF_API_KEY`
+  - at least one AI provider: `OPENAI_API_KEY` or `GEMINI_API_KEY`
+  - optional tuning: `OPENAI_MODEL`, `GEMINI_MODEL`, `MURF_STREAM_URL`
+3. Backend live verification:
+  - open `https://<your-render-service>.onrender.com/healthz`
+  - expected response: JSON with `{"status":"ok"}`
+4. GitHub Pages variable:
+  - set repository Actions variable `VITE_API_BASE_URL` to your Render service URL (without trailing slash)
+5. GitHub Actions deploy verification:
+  - confirm latest `Deploy Frontend To GitHub Pages` workflow run is green
+6. End-to-end production API test:
+  - from browser console or Postman, call `POST https://<your-render-service>.onrender.com/speak`
+  - confirm JSON includes `reply`, `audioStreamUrl`, `replySource`
+7. Live Pages verification:
+  - open `https://athiq2u.github.io/MoonSpeak-AI/`
+  - click `Check Connection` and confirm `Backend Online`
+8. Demo fallback verification:
+  - disable backend temporarily and confirm app shows `Offline Demo Mode` without crashing
+9. Security verification:
+  - rotate any API key that appeared in logs or terminal history
+  - confirm `.env` files are not committed
+
+## Production Audit (March 2026)
+
+Focused production audit results and fixes:
+
+1. Fixed high-risk Render port issue:
+  - backend now binds to `process.env.PORT` with `5000` fallback for local
+2. Fixed proxy-aware URL generation risk:
+  - backend now trusts proxy headers so HTTPS deployments generate correct stream URLs
+3. Added explicit health endpoint:
+  - backend now exposes `GET /healthz`
+  - Render blueprint health check updated to `/healthz`
+4. Reduced false-positive connection checks in frontend:
+  - frontend health checks now target `/healthz` instead of `/`
+5. Residual external risk:
+  - if Render URL returns `404`, service is not successfully deployed yet, even if frontend is healthy
 
 ## Troubleshooting
 
