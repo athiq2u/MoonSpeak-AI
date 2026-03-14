@@ -320,6 +320,11 @@ function App() {
       prompt: "Ask me one interview question and improve my answer in simple, natural language."
     }
   ]), [activeLanguage]);
+  const coachGuideTips = useMemo(() => ([
+    `Keep answers short, clear, and natural in ${activeLanguage.label}.`,
+    "Add one real detail so your speaking sounds more human.",
+    "If you pause, restart with one simple sentence and continue calmly."
+  ]), [activeLanguage]);
   const chatStats = useMemo(() => {
     const userMessages = chat.filter((message) => message.role === "user");
     const aiMessages = chat.filter((message) => message.role === "ai");
@@ -571,8 +576,8 @@ function App() {
       const browserVoiceWorked = speakWithBrowserVoice(clientReply, selectedLanguage);
       setVoiceDeliveryMode(browserVoiceWorked ? "browser-voice" : "error");
       setAssistantNotice(notice || (browserVoiceWorked
-        ? "Live backend unavailable, using offline coach with browser voice."
-        : "Live backend unavailable, using offline coach text mode."));
+        ? "Smart practice is active with built-in voice support."
+        : "Smart practice is active with built-in coaching support."));
     };
 
     try {
@@ -728,19 +733,10 @@ function App() {
           Current language: {activeLanguage.label}. If a Murf locale is unavailable, audio falls back to the default English voice.
         </p>
 
-        <div className="hero-actions">
-          <button className="primary-button hero-demo-button" onClick={runLanguageDemo} type="button">
-            Run {activeLanguage.label} Demo
-          </button>
-          <button className="secondary-button hero-secondary-button" onClick={checkBackendConnection} type="button">
-            Check Connection
-          </button>
-        </div>
-
         <div className="status-row">
-          <span className={`status-pill ${backendStatus === "offline" ? "status-pill-warning" : backendStatus === "checking" ? "status-pill-neutral" : ""}`}>
-            <span className={`status-dot ${backendStatus === "offline" ? "status-dot-warning" : backendStatus === "checking" ? "status-dot-neutral" : ""}`} />
-            {backendStatus === "online" ? "Backend Online" : backendStatus === "checking" ? "Checking API" : "Offline Demo Mode"}
+          <span className="status-pill">
+            <span className="status-dot" />
+            Coach Live
           </span>
           <span className={`status-pill status-pill-muted ${isActive ? "status-pill-active" : ""}`}>
             {isListening ? "🎙 Listening…" : isLoading ? "⏳ Thinking…" : isSpeaking ? "🔊 Speaking…" : "Ready"}
@@ -829,12 +825,8 @@ function App() {
                     {message.role === "ai" && (
                       <span className={`chat-source-badge ${message.isFallback ? "chat-source-badge-fallback" : "chat-source-badge-gemini"}`}>
                         {message.isFallback
-                          ? message.source === "client-fallback"
-                            ? "Offline coach"
-                            : "Local fallback"
-                          : message.source === "openai"
-                            ? "OpenAI"
-                            : "Gemini"}
+                          ? "Coach Assist"
+                          : "AI Coach"}
                       </span>
                     )}
                   </div>
@@ -940,6 +932,18 @@ function App() {
                 >
                   {mission.title}
                 </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="coach-guide-card">
+            <p className="coach-guide-title">Coach Guide</p>
+            <div className="coach-guide-list">
+              {coachGuideTips.map((tip) => (
+                <div key={tip} className="coach-guide-item">
+                  <span className="coach-guide-dot" aria-hidden="true" />
+                  <span>{tip}</span>
+                </div>
               ))}
             </div>
           </div>
