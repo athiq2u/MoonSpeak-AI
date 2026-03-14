@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useEffectEvent, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import "./App.css";
 import chatbotAvatar from "./assets/ai-chatbot.svg";
 
@@ -439,7 +439,7 @@ function App() {
     card.style.setProperty("--hero-rotate-y", "0deg");
   };
 
-  const cleanupAudioPlayback = () => {
+  const cleanupAudioPlayback = useCallback(() => {
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
     setNeedsManualPlayback(false);
@@ -459,9 +459,27 @@ function App() {
       URL.revokeObjectURL(mediaSourceUrlRef.current);
       mediaSourceUrlRef.current = null;
     }
-  };
+  }, []);
 
-  const attemptAudioPlayback = useEffectEvent(async (replyText, languageId) => {
+  const speakWithBrowserVoice = useCallback((replyText, languageId) => {
+    if (typeof window === "undefined" || !window.speechSynthesis || !replyText) {
+      return false;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(replyText);
+    utterance.lang = getLanguage(languageId).recognition || languageId;
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    utteranceRef.current = utterance;
+    window.speechSynthesis.speak(utterance);
+    return true;
+  }, []);
+
+  const attemptAudioPlayback = useCallback(async (replyText, languageId) => {
     const audio = audioRef.current;
 
     if (!audio) {
@@ -491,27 +509,9 @@ function App() {
         : "Voice playback paused for a moment. You can tap play to retry while coaching stays active.");
       return browserVoiceWorked;
     }
-  });
+  }, [speakWithBrowserVoice]);
 
-  const speakWithBrowserVoice = useEffectEvent((replyText, languageId) => {
-    if (typeof window === "undefined" || !window.speechSynthesis || !replyText) {
-      return false;
-    }
-
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(replyText);
-    utterance.lang = getLanguage(languageId).recognition || languageId;
-    utterance.rate = 1;
-    utterance.pitch = 1;
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-    utteranceRef.current = utterance;
-    window.speechSynthesis.speak(utterance);
-    return true;
-  });
-
-  const streamAudio = useEffectEvent(async (url, replyText, languageId) => {
+  const streamAudio = useCallback(async (url, replyText, languageId) => {
     if (!url) {
       return;
     }
@@ -612,7 +612,7 @@ function App() {
     } finally {
       setIsAudioLoading(false);
     }
-  });
+  }, [attemptAudioPlayback, cleanupAudioPlayback, speakWithBrowserVoice]);
 
   useEffect(() => {
     if (audioUrl) {
@@ -622,9 +622,9 @@ function App() {
         latestReplyForVoiceRef.current.languageId
       );
     }
-  }, [audioUrl]);
+  }, [audioUrl, streamAudio]);
 
-  const checkBackendConnection = useEffectEvent(async () => {
+  const checkBackendConnection = useCallback(async () => {
     setBackendStatus("checking");
 
     try {
@@ -645,7 +645,7 @@ function App() {
       setBackendStatus("offline");
       return false;
     }
-  });
+  }, []);
 
   useEffect(() => {
     checkBackendConnection();
@@ -795,10 +795,6 @@ function App() {
     setAssistantNotice(browserVoiceWorked
       ? "Replay is using the browser voice on this device."
       : "Voice playback is unavailable right now, but text coaching is still active.");
-  };
-
-  const runLanguageDemo = () => {
-    requestReply(activeLanguage.demoPrompt);
   };
 
   const runCoachPrompt = () => {
