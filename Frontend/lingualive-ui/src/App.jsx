@@ -203,6 +203,61 @@ function getLanguage(id) {
   return LANGUAGE_MAP[id] || LANGUAGE_MAP[DEFAULT_LANGUAGE_ID];
 }
 
+function pickClientVariant(seedText, options, recentReplies = []) {
+  const filtered = options.filter((option) => !recentReplies.includes(option));
+  const pool = filtered.length > 0 ? filtered : options;
+  const seed = [...seedText].reduce((total, char) => total + char.charCodeAt(0), 0);
+  return pool[seed % pool.length];
+}
+
+function buildClientFallbackReply(text, history, languageId) {
+  const trimmedText = text.trim();
+  const normalizedText = trimmedText.toLowerCase();
+  const recentAiReplies = history
+    .filter((message) => message.role === "ai")
+    .slice(-3)
+    .map((message) => message.text);
+  const activeLanguage = getLanguage(languageId);
+
+  if (/^(hi|hello|hey|good morning|good afternoon|good evening)\b/i.test(trimmedText)) {
+    return pickClientVariant(trimmedText, [
+      `Hi, that sounds natural. Since you started well, add one more line about what you want to practice in ${activeLanguage.label} today.`,
+      `Hello, that is a friendly and real sounding opener. A good next step is to say one small thing about your day or your goal.`,
+      `Nice start. That greeting feels human and comfortable. Now continue with one simple sentence so the conversation feels complete.`
+    ], recentAiReplies);
+  }
+
+  if (/(introduce myself|introduction|interview|job interview|hr round|tell me about yourself)/i.test(normalizedText)) {
+    return pickClientVariant(trimmedText, [
+      "That is a strong practice topic. For a good self introduction, start with who you are, then mention your current focus, and finish with one strength or achievement.",
+      "Interview introductions sound best when they are clear and calm. Try giving your background, your current role or studies, and one reason you are a good fit.",
+      "Good choice. A natural interview answer should sound professional but not memorized. Keep it short, specific, and easy to follow."
+    ], recentAiReplies);
+  }
+
+  if (trimmedText.endsWith("?")) {
+    return pickClientVariant(trimmedText, [
+      `That is a clear question, and it sounds natural. You can also say: "${trimmedText}" with a calm tone and a short pause before the main point.`,
+      "Good question. This works well in real conversation because it is direct and easy to understand. That is a strong speaking habit.",
+      "That sounds natural. Questions like this are useful because they keep the conversation moving and feel human, not textbook-like."
+    ], recentAiReplies);
+  }
+
+  if (/(today|meeting|office|work|project|school|college|friend|family|travel|presentation)/i.test(normalizedText)) {
+    return pickClientVariant(trimmedText, [
+      `That sounds realistic and useful for daily conversation. You could make it even stronger by adding one feeling or one detail about what happened.`,
+      `This already feels like something you could say in real life. A small example or reaction would make it sound even more natural.`,
+      `Good everyday sentence. The meaning is clear, and it sounds human. If you want, the next step is to say the same idea in a smoother way.`
+    ], recentAiReplies);
+  }
+
+  return pickClientVariant(trimmedText, [
+    `I understood that clearly. A more natural speaking pattern is to keep the sentence simple, then add one example or detail.`,
+    `That idea makes sense and sounds understandable. To make it feel more fluent, try saying it with one short supporting sentence after it.`,
+    `This is a useful line to practice. It already works, and with a small wording change it can sound even more natural in conversation.`
+  ], recentAiReplies);
+}
+
 function App() {
   const [text, setText] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
@@ -226,6 +281,7 @@ function App() {
 
   const chatEndRef = useRef(null);
   const audioRef = useRef(null);
+  const utteranceRef = useRef(null);
   const mediaSourceUrlRef = useRef(null);
   const abortControllerRef = useRef(null);
   const tutorExciteTimerRef = useRef(null);
@@ -291,6 +347,9 @@ function App() {
       if (mediaSourceUrlRef.current) {
         URL.revokeObjectURL(mediaSourceUrlRef.current);
       }
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
     };
   }, []);
 
@@ -306,6 +365,11 @@ function App() {
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
 
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    utteranceRef.current = null;
+
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.removeAttribute("src");
@@ -317,6 +381,24 @@ function App() {
       mediaSourceUrlRef.current = null;
     }
   };
+
+  const speakWithBrowserVoice = useEffectEvent((replyText, languageId) => {
+    if (typeof window === "undefined" || !window.speechSynthesis || !replyText) {
+      return false;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(replyText);
+    utterance.lang = getLanguage(languageId).recognition || languageId;
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    utteranceRef.current = utterance;
+    window.speechSynthesis.speak(utterance);
+    return true;
+  });
 
   const streamAudio = useEffectEvent(async (url) => {
     if (!url) {
@@ -431,6 +513,25 @@ function App() {
 
     setChat(prev => [...prev, { role: "user", text: trimmedMessage }]);
 
+    const applyClientFallback = (notice) => {
+      const clientReply = buildClientFallbackReply(trimmedMessage, chat.slice(-6), selectedLanguage);
+      setChat(prev => [
+        ...prev,
+        {
+          role: "ai",
+          text: clientReply,
+          source: "client-fallback",
+          isFallback: true
+        }
+      ]);
+      setAudioUrl("");
+      const browserVoiceWorked = speakWithBrowserVoice(clientReply, selectedLanguage);
+      setVoiceDeliveryMode(browserVoiceWorked ? "browser-voice" : "error");
+      setAssistantNotice(notice || (browserVoiceWorked
+        ? "Live backend unavailable, using offline coach with browser voice."
+        : "Live backend unavailable, using offline coach text mode."));
+    };
+
     try {
       const response = await fetch(API_URL, {
         method: "POST",
@@ -447,14 +548,16 @@ function App() {
       if (!isJsonResponse) {
         const looksLikeHtml = typeof responseBody === "string" && /<html|<!doctype/i.test(responseBody);
         if (looksLikeHtml) {
-          throw new Error(
+          applyClientFallback(
             isLocalDevHost
               ? "API returned HTML instead of JSON. Make sure the backend server is running on port 5000."
               : "Backend API is not configured for this deployment yet. Set VITE_API_BASE_URL in GitHub Actions to your live backend URL."
           );
+          return;
         }
 
-        throw new Error("API returned an unexpected response format.");
+        applyClientFallback("API returned an unexpected response format. Using offline coach mode.");
+        return;
       }
 
       const data = responseBody;
@@ -479,10 +582,10 @@ function App() {
     } catch (error) {
       console.error(error);
       const isNetworkError = error instanceof TypeError && /fetch/i.test(error.message || "");
-      setErrorMessage(
+      applyClientFallback(
         isNetworkError
-          ? "Failed to fetch from API. Start Backend with 'npm run start' and try again."
-          : (error.message || "Something went wrong. Please try again.")
+          ? "Failed to fetch from API. Using offline coach mode instead."
+          : (error.message || "Something went wrong. Using offline coach mode instead.")
       );
     } finally {
       setIsLoading(false);
@@ -650,7 +753,9 @@ function App() {
                     {message.role === "ai" && (
                       <span className={`chat-source-badge ${message.isFallback ? "chat-source-badge-fallback" : "chat-source-badge-gemini"}`}>
                         {message.isFallback
-                          ? "Local fallback"
+                          ? message.source === "client-fallback"
+                            ? "Offline coach"
+                            : "Local fallback"
                           : message.source === "openai"
                             ? "OpenAI"
                             : "Gemini"}
@@ -808,6 +913,8 @@ function App() {
                       ? "Fallback Audio"
                         : voiceDeliveryMode === "fallback-generate-default-voice"
                           ? "Generated English Fallback"
+                            : voiceDeliveryMode === "browser-voice"
+                              ? "Browser Voice"
                       : voiceDeliveryMode === "connecting"
                         ? "Connecting"
                         : voiceDeliveryMode === "error"
@@ -826,6 +933,8 @@ function App() {
                       ? "Falcon was unavailable, so playback switched to generated audio."
                       : voiceDeliveryMode === "fallback-generate-default-voice"
                         ? "The selected locale and Falcon stream were unavailable, so playback switched to generated English audio."
+                      : voiceDeliveryMode === "browser-voice"
+                        ? "Backend audio is unavailable, so playback switched to the browser voice on this device."
                       : "Voice playback is ready."}
               </p>
               <audio
