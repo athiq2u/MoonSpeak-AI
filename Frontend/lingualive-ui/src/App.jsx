@@ -217,11 +217,13 @@ function App() {
   const [voiceDeliveryMode, setVoiceDeliveryMode] = useState("idle");
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [assistantNotice, setAssistantNotice] = useState("");
+  const [isTutorExcited, setIsTutorExcited] = useState(false);
 
   const chatEndRef = useRef(null);
   const audioRef = useRef(null);
   const mediaSourceUrlRef = useRef(null);
   const abortControllerRef = useRef(null);
+  const tutorExciteTimerRef = useRef(null);
   const activeLanguage = getLanguage(selectedLanguage);
   const tutorState = isListening
     ? "listening"
@@ -230,13 +232,6 @@ function App() {
       : isSpeaking
         ? "speaking"
         : "ready";
-  const tutorStatusCopy = isListening
-    ? "I am listening closely. Speak naturally and I will guide the next turn."
-    : isLoading
-      ? "I am shaping a short tutor response for this practice turn."
-      : isSpeaking
-        ? "I am speaking now. Listen for rhythm, tone, and natural phrasing."
-        : `I am ready to coach you in ${activeLanguage.label}.`;
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -253,11 +248,22 @@ function App() {
   useEffect(() => {
     return () => {
       abortControllerRef.current?.abort();
+      if (tutorExciteTimerRef.current) {
+        clearTimeout(tutorExciteTimerRef.current);
+      }
       if (mediaSourceUrlRef.current) {
         URL.revokeObjectURL(mediaSourceUrlRef.current);
       }
     };
   }, []);
+
+  const triggerTutorExcitement = () => {
+    if (tutorExciteTimerRef.current) {
+      clearTimeout(tutorExciteTimerRef.current);
+    }
+    setIsTutorExcited(true);
+    tutorExciteTimerRef.current = setTimeout(() => setIsTutorExcited(false), 900);
+  };
 
   const cleanupAudioPlayback = () => {
     abortControllerRef.current?.abort();
@@ -444,6 +450,16 @@ function App() {
     requestReply(activeLanguage.demoPrompt);
   };
 
+  const runCoachPrompt = () => {
+    triggerTutorExcitement();
+    requestReply(activeLanguage.suggestions[0] || activeLanguage.demoPrompt);
+  };
+
+  const runChallengePrompt = () => {
+    triggerTutorExcitement();
+    requestReply(activeLanguage.suggestions[1] || activeLanguage.demoPrompt);
+  };
+
   const startListening = () => {
     if (isLoading || isListening) return;
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -590,31 +606,36 @@ function App() {
             </div>
           </div>
 
-          <section className={`tutor-card tutor-card-${tutorState}`} aria-label={`${TUTOR_NAME} tutor panel`}>
+          <aside className={`tutor-side tutor-side-${tutorState} ${isTutorExcited ? "tutor-side-excited" : ""}`} aria-label={`${TUTOR_NAME} tutor side assistant`}>
             <div className="tutor-avatar-wrap" aria-hidden="true">
               <div className="tutor-aura" />
-              <img
-                className={`tutor-chatbot-pic tutor-chatbot-pic-${tutorState}`}
-                src={chatbotAvatar}
-                alt="AI chatbot avatar"
-              />
+              <button
+                type="button"
+                className="tutor-fab"
+                onClick={triggerTutorExcitement}
+                title="Tap Mira"
+                aria-label="Tap tutor avatar"
+              >
+                <img
+                  className={`tutor-chatbot-pic tutor-chatbot-pic-${tutorState}`}
+                  src={chatbotAvatar}
+                  alt="AI chatbot avatar"
+                />
+              </button>
               <div className="tutor-wave tutor-wave-one" />
               <div className="tutor-wave tutor-wave-two" />
               <div className="tutor-wave tutor-wave-three" />
             </div>
 
-            <div className="tutor-copy-block">
-              <p className="tutor-kicker">Female voice tutor</p>
-              <div className="tutor-title-row">
-                <h3>{TUTOR_NAME}</h3>
-                <span className={`tutor-state-badge tutor-state-badge-${tutorState}`}>
-                  {isListening ? "Listening" : isLoading ? "Thinking" : isSpeaking ? "Speaking" : "Ready"}
-                </span>
+            <div className="tutor-mini-copy">
+              <p className="tutor-mini-title">{TUTOR_NAME}</p>
+              <p className="tutor-mini-status">{isListening ? "Listening" : isLoading ? "Thinking" : isSpeaking ? "Speaking" : "Ready"}</p>
+              <div className="tutor-mini-actions">
+                <button type="button" className="tutor-mini-btn" onClick={runCoachPrompt}>Coach me</button>
+                <button type="button" className="tutor-mini-btn" onClick={runChallengePrompt}>Challenge</button>
               </div>
-              <p className="tutor-intro">Warm, clear, and conversational coaching for live speaking practice.</p>
-              <p className="tutor-status-copy">{tutorStatusCopy}</p>
             </div>
-          </section>
+          </aside>
 
           <label className="language-picker language-picker-compact" htmlFor="language-picker-composer">
             <span className="language-picker-label">Practice language</span>
