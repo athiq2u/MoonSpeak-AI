@@ -187,11 +187,36 @@ This repository includes a GitHub Actions workflow at [.github/workflows/deploy-
 
 1. Open repository settings and enable GitHub Pages with source set to GitHub Actions.
 2. In repository settings, add an Actions variable named `VITE_API_BASE_URL`.
-3. Set `VITE_API_BASE_URL` to your deployed backend URL (for example `https://your-backend-domain.com`).
+3. Set `VITE_API_BASE_URL` to your deployed backend URL (for example `https://moonspeak-ai-backend.onrender.com`).
 
 After that, pushes to `main` will publish the frontend at:
 
 - `https://athiq2u.github.io/MoonSpeak-AI/`
+
+## Backend Deployment On Render
+
+This repository includes a Render Blueprint file at [render.yaml](render.yaml).
+
+### Option A: Blueprint deploy (recommended)
+
+1. In Render, choose New + and select Blueprint.
+2. Connect this GitHub repository.
+3. Render will detect [render.yaml](render.yaml) and create the backend service.
+4. Set the required environment variables in Render:
+  - `GEMINI_API_KEY`
+  - `MURF_API_KEY`
+  - optional: `MURF_STREAM_URL`
+
+### Option B: Manual web service
+
+Create a Web Service in Render with these settings:
+
+- Root Directory: `Backend`
+- Build Command: `npm install`
+- Start Command: `npm run start`
+- Health Check Path: `/`
+
+After deploy, copy the Render service URL and set it as the GitHub Actions variable `VITE_API_BASE_URL` so GitHub Pages calls the live backend.
 
 ## API
 
