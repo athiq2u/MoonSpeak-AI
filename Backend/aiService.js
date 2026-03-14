@@ -222,12 +222,20 @@ function getProviderErrorCode(error) {
   return error?.response?.data?.error?.code || null;
 }
 
+function sanitizeProviderMessage(error) {
+  const rawMessage = error?.response?.data?.error?.message || error?.message || "Unknown provider error";
+  return rawMessage
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 220);
+}
+
 function getProviderErrorSummary(provider, error) {
   return {
     provider,
     status: getHttpStatus(error) || null,
     code: getProviderErrorCode(error),
-    message: error?.response?.data?.error?.message || error?.message || "Unknown provider error"
+    message: sanitizeProviderMessage(error)
   };
 }
 
