@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useEffectEvent } from "react";
 import "./App.css";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
@@ -6,6 +6,7 @@ const API_URL = `${API_BASE_URL}/speak`;
 const MAX_CHARS = 500;
 const STORAGE_KEY = "lingualive_chat";
 const DEFAULT_LANGUAGE_ID = "en-US";
+const TUTOR_NAME = "Mira";
 
 const LANGUAGE_OPTIONS = [
   {
@@ -221,6 +222,20 @@ function App() {
   const mediaSourceUrlRef = useRef(null);
   const abortControllerRef = useRef(null);
   const activeLanguage = getLanguage(selectedLanguage);
+  const tutorState = isListening
+    ? "listening"
+    : isLoading
+      ? "thinking"
+      : isSpeaking
+        ? "speaking"
+        : "ready";
+  const tutorStatusCopy = isListening
+    ? "I am listening closely. Speak naturally and I will guide the next turn."
+    : isLoading
+      ? "I am shaping a short tutor response for this practice turn."
+      : isSpeaking
+        ? "I am speaking now. Listen for rhythm, tone, and natural phrasing."
+        : `I am ready to coach you in ${activeLanguage.label}.`;
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -259,7 +274,7 @@ function App() {
     }
   };
 
-  const streamAudio = async (url) => {
+  const streamAudio = useEffectEvent(async (url) => {
     if (!url) {
       return;
     }
@@ -351,7 +366,7 @@ function App() {
     } finally {
       setIsAudioLoading(false);
     }
-  };
+  });
 
   useEffect(() => {
     if (audioUrl) {
@@ -463,7 +478,7 @@ function App() {
         <p className="eyebrow">Powered by Murf Falcon</p>
         <h1>MoonSpeak AI</h1>
         <p className="hero-copy">
-          Voice English Tutor powered by Murf Falcon. Pick a language, speak naturally, get a quick AI reply, and hear it back instantly.
+          Meet {TUTOR_NAME}, your female voice tutor powered by Murf Falcon. Pick a language, speak naturally, get a quick coaching reply, and hear it back instantly.
         </p>
 
         <div className="use-case-row" aria-label="Supported practice modes">
@@ -517,7 +532,7 @@ function App() {
             {chat.length === 0 && !isLoading ? (
               <div className="empty-state">
                 <p className="empty-icon">💬</p>
-                <p className="empty-copy">Choose a language and start speaking.</p>
+                <p className="empty-copy">Choose a language and start speaking with {TUTOR_NAME}.</p>
                 <label className="language-picker" htmlFor="language-picker-empty">
                   <span className="language-picker-label">Practice language</span>
                   <select
@@ -542,7 +557,7 @@ function App() {
               chat.map((message, index) => (
                 <div key={index} className={`chat-bubble chat-bubble-${message.role}`}>
                   <div className="chat-meta-row">
-                    <span className="chat-role">{message.role === "user" ? "You" : "MoonSpeak AI"}</span>
+                    <span className="chat-role">{message.role === "user" ? "You" : TUTOR_NAME}</span>
                     {message.role === "ai" && (
                       <span className={`chat-source-badge ${message.isFallback ? "chat-source-badge-fallback" : "chat-source-badge-gemini"}`}>
                         {message.isFallback ? "Local fallback" : "Gemini"}
@@ -556,7 +571,7 @@ function App() {
 
             {isLoading && (
               <div className="chat-bubble chat-bubble-ai">
-                <span className="chat-role">MoonSpeak AI</span>
+                <span className="chat-role">{TUTOR_NAME}</span>
                 <div className="typing-dots">
                   <span /><span /><span />
                 </div>
@@ -573,6 +588,38 @@ function App() {
               <h2>Voice First</h2>
             </div>
           </div>
+
+          <section className={`tutor-card tutor-card-${tutorState}`} aria-label={`${TUTOR_NAME} tutor panel`}>
+            <div className="tutor-avatar-wrap" aria-hidden="true">
+              <div className="tutor-aura" />
+              <div className="tutor-avatar">
+                <div className="tutor-hair" />
+                <div className="tutor-face">
+                  <span className="tutor-eye tutor-eye-left" />
+                  <span className="tutor-eye tutor-eye-right" />
+                  <span className={`tutor-mouth tutor-mouth-${tutorState}`} />
+                </div>
+                <div className="tutor-neck" />
+                <div className="tutor-body" />
+                <div className="tutor-headset" />
+              </div>
+              <div className="tutor-wave tutor-wave-one" />
+              <div className="tutor-wave tutor-wave-two" />
+              <div className="tutor-wave tutor-wave-three" />
+            </div>
+
+            <div className="tutor-copy-block">
+              <p className="tutor-kicker">Female voice tutor</p>
+              <div className="tutor-title-row">
+                <h3>{TUTOR_NAME}</h3>
+                <span className={`tutor-state-badge tutor-state-badge-${tutorState}`}>
+                  {isListening ? "Listening" : isLoading ? "Thinking" : isSpeaking ? "Speaking" : "Ready"}
+                </span>
+              </div>
+              <p className="tutor-intro">Warm, clear, and conversational coaching for live speaking practice.</p>
+              <p className="tutor-status-copy">{tutorStatusCopy}</p>
+            </div>
+          </section>
 
           <label className="language-picker language-picker-compact" htmlFor="language-picker-composer">
             <span className="language-picker-label">Practice language</span>
