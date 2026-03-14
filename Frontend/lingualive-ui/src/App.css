@@ -524,136 +524,54 @@
   position: relative;
   display: grid;
   place-items: center;
-  min-height: 152px;
+  min-height: 176px;
 }
 
 .tutor-aura {
   position: absolute;
-  inset: 18px;
+  inset: 8px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(255, 187, 144, 0.34), rgba(255, 187, 144, 0));
-  filter: blur(8px);
+  filter: blur(14px);
 }
 
-.tutor-avatar {
+.tutor-portrait {
   position: relative;
-  width: 116px;
-  height: 132px;
-  display: grid;
-  place-items: center;
+  z-index: 1;
+  width: 168px;
+  max-width: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.22));
+  transform-origin: center bottom;
 }
 
-.tutor-hair {
-  position: absolute;
-  top: 6px;
-  width: 78px;
-  height: 72px;
-  border-radius: 42px 42px 34px 34px;
-  background: linear-gradient(180deg, #2b1b22, #5a3041 72%, #3b1d28);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+.tutor-portrait-hair-back,
+.tutor-portrait-hair-front {
+  transition: transform 0.28s ease;
 }
 
-.tutor-face {
-  position: absolute;
-  top: 22px;
-  width: 58px;
-  height: 68px;
-  border-radius: 26px 26px 24px 24px;
-  background: linear-gradient(180deg, #ffd8c1, #efb79a);
-  box-shadow: inset 0 -8px 14px rgba(199, 119, 94, 0.18);
-}
-
-.tutor-eye {
-  position: absolute;
-  top: 24px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #43242c;
-}
-
-.tutor-eye-left {
-  left: 15px;
-}
-
-.tutor-eye-right {
-  right: 15px;
-}
-
-.tutor-mouth {
-  position: absolute;
-  left: 50%;
-  bottom: 15px;
-  width: 16px;
-  height: 7px;
-  margin-left: -8px;
-  border-radius: 0 0 12px 12px;
-  border-bottom: 3px solid #b15a64;
+.tutor-portrait-mouth {
+  fill: #a44f62;
+  transform-box: fill-box;
+  transform-origin: center;
   transition: all 0.2s ease;
 }
 
-.tutor-mouth-speaking {
-  width: 18px;
-  height: 12px;
-  margin-left: -9px;
-  border: 2px solid #a95661;
-  border-radius: 50%;
-  animation: tutor-talk 0.45s ease-in-out infinite;
+.tutor-portrait-mouth-ready {
+  transform: scale(1, 0.85);
 }
 
-.tutor-mouth-thinking,
-.tutor-mouth-listening {
-  width: 18px;
-  margin-left: -9px;
-  border-bottom-width: 2px;
+.tutor-portrait-mouth-listening {
+  transform: scale(1.08, 0.7);
 }
 
-.tutor-neck {
-  position: absolute;
-  top: 82px;
-  width: 14px;
-  height: 12px;
-  border-radius: 8px;
-  background: #e0a688;
+.tutor-portrait-mouth-thinking {
+  transform: scale(0.88, 0.68);
 }
 
-.tutor-body {
-  position: absolute;
-  bottom: 0;
-  width: 96px;
-  height: 54px;
-  border-radius: 28px 28px 18px 18px;
-  background: linear-gradient(180deg, #fff0ef, #d97877 32%, #8f405f 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
-}
-
-.tutor-headset {
-  position: absolute;
-  top: 28px;
-  width: 82px;
-  height: 44px;
-  border: 3px solid rgba(255, 223, 199, 0.8);
-  border-bottom: none;
-  border-radius: 34px 34px 0 0;
-}
-
-.tutor-headset::before,
-.tutor-headset::after {
-  content: "";
-  position: absolute;
-  top: 10px;
-  width: 11px;
-  height: 24px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #ffe8d8, #f5b38d);
-}
-
-.tutor-headset::before {
-  left: -6px;
-}
-
-.tutor-headset::after {
-  right: -6px;
+.tutor-portrait-mouth-speaking {
+  fill: #924355;
+  animation: tutor-talk 0.42s ease-in-out infinite;
 }
 
 .tutor-wave {
@@ -694,12 +612,21 @@
   animation-delay: 0.48s;
 }
 
-.tutor-card-speaking .tutor-avatar {
+.tutor-card-speaking .tutor-portrait,
+.tutor-card-listening .tutor-portrait {
   animation: tutor-float 1.7s ease-in-out infinite;
 }
 
 .tutor-card-thinking .tutor-aura {
   animation: tutor-glow 1.5s ease-in-out infinite;
+}
+
+.tutor-card-speaking .tutor-portrait-hair-front {
+  transform: translateY(1px);
+}
+
+.tutor-card-listening .tutor-portrait-hair-back {
+  transform: translateY(-1px);
 }
 
 .tutor-kicker {
@@ -774,8 +701,8 @@
 }
 
 @keyframes tutor-talk {
-  0%, 100% { transform: scaleY(0.82); }
-  50% { transform: scaleY(1.1); }
+  0%, 100% { transform: scale(1, 0.82); }
+  50% { transform: scale(1.06, 1.18); }
 }
 
 @keyframes tutor-wave {

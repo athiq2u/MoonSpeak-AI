@@ -592,17 +592,106 @@ function App() {
           <section className={`tutor-card tutor-card-${tutorState}`} aria-label={`${TUTOR_NAME} tutor panel`}>
             <div className="tutor-avatar-wrap" aria-hidden="true">
               <div className="tutor-aura" />
-              <div className="tutor-avatar">
-                <div className="tutor-hair" />
-                <div className="tutor-face">
-                  <span className="tutor-eye tutor-eye-left" />
-                  <span className="tutor-eye tutor-eye-right" />
-                  <span className={`tutor-mouth tutor-mouth-${tutorState}`} />
-                </div>
-                <div className="tutor-neck" />
-                <div className="tutor-body" />
-                <div className="tutor-headset" />
-              </div>
+              <svg
+                className={`tutor-portrait tutor-portrait-${tutorState}`}
+                viewBox="0 0 220 240"
+                role="img"
+                aria-label={`${TUTOR_NAME} illustrated tutor avatar`}
+              >
+                <defs>
+                  <linearGradient id="tutorBackdrop" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ffb49c" />
+                    <stop offset="55%" stopColor="#ff8b8f" />
+                    <stop offset="100%" stopColor="#5f4bd8" />
+                  </linearGradient>
+                  <radialGradient id="tutorGlow" cx="50%" cy="35%" r="60%">
+                    <stop offset="0%" stopColor="#fff4ea" stopOpacity="0.95" />
+                    <stop offset="100%" stopColor="#fff4ea" stopOpacity="0" />
+                  </radialGradient>
+                  <linearGradient id="tutorSkin" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#ffdcca" />
+                    <stop offset="100%" stopColor="#e5a887" />
+                  </linearGradient>
+                  <linearGradient id="tutorHair" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#2b1c2b" />
+                    <stop offset="55%" stopColor="#5b3552" />
+                    <stop offset="100%" stopColor="#1f1622" />
+                  </linearGradient>
+                  <linearGradient id="tutorJacket" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#fff3f0" />
+                    <stop offset="22%" stopColor="#ffbfaa" />
+                    <stop offset="100%" stopColor="#8c4275" />
+                  </linearGradient>
+                </defs>
+
+                <circle cx="110" cy="105" r="82" fill="url(#tutorBackdrop)" opacity="0.25" />
+                <circle cx="110" cy="92" r="64" fill="url(#tutorGlow)" opacity="0.55" />
+                <ellipse cx="110" cy="208" rx="66" ry="26" fill="#5d2950" opacity="0.26" />
+
+                <path
+                  className="tutor-portrait-hair-back"
+                  d="M55 136C55 85 80 44 111 44c35 0 57 44 57 92 0 30-8 57-16 79H68c-8-19-13-47-13-79Z"
+                  fill="url(#tutorHair)"
+                />
+                <path
+                  d="M56 210c8-26 31-43 54-43 28 0 49 17 57 43H56Z"
+                  fill="url(#tutorJacket)"
+                />
+                <path
+                  d="M82 210c6-13 16-22 28-22 12 0 22 9 28 22H82Z"
+                  fill="#fff8f2"
+                  opacity="0.94"
+                />
+                <rect x="101" y="150" width="18" height="24" rx="9" fill="#eab090" />
+
+                <ellipse cx="110" cy="112" rx="38" ry="46" fill="url(#tutorSkin)" />
+                <ellipse cx="78" cy="114" rx="7" ry="12" fill="url(#tutorSkin)" />
+                <ellipse cx="142" cy="114" rx="7" ry="12" fill="url(#tutorSkin)" />
+
+                <path
+                  className="tutor-portrait-hair-front"
+                  d="M72 113c0-41 18-67 40-67 20 0 42 19 44 59-10-13-23-23-43-23-18 0-30 6-41 18Z"
+                  fill="url(#tutorHair)"
+                />
+                <path
+                  className="tutor-portrait-bangs"
+                  d="M79 89c15-22 49-31 71-11-7-2-12 6-18 11-8 7-18 10-28 9-9 0-16-4-25-9Z"
+                  fill="#2f1d2d"
+                  opacity="0.88"
+                />
+
+                <path d="M93 109c5-4 11-4 16 0" stroke="#6c3e46" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.55" />
+                <path d="M113 109c5-4 11-4 16 0" stroke="#6c3e46" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.55" />
+
+                <ellipse cx="97" cy="118" rx="6" ry="7" fill="#fff" />
+                <ellipse cx="123" cy="118" rx="6" ry="7" fill="#fff" />
+                <circle cx="98" cy="119" r="3.5" fill="#2a2437" />
+                <circle cx="124" cy="119" r="3.5" fill="#2a2437" />
+                <circle cx="99" cy="118" r="1.1" fill="#fff" />
+                <circle cx="125" cy="118" r="1.1" fill="#fff" />
+
+                <ellipse cx="89" cy="135" rx="6" ry="3" fill="#ef9f9f" opacity="0.35" />
+                <ellipse cx="131" cy="135" rx="6" ry="3" fill="#ef9f9f" opacity="0.35" />
+                <path d="M110 122c2 7 2 12-2 16" stroke="#c9856e" strokeWidth="2.4" strokeLinecap="round" fill="none" opacity="0.55" />
+
+                <ellipse
+                  className={`tutor-portrait-mouth tutor-portrait-mouth-${tutorState}`}
+                  cx="110"
+                  cy="146"
+                  rx="9"
+                  ry="4"
+                />
+
+                <path d="M74 106c-9 4-15 12-18 21" stroke="#ffe0d1" strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.9" />
+                <path d="M146 106c9 4 15 12 18 21" stroke="#ffe0d1" strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.9" />
+                <rect x="49" y="120" width="10" height="28" rx="5" fill="#f7c6aa" />
+                <rect x="161" y="120" width="10" height="28" rx="5" fill="#f7c6aa" />
+                <path d="M56 143c14 5 20 16 21 24" stroke="#f7c6aa" strokeWidth="5" strokeLinecap="round" fill="none" />
+
+                <circle cx="56" cy="64" r="4" fill="#fff6f1" opacity="0.75" />
+                <circle cx="165" cy="54" r="3" fill="#ffd6c3" opacity="0.6" />
+                <circle cx="176" cy="86" r="2.5" fill="#ffe9de" opacity="0.8" />
+              </svg>
               <div className="tutor-wave tutor-wave-one" />
               <div className="tutor-wave tutor-wave-two" />
               <div className="tutor-wave tutor-wave-three" />
