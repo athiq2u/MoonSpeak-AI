@@ -15,6 +15,7 @@ const API_TIMEOUT_MS = 12000;
 const STORAGE_KEY = "lingualive_chat";
 const DEFAULT_LANGUAGE_ID = "en-US";
 const TUTOR_NAME = "Moon";
+const MANUAL_PLAYBACK_NOTICE = "Tap play to hear the reply on this phone. Some mobile browsers block autoplay until you interact.";
 
 const LANGUAGE_OPTIONS = [
   {
@@ -280,6 +281,7 @@ function App() {
   const [assistantNotice, setAssistantNotice] = useState("");
   const [isTutorExcited, setIsTutorExcited] = useState(false);
   const [backendStatus, setBackendStatus] = useState(isLocalDevHost ? "checking" : "offline");
+  const [needsManualPlayback, setNeedsManualPlayback] = useState(false);
 
   const chatEndRef = useRef(null);
   const audioRef = useRef(null);
@@ -287,6 +289,9 @@ function App() {
   const mediaSourceUrlRef = useRef(null);
   const abortControllerRef = useRef(null);
   const tutorExciteTimerRef = useRef(null);
+  const heroFigureRef = useRef(null);
+  const heroFigureCardRef = useRef(null);
+  const latestReplyForVoiceRef = useRef({ text: "", languageId: DEFAULT_LANGUAGE_ID });
   const activeLanguage = getLanguage(selectedLanguage);
   const practiceMissions = useMemo(() => ([
     {
@@ -346,6 +351,21 @@ function App() {
       : isSpeaking
         ? "speaking"
         : "ready";
+  const latestAiMessage = [...chat].reverse().find((message) => message.role === "ai") || null;
+  const aiStatusTone = latestAiMessage?.isFallback
+    ? "warning"
+    : backendStatus === "online"
+      ? "live"
+      : backendStatus === "checking"
+        ? "checking"
+        : "offline";
+  const aiStatusLabel = latestAiMessage?.isFallback
+    ? "Built-in coach"
+    : backendStatus === "online"
+      ? "AI live"
+      : backendStatus === "checking"
+        ? "Checking AI"
+        : "Backend offline";
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -382,9 +402,47 @@ function App() {
     tutorExciteTimerRef.current = setTimeout(() => setIsTutorExcited(false), 900);
   };
 
+  const updateHeroFigureInteraction = (event) => {
+    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
+    const figure = heroFigureRef.current;
+    const card = heroFigureCardRef.current;
+
+    if (!figure || !card) {
+      return;
+    }
+
+    const rect = figure.getBoundingClientRect();
+    const pointerX = (event.clientX - rect.left) / rect.width;
+    const pointerY = (event.clientY - rect.top) / rect.height;
+    const rotateY = (pointerX - 0.5) * 16;
+    const rotateX = (0.5 - pointerY) * 14;
+
+    card.style.setProperty("--hero-pointer-x", `${pointerX * 100}%`);
+    card.style.setProperty("--hero-pointer-y", `${pointerY * 100}%`);
+    card.style.setProperty("--hero-rotate-x", `${rotateX}deg`);
+    card.style.setProperty("--hero-rotate-y", `${rotateY}deg`);
+  };
+
+  const resetHeroFigureInteraction = () => {
+    const card = heroFigureCardRef.current;
+
+    if (!card) {
+      return;
+    }
+
+    card.style.setProperty("--hero-pointer-x", "50%");
+    card.style.setProperty("--hero-pointer-y", "50%");
+    card.style.setProperty("--hero-rotate-x", "0deg");
+    card.style.setProperty("--hero-rotate-y", "0deg");
+  };
+
   const cleanupAudioPlayback = () => {
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
+    setNeedsManualPlayback(false);
 
     if (typeof window !== "undefined" && window.speechSynthesis) {
       window.speechSynthesis.cancel();
@@ -402,6 +460,38 @@ function App() {
       mediaSourceUrlRef.current = null;
     }
   };
+
+  const attemptAudioPlayback = useEffectEvent(async (replyText, languageId) => {
+    const audio = audioRef.current;
+
+    if (!audio) {
+      return false;
+    }
+
+    try {
+      await audio.play();
+      setNeedsManualPlayback(false);
+      setAssistantNotice((currentNotice) => (
+        currentNotice === MANUAL_PLAYBACK_NOTICE ? "" : currentNotice
+      ));
+      return true;
+    } catch (error) {
+      if (error?.name === "NotAllowedError") {
+        setNeedsManualPlayback(true);
+        setVoiceDeliveryMode("manual-play");
+        setAssistantNotice(MANUAL_PLAYBACK_NOTICE);
+        return false;
+      }
+
+      const browserVoiceWorked = speakWithBrowserVoice(replyText, languageId);
+      setNeedsManualPlayback(false);
+      setVoiceDeliveryMode(browserVoiceWorked ? "browser-voice" : "error");
+      setAssistantNotice(browserVoiceWorked
+        ? "Streaming audio paused, so playback switched to the browser voice on this device."
+        : "Voice playback paused for a moment. You can tap play to retry while coaching stays active.");
+      return browserVoiceWorked;
+    }
+  });
 
   const speakWithBrowserVoice = useEffectEvent((replyText, languageId) => {
     if (typeof window === "undefined" || !window.speechSynthesis || !replyText) {
@@ -421,7 +511,7 @@ function App() {
     return true;
   });
 
-  const streamAudio = useEffectEvent(async (url) => {
+  const streamAudio = useEffectEvent(async (url, replyText, languageId) => {
     if (!url) {
       return;
     }
@@ -430,6 +520,7 @@ function App() {
     setIsAudioLoading(true);
     setIsSpeaking(false);
     setVoiceDeliveryMode("connecting");
+    setNeedsManualPlayback(false);
 
     const controller = new AbortController();
     abortControllerRef.current = controller;
@@ -447,12 +538,16 @@ function App() {
       const mediaType = "audio/mpeg";
       const audio = audioRef.current;
 
+      if (!audio) {
+        throw new Error("Audio player is unavailable.");
+      }
+
       if (!audio || !window.MediaSource || !MediaSource.isTypeSupported(mediaType)) {
         const blob = await response.blob();
         const blobUrl = URL.createObjectURL(blob);
         mediaSourceUrlRef.current = blobUrl;
         audio.src = blobUrl;
-        audio.play().catch(() => {});
+        await attemptAudioPlayback(replyText, languageId);
         setIsAudioLoading(false);
         return;
       }
@@ -486,8 +581,8 @@ function App() {
 
       sourceBuffer.addEventListener("updateend", () => {
         if (!playbackStarted && audio.paused) {
-          audio.play().catch(() => {});
           playbackStarted = true;
+          void attemptAudioPlayback(replyText, languageId);
           setIsAudioLoading(false);
         }
         appendNextChunk();
@@ -507,8 +602,12 @@ function App() {
     } catch (error) {
       if (error.name !== "AbortError") {
         console.error(error);
-        setAssistantNotice("Live voice is taking a short break. You can keep practicing while text coaching stays active.");
-        setVoiceDeliveryMode("error");
+        const browserVoiceWorked = speakWithBrowserVoice(replyText, languageId);
+        setNeedsManualPlayback(false);
+        setAssistantNotice(browserVoiceWorked
+          ? "Live voice paused, so playback switched to the browser voice on this device."
+          : "Live voice is taking a short break. You can tap play to retry while text coaching stays active.");
+        setVoiceDeliveryMode(browserVoiceWorked ? "browser-voice" : "error");
       }
     } finally {
       setIsAudioLoading(false);
@@ -517,7 +616,11 @@ function App() {
 
   useEffect(() => {
     if (audioUrl) {
-      streamAudio(audioUrl);
+      streamAudio(
+        audioUrl,
+        latestReplyForVoiceRef.current.text,
+        latestReplyForVoiceRef.current.languageId
+      );
     }
   }, [audioUrl]);
 
@@ -557,6 +660,8 @@ function App() {
     setIsSpeaking(false);
     setText("");
     setAssistantNotice("");
+    setNeedsManualPlayback(false);
+    latestReplyForVoiceRef.current = { text: "", languageId: selectedLanguage };
 
     setChat(prev => [...prev, { role: "user", text: trimmedMessage }]);
 
@@ -572,6 +677,7 @@ function App() {
           isFallback: true
         }
       ]);
+      latestReplyForVoiceRef.current = { text: clientReply, languageId: selectedLanguage };
       setAudioUrl("");
       const browserVoiceWorked = speakWithBrowserVoice(clientReply, selectedLanguage);
       setVoiceDeliveryMode(browserVoiceWorked ? "browser-voice" : "error");
@@ -620,6 +726,7 @@ function App() {
       }
 
       const nextReply = data.reply || "I heard you, but could not build a reply just now.";
+      latestReplyForVoiceRef.current = { text: nextReply, languageId: selectedLanguage };
       setChat(prev => [
         ...prev,
         {
@@ -629,6 +736,7 @@ function App() {
           isFallback: Boolean(data.isFallback)
         }
       ]);
+      setNeedsManualPlayback(false);
       setAudioUrl(data.audioStreamUrl || data.audioFile || "");
       setAssistantNotice(data.assistantNotice || "");
 
@@ -661,9 +769,32 @@ function App() {
   const clearChat = () => {
     setChat([]);
     cleanupAudioPlayback();
+    latestReplyForVoiceRef.current = { text: "", languageId: selectedLanguage };
     setAudioUrl("");
     setVoiceDeliveryMode("idle");
     setAssistantNotice("");
+  };
+
+  const replayLatestReply = async () => {
+    const { text: replyText, languageId } = latestReplyForVoiceRef.current;
+
+    if (!replyText) {
+      return;
+    }
+
+    if (audioRef.current?.src) {
+      const started = await attemptAudioPlayback(replyText, languageId);
+      if (started) {
+        setVoiceDeliveryMode((currentMode) => (currentMode === "manual-play" ? "ready" : currentMode));
+      }
+      return;
+    }
+
+    const browserVoiceWorked = speakWithBrowserVoice(replyText, languageId);
+    setVoiceDeliveryMode(browserVoiceWorked ? "browser-voice" : "error");
+    setAssistantNotice(browserVoiceWorked
+      ? "Replay is using the browser voice on this device."
+      : "Voice playback is unavailable right now, but text coaching is still active.");
   };
 
   const runLanguageDemo = () => {
@@ -736,9 +867,9 @@ function App() {
             </p>
 
             <div className="status-row">
-              <span className="status-pill">
-                <span className="status-dot" />
-                Coach Live
+              <span className={`status-pill ${aiStatusTone === "warning" ? "status-pill-warning" : aiStatusTone !== "live" ? "status-pill-neutral" : ""}`}>
+                <span className={`status-dot ${aiStatusTone === "warning" ? "status-dot-warning" : aiStatusTone !== "live" ? "status-dot-neutral" : ""}`} />
+                {aiStatusLabel}
               </span>
               <span className={`status-pill status-pill-muted ${isActive ? "status-pill-active" : ""}`}>
                 {isListening ? "🎙 Listening…" : isLoading ? "⏳ Thinking…" : isSpeaking ? "🔊 Speaking…" : "Ready"}
@@ -755,10 +886,17 @@ function App() {
             )}
           </div>
 
-          <div className="hero-figure" aria-hidden="true">
+          <div
+            ref={heroFigureRef}
+            className="hero-figure"
+            aria-hidden="true"
+            onPointerMove={updateHeroFigureInteraction}
+            onPointerLeave={resetHeroFigureInteraction}
+            onPointerCancel={resetHeroFigureInteraction}
+          >
             <div className="hero-figure-glow hero-figure-glow-one" />
             <div className="hero-figure-glow hero-figure-glow-two" />
-            <div className="hero-figure-card">
+            <div ref={heroFigureCardRef} className="hero-figure-card">
               <div className="hero-figure-badge">AI Speaking Coach</div>
               <div className="hero-figure-avatar-wrap">
                 <div className="hero-figure-ring" />
@@ -859,8 +997,8 @@ function App() {
                     {message.role === "ai" && (
                       <span className={`chat-source-badge ${message.isFallback ? "chat-source-badge-fallback" : "chat-source-badge-gemini"}`}>
                         {message.isFallback
-                          ? "Coach Assist"
-                          : "AI Coach"}
+                            ? "Built-in Coach"
+                            : "AI Coach"}
                       </span>
                     )}
                   </div>
@@ -1023,6 +1161,8 @@ function App() {
                           ? "Generated English Fallback"
                             : voiceDeliveryMode === "browser-voice"
                               ? "Browser Voice"
+                      : voiceDeliveryMode === "manual-play"
+                              ? "Tap To Play"
                       : voiceDeliveryMode === "connecting"
                         ? "Connecting"
                         : voiceDeliveryMode === "error"
@@ -1043,14 +1183,27 @@ function App() {
                         ? "The selected locale and Falcon stream were unavailable, so playback switched to generated English audio."
                       : voiceDeliveryMode === "browser-voice"
                         ? "Backend audio is unavailable, so playback switched to the browser voice on this device."
+                      : voiceDeliveryMode === "manual-play"
+                        ? "Autoplay was blocked on this phone. Tap the play button below to hear the reply."
                       : voiceDeliveryMode === "error"
                         ? "Live voice paused for a moment, but coaching is still active."
                       : "Voice playback is ready."}
               </p>
+              <div className="audio-actions">
+                <button
+                  type="button"
+                  className="secondary-button audio-replay-button"
+                  onClick={replayLatestReply}
+                  disabled={!latestReplyForVoiceRef.current.text || isAudioLoading}
+                >
+                  {needsManualPlayback ? "Play Reply On Phone" : "Replay Reply"}
+                </button>
+              </div>
               <audio
                 ref={audioRef}
                 controls
                 className="audio-player"
+                preload="auto"
                 onPlay={() => setIsSpeaking(true)}
                 onPause={() => setIsSpeaking(false)}
                 onEnded={() => setIsSpeaking(false)}

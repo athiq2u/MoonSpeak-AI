@@ -98,6 +98,7 @@
   min-height: 300px;
   display: grid;
   place-items: center;
+  perspective: 1200px;
 }
 
 .hero-figure-glow {
@@ -124,6 +125,10 @@
 }
 
 .hero-figure-card {
+  --hero-pointer-x: 50%;
+  --hero-pointer-y: 50%;
+  --hero-rotate-x: 0deg;
+  --hero-rotate-y: 0deg;
   position: relative;
   z-index: 1;
   width: min(100%, 360px);
@@ -132,6 +137,30 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: linear-gradient(155deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  transform: rotateX(var(--hero-rotate-x)) rotateY(var(--hero-rotate-y));
+  transform-style: preserve-3d;
+  overflow: hidden;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.hero-figure-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at var(--hero-pointer-x) var(--hero-pointer-y), rgba(255, 255, 255, 0.24), transparent 34%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.hero-figure:hover .hero-figure-card {
+  border-color: rgba(255, 181, 135, 0.26);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.34);
+}
+
+.hero-figure:hover .hero-figure-card::after {
+  opacity: 1;
 }
 
 .hero-figure-badge {
@@ -146,6 +175,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  transform: translateZ(34px);
 }
 
 .hero-figure-avatar-wrap {
@@ -154,6 +184,8 @@
   place-items: center;
   min-height: 180px;
   margin: 10px 0 14px;
+  transform: translateZ(48px);
+  transition: transform 180ms ease;
 }
 
 .hero-figure-ring {
@@ -163,6 +195,8 @@
   border-radius: 50%;
   border: 1px solid rgba(104, 210, 255, 0.26);
   box-shadow: 0 0 0 18px rgba(104, 210, 255, 0.05), 0 0 0 36px rgba(255, 164, 116, 0.04);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+  animation: hero-ring-breathe 4.4s ease-in-out infinite;
 }
 
 .hero-figure-avatar {
@@ -173,12 +207,54 @@
   border: 1px solid rgba(104, 210, 255, 0.38);
   background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.12), rgba(11, 23, 41, 0.8));
   filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.34));
+  transition: transform 180ms ease, filter 180ms ease;
 }
 
 .hero-figure-metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+  transform: translateZ(30px);
+}
+
+.hero-figure:hover .hero-figure-avatar-wrap {
+  transform: translateZ(48px) translateY(-4px);
+}
+
+.hero-figure:hover .hero-figure-ring {
+  transform: scale(1.04);
+  box-shadow: 0 0 0 20px rgba(104, 210, 255, 0.08), 0 0 0 40px rgba(255, 164, 116, 0.07);
+}
+
+.hero-figure:hover .hero-figure-avatar {
+  transform: translateY(-3px) scale(1.02);
+  filter: drop-shadow(0 24px 34px rgba(0, 0, 0, 0.38));
+}
+
+@keyframes hero-ring-breathe {
+  0%,
+  100% {
+    transform: scale(0.98);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-figure-card,
+  .hero-figure-card::after,
+  .hero-figure-avatar-wrap,
+  .hero-figure-ring,
+  .hero-figure-avatar {
+    animation: none;
+    transition: none;
+    transform: none;
+  }
+
+  .hero-figure:hover .hero-figure-card::after {
+    opacity: 0;
+  }
 }
 
 .hero-metric-tile {
@@ -1346,10 +1422,24 @@
   color: rgba(245, 247, 255, 0.78);
 }
 
+.delivery-badge-manual-play {
+  background: rgba(91, 190, 255, 0.16);
+  border: 1px solid rgba(91, 190, 255, 0.26);
+  color: #caecff;
+}
+
 .delivery-badge-error {
   background: rgba(255, 80, 80, 0.12);
   border: 1px solid rgba(255, 80, 80, 0.2);
   color: #ffc9c9;
+}
+
+.audio-actions {
+  margin-top: 12px;
+}
+
+.audio-replay-button {
+  width: 100%;
 }
 
 /* ================================
@@ -1375,7 +1465,6 @@
 
   .composer-panel {
     position: static;
-    order: -1;
   }
 
   .hero-panel,
@@ -1481,7 +1570,7 @@
 
   .tutor-mini-actions {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
 
@@ -1548,9 +1637,16 @@
     align-items: stretch;
   }
 
-  .left-focus-actions,
-  .tutor-mini-actions {
+  .left-focus-actions {
     grid-template-columns: 1fr;
+  }
+
+  .tutor-mini-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .audio-replay-button {
+    min-height: 48px;
   }
 
   .delivery-badge,
