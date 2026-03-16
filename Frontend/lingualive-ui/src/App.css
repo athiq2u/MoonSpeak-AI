@@ -1300,14 +1300,45 @@
   white-space: nowrap;
 }
 
+.welcome-chip-primary {
+  background: linear-gradient(135deg, rgba(253, 161, 114, 0.24), rgba(104, 210, 255, 0.2));
+  border-color: rgba(253, 161, 114, 0.44);
+  color: #ffe5d1;
+}
+
 .welcome-chip:hover {
   background: rgba(104, 210, 255, 0.22);
   border-color: rgba(104, 210, 255, 0.6);
   transform: translateY(-2px);
 }
 
+.welcome-chip-primary:hover {
+  background: linear-gradient(135deg, rgba(253, 161, 114, 0.34), rgba(104, 210, 255, 0.26));
+  border-color: rgba(253, 161, 114, 0.58);
+}
+
 .welcome-chip:active {
   transform: translateY(0) scale(0.97);
+}
+
+.welcome-playback-hint {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: rgba(238, 242, 255, 0.68);
+}
+
+@media (max-width: 600px) {
+  .welcome-chips {
+    gap: 10px;
+  }
+
+  .welcome-chip {
+    width: 100%;
+    min-height: 42px;
+    white-space: normal;
+    text-align: center;
+  }
 }
 
 .refresh-task-actions {

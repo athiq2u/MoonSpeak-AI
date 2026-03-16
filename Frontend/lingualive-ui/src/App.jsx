@@ -9,6 +9,7 @@ const resolvedApiBaseUrl = import.meta.env.VITE_API_BASE_URL
   || (isLocalDevHost ? "/api" : DEFAULT_PRODUCTION_API_BASE_URL);
 const API_BASE_URL = resolvedApiBaseUrl.replace(/\/$/, "");
 const API_URL = `${API_BASE_URL}/speak`;
+const TTS_STREAM_URL = `${API_BASE_URL}/tts-stream`;
 const MAX_CHARS = 500;
 const API_TIMEOUT_MS = 12000;
 const STORAGE_KEY = "lingualive_chat";
@@ -355,7 +356,14 @@ function pickRefreshTask() {
   return REFRESH_TASKS[Math.floor(Math.random() * REFRESH_TASKS.length)];
 }
 
-const WelcomeBubble = memo(function WelcomeBubble({ message, tutorName, onChipClick, onAvatarTap }) {
+const WelcomeBubble = memo(function WelcomeBubble({
+  message,
+  tutorName,
+  onChipClick,
+  onAvatarTap,
+  onPlayGreeting,
+  welcomePlaybackHint
+}) {
   const [displayedText, setDisplayedText] = useState("");
   const [isDone, setIsDone] = useState(false);
   const [isAvatarPoked, setIsAvatarPoked] = useState(false);
@@ -402,6 +410,13 @@ const WelcomeBubble = memo(function WelcomeBubble({ message, tutorName, onChipCl
         </p>
         {isDone && (
           <div className="welcome-chips">
+            <button
+              type="button"
+              className="welcome-chip welcome-chip-primary"
+              onClick={() => onPlayGreeting?.()}
+            >
+              ▶ Hear welcome
+            </button>
             {WELCOME_CHIPS.map((chip) => (
               <button
                 key={chip.label}
@@ -414,6 +429,9 @@ const WelcomeBubble = memo(function WelcomeBubble({ message, tutorName, onChipCl
             ))}
           </div>
         )}
+        {isDone && welcomePlaybackHint ? (
+          <p className="welcome-playback-hint">{welcomePlaybackHint}</p>
+        ) : null}
       </div>
     </div>
   );
@@ -541,6 +559,7 @@ function App() {
 
   const chatEndRef = useRef(null);
   const audioRef = useRef(null);
+  const openingAudioRef = useRef(null);
   const utteranceRef = useRef(null);
   const mediaSourceUrlRef = useRef(null);
   const abortControllerRef = useRef(null);
@@ -675,8 +694,34 @@ function App() {
     const xpToNextLevel = useMemo(() => Math.max(0, nextLevelTarget - experiencePoints), [nextLevelTarget, experiencePoints]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      const hasConversationStarted = chat.some((message) => message.role === "user");
+
+      if (!hasConversationStarted && !isLoading) {
+        return;
+      }
+
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [chat, isLoading]);
+
+    useEffect(() => {
+      if (typeof window === "undefined") {
+        return undefined;
+      }
+
+      const previousScrollRestoration = window.history?.scrollRestoration;
+
+      if (window.history && "scrollRestoration" in window.history) {
+        window.history.scrollRestoration = "manual";
+      }
+
+      window.scrollTo(0, 0);
+
+      return () => {
+        if (window.history && typeof previousScrollRestoration === "string") {
+          window.history.scrollRestoration = previousScrollRestoration;
+        }
+      };
+    }, []);
 
   useEffect(() => {
     setChat((previousChat) => {
@@ -770,6 +815,8 @@ function App() {
   }, [achievementCatalog, unlockedAchievementIds]);
 
   useEffect(() => {
+    const openingAudio = openingAudioRef.current;
+
     return () => {
       abortControllerRef.current?.abort();
       if (tutorExciteTimerRef.current) {
@@ -792,6 +839,11 @@ function App() {
       }
       if (typeof window !== "undefined" && window.speechSynthesis) {
         window.speechSynthesis.cancel();
+      }
+      if (openingAudio) {
+        openingAudio.pause();
+        openingAudio.removeAttribute("src");
+        openingAudio.load();
       }
     };
   }, []);
@@ -863,7 +915,83 @@ function App() {
     }
   }, []);
 
-  const playOpeningGreeting = useCallback((languageId, { fromUserGesture = false } = {}) => new Promise((resolve) => {
+  const buildTtsStreamUrl = useCallback((textToSpeak, languageId) => {
+    const params = new URLSearchParams({
+      text: textToSpeak,
+      language: languageId
+    });
+
+    return `${TTS_STREAM_URL}?${params.toString()}`;
+  }, []);
+
+  const playOpeningGreetingStream = useCallback((languageId, { fromUserGesture = false } = {}) => new Promise((resolve) => {
+    if (typeof window === "undefined") {
+      resolve(false);
+      return;
+    }
+
+    const openingAudio = openingAudioRef.current;
+
+    if (!openingAudio) {
+      resolve(false);
+      return;
+    }
+
+    if (openGreetingTimeoutRef.current) {
+      clearTimeout(openGreetingTimeoutRef.current);
+      openGreetingTimeoutRef.current = null;
+    }
+
+    let settled = false;
+    const finish = (didStart) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+
+      if (openGreetingTimeoutRef.current) {
+        clearTimeout(openGreetingTimeoutRef.current);
+        openGreetingTimeoutRef.current = null;
+      }
+
+      openingAudio.removeEventListener("playing", handlePlaying);
+      openingAudio.removeEventListener("error", handleError);
+      resolve(didStart);
+    };
+
+    const handlePlaying = () => {
+      setIsSpeaking(true);
+      finish(true);
+    };
+
+    const handleError = () => {
+      setIsSpeaking(false);
+      finish(false);
+    };
+
+    openingAudio.pause();
+    openingAudio.currentTime = 0;
+    openingAudio.src = buildTtsStreamUrl(getOpeningGreeting(languageId), languageId);
+    openingAudio.onended = () => setIsSpeaking(false);
+    openingAudio.onpause = () => {
+      if (!openingAudio.ended) {
+        setIsSpeaking(false);
+      }
+    };
+    openingAudio.addEventListener("playing", handlePlaying);
+    openingAudio.addEventListener("error", handleError);
+    openingAudio.load();
+
+    const playPromise = openingAudio.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch(() => finish(false));
+    }
+
+    openGreetingTimeoutRef.current = window.setTimeout(() => finish(false), fromUserGesture ? 6000 : 2500);
+  }), [buildTtsStreamUrl]);
+
+  const playOpeningGreetingWithBrowserVoice = useCallback((languageId) => new Promise((resolve) => {
     if (typeof window === "undefined" || !window.speechSynthesis) {
       resolve(false);
       return;
@@ -894,15 +1022,6 @@ function App() {
         openGreetingTimeoutRef.current = null;
       }
 
-      if (didStart) {
-        hasPlayedOpenGreetingRef.current = true;
-        setAssistantNotice((currentNotice) => (
-          currentNotice === "Tap Moon to hear the welcome voice on this phone." ? "" : currentNotice
-        ));
-      } else if (fromUserGesture) {
-        setAssistantNotice("Welcome voice is unavailable on this phone, but coaching is ready.");
-      }
-
       resolve(didStart);
     };
 
@@ -918,8 +1037,24 @@ function App() {
 
     utteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
-    openGreetingTimeoutRef.current = window.setTimeout(() => finish(false), fromUserGesture ? 1500 : 900);
+    openGreetingTimeoutRef.current = window.setTimeout(() => finish(false), 2200);
   }), []);
+
+  const playOpeningGreeting = useCallback(async (languageId, { fromUserGesture = false } = {}) => {
+    const streamWorked = await playOpeningGreetingStream(languageId, { fromUserGesture });
+    const didStart = streamWorked || await playOpeningGreetingWithBrowserVoice(languageId);
+
+    if (didStart) {
+      hasPlayedOpenGreetingRef.current = true;
+      setAssistantNotice((currentNotice) => (
+        currentNotice === "Tap Moon to hear the welcome voice on this phone." ? "" : currentNotice
+      ));
+    } else if (fromUserGesture) {
+      setAssistantNotice("Welcome voice is unavailable on this phone, but coaching is ready.");
+    }
+
+    return didStart;
+  }, [playOpeningGreetingStream, playOpeningGreetingWithBrowserVoice]);
 
   const speakWithBrowserVoice = useCallback((replyText, languageId) => {
     if (typeof window === "undefined" || !window.speechSynthesis || !replyText) {
@@ -972,6 +1107,18 @@ function App() {
       void playOpeningGreeting(languageId, { fromUserGesture: true });
     }
   }, [playOpeningGreeting]);
+
+  const welcomePlaybackHint = useMemo(() => {
+    if (assistantNotice === "Tap Moon to hear the welcome voice on this phone.") {
+      return "Phone autoplay can be blocked. Tap Hear welcome to play the intro.";
+    }
+
+    if (assistantNotice === "Welcome voice is unavailable on this phone, but coaching is ready.") {
+      return assistantNotice;
+    }
+
+    return "If the intro stays silent on your phone, tap Hear welcome.";
+  }, [assistantNotice]);
 
   const attemptAudioPlayback = useCallback(async (replyText, languageId) => {
     const audio = audioRef.current;
@@ -1647,6 +1794,8 @@ function App() {
                     tutorName={TUTOR_NAME}
                     onChipClick={requestReply}
                     onAvatarTap={handleTutorAvatarTap}
+                    onPlayGreeting={handleTutorAvatarTap}
+                    welcomePlaybackHint={welcomePlaybackHint}
                   />
                 ) : (
                   <ChatBubble
@@ -1784,7 +1933,6 @@ function App() {
           </div>
 
           <textarea
-            autoFocus
             id="practice-input"
             value={text}
             placeholder="Type only if you want to use text instead of voice…"
@@ -1880,6 +2028,13 @@ function App() {
             </div>
           )}
         </section>
+        <audio
+          ref={openingAudioRef}
+          preload="none"
+          playsInline
+          hidden
+          aria-hidden="true"
+        />
       </div>
       ) : (
       <div className="workspace-panel workspace-panel-lab">
