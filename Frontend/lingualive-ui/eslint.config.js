@@ -23,6 +23,11 @@ export default defineConfig([
       },
     },
     rules: {
+      'eqeqeq': ['error', 'always'],
+      'curly': ['error', 'all'],
+      'no-var': 'error',
+      'prefer-const': ['error', { destructuring: 'all' }],
+      'no-implicit-coercion': 'error',
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },

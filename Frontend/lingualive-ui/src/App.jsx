@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { memo, useState, useRef, useEffect, useMemo, useCallback } from "react";
 import "./App.css";
 import chatbotAvatar from "./assets/ai-chatbot.svg";
 
@@ -13,9 +13,42 @@ const API_HEALTH_URL = `${API_BASE_URL}/healthz`;
 const MAX_CHARS = 500;
 const API_TIMEOUT_MS = 12000;
 const STORAGE_KEY = "lingualive_chat";
+const STREAK_STORAGE_KEY = "lingualive_streak";
+const ACHIEVEMENTS_STORAGE_KEY = "lingualive_achievements";
 const DEFAULT_LANGUAGE_ID = "en-US";
 const TUTOR_NAME = "Moon";
 const MANUAL_PLAYBACK_NOTICE = "Tap play to hear the reply on this phone. Some mobile browsers block autoplay until you interact.";
+const MAX_RENDERED_MESSAGES = 120;
+const MAX_PERSISTED_MESSAGES = 240;
+
+function getLocalDateKey() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function normalizeSpeechText(value = "") {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/gi, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function calculateShadowAccuracy(expectedText, spokenText) {
+  const expectedWords = normalizeSpeechText(expectedText);
+  const spokenWords = normalizeSpeechText(spokenText);
+
+  if (expectedWords.length === 0 || spokenWords.length === 0) {
+    return 0;
+  }
+
+  const spokenSet = new Set(spokenWords);
+  const matchedWords = expectedWords.filter((word) => spokenSet.has(word)).length;
+  return Math.min(100, Math.round((matchedWords / expectedWords.length) * 100));
+}
 
 const LANGUAGE_OPTIONS = [
   {
@@ -261,13 +294,70 @@ function buildClientFallbackReply(text, history, languageId) {
   ], recentAiReplies);
 }
 
+function createMessageId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+}
+
+const ChatBubble = memo(function ChatBubble({ message, tutorName }) {
+  const [isAvatarPoked, setIsAvatarPoked] = useState(false);
+  const isAiMessage = message.role === "ai";
+
+  const handleAvatarTap = () => {
+    setIsAvatarPoked(true);
+    window.setTimeout(() => setIsAvatarPoked(false), 420);
+  };
+
+  return (
+    <div className={`chat-message-row chat-message-row-${message.role}`}>
+      {isAiMessage && (
+        <button
+          type="button"
+          className={`chat-avatar-button ${isAvatarPoked ? "chat-avatar-button-poked" : ""}`}
+          onClick={handleAvatarTap}
+          title="Tap Moon"
+          aria-label="Tap Moon avatar"
+        >
+          <img src={chatbotAvatar} alt="" className="chat-avatar-image" />
+        </button>
+      )}
+
+      <div className={`chat-bubble chat-bubble-${message.role}`}>
+        <div className="chat-meta-row">
+          <span className="chat-role">{message.role === "user" ? "You" : tutorName}</span>
+          {isAiMessage && (
+            <span className={`chat-source-badge ${message.isFallback ? "chat-source-badge-fallback" : "chat-source-badge-gemini"}`}>
+              {message.isFallback ? "Built-in Coach" : "AI Coach"}
+            </span>
+          )}
+        </div>
+        <p>{message.text}</p>
+      </div>
+    </div>
+  );
+});
+
 function App() {
   const [text, setText] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
   const [chat, setChat] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
+      const parsed = saved ? JSON.parse(saved) : [];
+
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+
+      return parsed
+        .slice(-MAX_PERSISTED_MESSAGES)
+        .map((message) => ({
+          ...message,
+          id: message?.id || createMessageId()
+        }));
     } catch {
       return [];
     }
@@ -275,6 +365,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [activeWorkspacePage, setActiveWorkspacePage] = useState("practice");
   const [selectedLanguage, setSelectedLanguage] = useState(DEFAULT_LANGUAGE_ID);
   const [voiceDeliveryMode, setVoiceDeliveryMode] = useState("idle");
   const [isAudioLoading, setIsAudioLoading] = useState(false);
@@ -282,6 +373,42 @@ function App() {
   const [isTutorExcited, setIsTutorExcited] = useState(false);
   const [backendStatus, setBackendStatus] = useState(isLocalDevHost ? "checking" : "offline");
   const [needsManualPlayback, setNeedsManualPlayback] = useState(false);
+  const [dailyStreak, setDailyStreak] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STREAK_STORAGE_KEY);
+      const parsed = saved ? JSON.parse(saved) : null;
+
+      if (parsed && typeof parsed.count === "number" && typeof parsed.lastActive === "string") {
+        return {
+          count: Math.max(1, parsed.count),
+          lastActive: parsed.lastActive
+        };
+      }
+    } catch {
+      // storage unavailable - keep defaults
+    }
+
+    return {
+      count: 1,
+      lastActive: ""
+    };
+  });
+  const [isWheelSpinning, setIsWheelSpinning] = useState(false);
+  const [coachWheelResult, setCoachWheelResult] = useState("");
+  const [shadowCountdown, setShadowCountdown] = useState(0);
+  const [sessionXp, setSessionXp] = useState(0);
+  const [sessionBestXp, setSessionBestXp] = useState(0);
+  const [sessionBestStreak, setSessionBestStreak] = useState(1);
+  const [shadowDrillResult, setShadowDrillResult] = useState(null);
+  const [unlockedAchievementIds, setUnlockedAchievementIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem(ACHIEVEMENTS_STORAGE_KEY);
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
 
   const chatEndRef = useRef(null);
   const audioRef = useRef(null);
@@ -292,6 +419,11 @@ function App() {
   const heroFigureRef = useRef(null);
   const heroFigureCardRef = useRef(null);
   const latestReplyForVoiceRef = useRef({ text: "", languageId: DEFAULT_LANGUAGE_ID });
+  const wheelSpinTimerRef = useRef(null);
+  const shadowCountdownTimerRef = useRef(null);
+  const shadowRecognitionRef = useRef(null);
+  const shadowTranscriptRef = useRef("");
+  const shadowExpectedTextRef = useRef("");
   const activeLanguage = getLanguage(selectedLanguage);
   const practiceMissions = useMemo(() => ([
     {
@@ -330,6 +462,13 @@ function App() {
     "Add one real detail so your speaking sounds more human.",
     "If you pause, restart with one simple sentence and continue calmly."
   ]), [activeLanguage]);
+  const coachWheelPrompts = useMemo(() => ([
+    activeLanguage.demoPrompt,
+    ...activeLanguage.suggestions,
+    `Give me a 30-second speaking warmup in ${activeLanguage.label}.`,
+    `Challenge me with one real-life speaking scenario in ${activeLanguage.label}.`,
+    `Help me upgrade this sentence in ${activeLanguage.label}: I want to speak better every day.`
+  ]), [activeLanguage]);
   const chatStats = useMemo(() => {
     const userMessages = chat.filter((message) => message.role === "user");
     const aiMessages = chat.filter((message) => message.role === "ai");
@@ -344,6 +483,33 @@ function App() {
       avgAiWords: aiMessages.length ? Math.round(totalAiWords / aiMessages.length) : 0
     };
   }, [chat]);
+  const achievementCatalog = useMemo(() => {
+    const definitions = [
+      {
+        id: "turns-10",
+        title: "Conversation Starter",
+        description: "Complete 10 turns in conversation.",
+        unlocked: chatStats.turns >= 10
+      },
+      {
+        id: "streak-3",
+        title: "Streak Builder",
+        description: "Reach a 3-day speaking streak.",
+        unlocked: dailyStreak.count >= 3
+      },
+      {
+        id: "session-xp-100",
+        title: "Century Sprint",
+        description: "Earn 100 XP in a single session.",
+        unlocked: sessionXp >= 100
+      }
+    ];
+
+    return definitions.map((achievement) => ({
+      ...achievement,
+      unlocked: achievement.unlocked || unlockedAchievementIds.includes(achievement.id)
+    }));
+  }, [chatStats.turns, dailyStreak.count, sessionXp, unlockedAchievementIds]);
   const tutorState = isListening
     ? "listening"
     : isLoading
@@ -366,24 +532,104 @@ function App() {
       : backendStatus === "checking"
         ? "Checking AI"
         : "Backend offline";
+    const experiencePoints = useMemo(() => (
+      (chatStats.turns * 12) + (dailyStreak.count * 25)
+    ), [chatStats.turns, dailyStreak.count]);
+    const coachLevel = useMemo(() => Math.max(1, Math.floor(experiencePoints / 120) + 1), [experiencePoints]);
+    const currentLevelFloor = useMemo(() => (coachLevel - 1) * 120, [coachLevel]);
+    const nextLevelTarget = useMemo(() => coachLevel * 120, [coachLevel]);
+    const xpIntoCurrentLevel = useMemo(() => experiencePoints - currentLevelFloor, [experiencePoints, currentLevelFloor]);
+    const xpRangeForLevel = useMemo(() => Math.max(1, nextLevelTarget - currentLevelFloor), [nextLevelTarget, currentLevelFloor]);
+    const levelProgressPercent = useMemo(() => Math.min(100, Math.round((xpIntoCurrentLevel / xpRangeForLevel) * 100)), [xpIntoCurrentLevel, xpRangeForLevel]);
+    const xpToNextLevel = useMemo(() => Math.max(0, nextLevelTarget - experiencePoints), [nextLevelTarget, experiencePoints]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat, isLoading]);
 
   useEffect(() => {
+    setChat((previousChat) => {
+      if (previousChat.length > 0) {
+        return previousChat;
+      }
+
+      return [
+        {
+          id: createMessageId(),
+          role: "ai",
+          text: "Hi, welcome to MoonSpeak AI. I am Moon, your speaking coach. Pick a language and tap Start Speaking, or type a line and I will help you sound more natural.",
+          source: "welcome",
+          isFallback: false
+        }
+      ];
+    });
+  }, []);
+
+  useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(chat));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(chat.slice(-MAX_PERSISTED_MESSAGES)));
     } catch {
       // storage unavailable — ignore
     }
   }, [chat]);
 
   useEffect(() => {
+    try {
+      localStorage.setItem(STREAK_STORAGE_KEY, JSON.stringify(dailyStreak));
+    } catch {
+      // storage unavailable - ignore
+    }
+  }, [dailyStreak]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(ACHIEVEMENTS_STORAGE_KEY, JSON.stringify(unlockedAchievementIds));
+    } catch {
+      // storage unavailable - ignore
+    }
+  }, [unlockedAchievementIds]);
+
+  useEffect(() => {
+    setSessionBestXp((previousBest) => Math.max(previousBest, sessionXp));
+  }, [sessionXp]);
+
+  useEffect(() => {
+    setSessionBestStreak((previousBest) => Math.max(previousBest, dailyStreak.count));
+  }, [dailyStreak.count]);
+
+  useEffect(() => {
+    const newlyUnlocked = achievementCatalog.filter((achievement) => (
+      achievement.unlocked && !unlockedAchievementIds.includes(achievement.id)
+    ));
+
+    if (newlyUnlocked.length === 0) {
+      return;
+    }
+
+    setUnlockedAchievementIds((previousIds) => [
+      ...previousIds,
+      ...newlyUnlocked
+        .map((achievement) => achievement.id)
+        .filter((id) => !previousIds.includes(id))
+    ]);
+
+    setAssistantNotice(`Achievement unlocked: ${newlyUnlocked[0].title}`);
+  }, [achievementCatalog, unlockedAchievementIds]);
+
+  useEffect(() => {
     return () => {
       abortControllerRef.current?.abort();
       if (tutorExciteTimerRef.current) {
         clearTimeout(tutorExciteTimerRef.current);
+      }
+      if (wheelSpinTimerRef.current) {
+        clearTimeout(wheelSpinTimerRef.current);
+      }
+      if (shadowCountdownTimerRef.current) {
+        clearInterval(shadowCountdownTimerRef.current);
+      }
+      if (shadowRecognitionRef.current) {
+        shadowRecognitionRef.current.stop();
       }
       if (mediaSourceUrlRef.current) {
         URL.revokeObjectURL(mediaSourceUrlRef.current);
@@ -653,7 +899,42 @@ function App() {
 
   const requestReply = async (message) => {
     const trimmedMessage = message.trim();
-    if (!trimmedMessage) return;
+    if (!trimmedMessage) {
+      return;
+    }
+
+    setDailyStreak((previousStreak) => {
+      const todayKey = getLocalDateKey();
+
+      if (!previousStreak.lastActive) {
+        return {
+          count: previousStreak.count,
+          lastActive: todayKey
+        };
+      }
+
+      if (previousStreak.lastActive === todayKey) {
+        return previousStreak;
+      }
+
+      const previousDate = new Date(`${previousStreak.lastActive}T00:00:00`);
+      const todayDate = new Date(`${todayKey}T00:00:00`);
+      const dayDiff = Math.round((todayDate - previousDate) / 86400000);
+
+      if (dayDiff === 1) {
+        return {
+          count: previousStreak.count + 1,
+          lastActive: todayKey
+        };
+      }
+
+      return {
+        count: 1,
+        lastActive: todayKey
+      };
+    });
+    setSessionXp((currentXp) => currentXp + 12);
+    setShadowDrillResult(null);
 
     setIsLoading(true);
     setAudioUrl("");
@@ -773,6 +1054,17 @@ function App() {
     setAudioUrl("");
     setVoiceDeliveryMode("idle");
     setAssistantNotice("");
+    setShadowCountdown(0);
+    setShadowDrillResult(null);
+
+    if (shadowCountdownTimerRef.current) {
+      clearInterval(shadowCountdownTimerRef.current);
+      shadowCountdownTimerRef.current = null;
+    }
+    if (shadowRecognitionRef.current) {
+      shadowRecognitionRef.current.stop();
+      shadowRecognitionRef.current = null;
+    }
   };
 
   const replayLatestReply = async () => {
@@ -812,8 +1104,121 @@ function App() {
     requestReply(activeLanguage.suggestions[2] || activeLanguage.demoPrompt);
   };
 
+  const spinCoachWheel = () => {
+    if (isLoading || isListening || isWheelSpinning) {
+      return;
+    }
+
+    triggerTutorExcitement();
+    setIsWheelSpinning(true);
+    setCoachWheelResult("");
+
+    const spinMs = 1100;
+    wheelSpinTimerRef.current = setTimeout(() => {
+      const selectedPrompt = coachWheelPrompts[Math.floor(Math.random() * coachWheelPrompts.length)] || activeLanguage.demoPrompt;
+      setCoachWheelResult(selectedPrompt);
+      setText(selectedPrompt);
+      setAssistantNotice("Coach wheel selected a challenge. Edit it or tap Send to start.");
+      setIsWheelSpinning(false);
+      wheelSpinTimerRef.current = null;
+    }, spinMs);
+  };
+
+  const startShadowDrill = () => {
+    const { text: replyText, languageId } = latestReplyForVoiceRef.current;
+
+    if (!replyText || isLoading || isListening) {
+      setAssistantNotice("Generate one coach reply first, then start Shadow Drill.");
+      return;
+    }
+
+    triggerTutorExcitement();
+    setShadowDrillResult(null);
+    setAssistantNotice("Shadow Drill started. Listen and repeat with the countdown.");
+    setShadowCountdown(5);
+    void replayLatestReply();
+    shadowTranscriptRef.current = "";
+    shadowExpectedTextRef.current = replyText;
+
+    if (shadowRecognitionRef.current) {
+      shadowRecognitionRef.current.stop();
+      shadowRecognitionRef.current = null;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.lang = getLanguage(languageId).recognition || languageId;
+      recognition.interimResults = true;
+      recognition.continuous = true;
+      recognition.maxAlternatives = 1;
+      recognition.onresult = (event) => {
+        const nextFinalParts = [];
+
+        for (let index = event.resultIndex; index < event.results.length; index += 1) {
+          const result = event.results[index];
+          if (result.isFinal) {
+            nextFinalParts.push(result[0].transcript);
+          }
+        }
+
+        if (nextFinalParts.length > 0) {
+          shadowTranscriptRef.current = `${shadowTranscriptRef.current} ${nextFinalParts.join(" ")}`.trim();
+        }
+      };
+      recognition.onerror = () => {
+        setAssistantNotice("Shadow Drill could not capture your voice clearly. Try again in Chrome.");
+      };
+
+      try {
+        recognition.start();
+        shadowRecognitionRef.current = recognition;
+      } catch {
+        shadowRecognitionRef.current = null;
+      }
+    }
+
+    if (shadowCountdownTimerRef.current) {
+      clearInterval(shadowCountdownTimerRef.current);
+    }
+
+    shadowCountdownTimerRef.current = setInterval(() => {
+      setShadowCountdown((currentValue) => {
+        if (currentValue <= 1) {
+          clearInterval(shadowCountdownTimerRef.current);
+          shadowCountdownTimerRef.current = null;
+
+          if (shadowRecognitionRef.current) {
+            shadowRecognitionRef.current.stop();
+            shadowRecognitionRef.current = null;
+          }
+
+          const spokenText = shadowTranscriptRef.current.trim();
+          const score = calculateShadowAccuracy(shadowExpectedTextRef.current, spokenText);
+          const grade = score >= 85 ? "Excellent" : score >= 65 ? "Good" : score >= 40 ? "Keep going" : "Needs another try";
+
+          setShadowDrillResult({
+            score,
+            spokenText,
+            grade
+          });
+          setAssistantNotice(
+            spokenText
+              ? `Shadow Drill complete: ${score}% match (${grade}).`
+              : `Shadow Drill complete in ${getLanguage(languageId).label}. No speech was captured, so try once more.`
+          );
+          return 0;
+        }
+
+        return currentValue - 1;
+      });
+    }, 1000);
+  };
+
   const startListening = () => {
-    if (isLoading || isListening) return;
+    if (isLoading || isListening) {
+      return;
+    }
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       setAssistantNotice("Voice input works best in Chrome. You can still use text practice anytime.");
@@ -862,6 +1267,27 @@ function App() {
               Current language: {activeLanguage.label}. If a Murf locale is unavailable, audio falls back to the default English voice.
             </p>
 
+            <div className="workspace-nav" role="tablist" aria-label="Workspace pages">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeWorkspacePage === "practice"}
+                className={`workspace-nav-button ${activeWorkspacePage === "practice" ? "workspace-nav-button-active" : ""}`}
+                onClick={() => setActiveWorkspacePage("practice")}
+              >
+                Practice
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeWorkspacePage === "coach-lab"}
+                className={`workspace-nav-button ${activeWorkspacePage === "coach-lab" ? "workspace-nav-button-active" : ""}`}
+                onClick={() => setActiveWorkspacePage("coach-lab")}
+              >
+                Coach Lab
+              </button>
+            </div>
+
             <div className="status-row">
               <span className={`status-pill ${aiStatusTone === "warning" ? "status-pill-warning" : aiStatusTone !== "live" ? "status-pill-neutral" : ""}`}>
                 <span className={`status-dot ${aiStatusTone === "warning" ? "status-dot-warning" : aiStatusTone !== "live" ? "status-dot-neutral" : ""}`} />
@@ -870,6 +1296,14 @@ function App() {
               <span className={`status-pill status-pill-muted ${isActive ? "status-pill-active" : ""}`}>
                 {isListening ? "🎙 Listening…" : isLoading ? "⏳ Thinking…" : isSpeaking ? "🔊 Speaking…" : "Ready"}
               </span>
+              <button
+                type="button"
+                className="status-check-button"
+                onClick={checkBackendConnection}
+                disabled={backendStatus === "checking"}
+              >
+                {backendStatus === "checking" ? "Checking..." : "Check Status"}
+              </button>
               <div className={`signal-bars ${isActive ? "signal-bars-active" : ""}`} aria-hidden="true">
                 <span /><span /><span /><span />
               </div>
@@ -921,6 +1355,7 @@ function App() {
         </div>
       </header>
 
+      {activeWorkspacePage === "practice" ? (
       <div className="workspace-panel">
         <section className="chat-panel">
           <div className="panel-heading">
@@ -933,11 +1368,16 @@ function App() {
           </div>
 
           <div className="left-focus-card" aria-label="Today's speaking focus">
-            <div className="left-focus-head">
-              <p className="left-focus-kicker">Today's focus</p>
-              <p className="left-focus-copy">
-                Quick warmup ideas for {activeLanguage.label}. Tap one to start instantly.
-              </p>
+            <div className="left-focus-head left-focus-head-with-icon">
+              <div className="left-focus-icon-wrap" aria-hidden="true">
+                <img className="left-focus-icon" src={chatbotAvatar} alt="" />
+              </div>
+              <div>
+                <p className="left-focus-kicker">Today's focus</p>
+                <p className="left-focus-copy">
+                  Quick warmup ideas for {activeLanguage.label}. Tap one to start instantly.
+                </p>
+              </div>
             </div>
             <div className="left-focus-actions">
               {leftPanelFocusPrompts.map((item) => (
@@ -987,27 +1427,30 @@ function App() {
               </div>
             ) : (
               chat.map((message, index) => (
-                <div key={index} className={`chat-bubble chat-bubble-${message.role}`}>
-                  <div className="chat-meta-row">
-                    <span className="chat-role">{message.role === "user" ? "You" : TUTOR_NAME}</span>
-                    {message.role === "ai" && (
-                      <span className={`chat-source-badge ${message.isFallback ? "chat-source-badge-fallback" : "chat-source-badge-gemini"}`}>
-                        {message.isFallback
-                            ? "Built-in Coach"
-                            : "AI Coach"}
-                      </span>
-                    )}
-                  </div>
-                  <p>{message.text}</p>
-                </div>
+                <ChatBubble
+                  key={message.id || `${message.role}-${index}`}
+                  message={message}
+                  tutorName={TUTOR_NAME}
+                />
               ))
             )}
 
             {isLoading && (
-              <div className="chat-bubble chat-bubble-ai">
-                <span className="chat-role">{TUTOR_NAME}</span>
-                <div className="typing-dots">
-                  <span /><span /><span />
+              <div className="chat-message-row chat-message-row-ai">
+                <button
+                  type="button"
+                  className="chat-avatar-button chat-avatar-button-typing"
+                  onClick={triggerTutorExcitement}
+                  title="Tap Moon"
+                  aria-label="Tap Moon avatar"
+                >
+                  <img src={chatbotAvatar} alt="" className="chat-avatar-image" />
+                </button>
+                <div className="chat-bubble chat-bubble-ai">
+                  <span className="chat-role">{TUTOR_NAME}</span>
+                  <div className="typing-dots">
+                    <span /><span /><span />
+                  </div>
                 </div>
               </div>
             )}
@@ -1185,6 +1628,12 @@ function App() {
                         ? "Live voice paused for a moment, but coaching is still active."
                       : "Voice playback is ready."}
               </p>
+              {(voiceDeliveryMode === "falcon-stream-default-voice" ||
+                voiceDeliveryMode === "fallback-generate-default-voice") && (
+                <p className="tts-fallback-notice">
+                  ⚠️ <strong>{activeLanguage?.label ?? selectedLanguage}</strong> voice isn&apos;t available in your Murf plan yet — this reply played in English instead.
+                </p>
+              )}
               <div className="audio-actions">
                 <button
                   type="button"
@@ -1208,6 +1657,173 @@ function App() {
           )}
         </section>
       </div>
+      ) : (
+      <div className="workspace-panel workspace-panel-lab">
+        <section className="chat-panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Coach Lab</h2>
+              <p>Advanced tools live here, separate from the main speaking flow.</p>
+            </div>
+          </div>
+
+          <div className="left-focus-card" aria-label="Coach lab overview">
+            <div className="left-focus-head left-focus-head-with-icon">
+              <div className="left-focus-icon-wrap" aria-hidden="true">
+                <img className="left-focus-icon" src={chatbotAvatar} alt="" />
+              </div>
+              <div>
+                <p className="left-focus-kicker">Advanced practice</p>
+                <p className="left-focus-copy">
+                  Use badges, coach wheel, shadow drill, and leaderboard here without crowding the main practice page.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="stats-strip" aria-live="polite">
+            <span className="stats-chip">Turns: {chatStats.turns}</span>
+            <span className="stats-chip">Streak: {dailyStreak.count} day{dailyStreak.count > 1 ? "s" : ""}</span>
+            <span className="stats-chip">XP: {experiencePoints}</span>
+          </div>
+
+          {latestAiMessage ? (
+            <div className="lab-preview-card">
+              <p className="lab-preview-kicker">Latest coach reply</p>
+              <div className="chat-bubble chat-bubble-ai lab-preview-bubble">
+                <span className="chat-role">{TUTOR_NAME}</span>
+                <p>{latestAiMessage.text}</p>
+              </div>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={replayLatestReply}
+                disabled={!latestReplyForVoiceRef.current.text || isAudioLoading}
+              >
+                Replay Latest Reply
+              </button>
+            </div>
+          ) : (
+            <div className="empty-state">
+              <p className="empty-icon">🧪</p>
+              <p className="empty-copy">Start one conversation on the Practice page first, then use the Coach Lab tools here.</p>
+            </div>
+          )}
+        </section>
+
+        <section className="composer-panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Lab Tools</h2>
+              <p>Challenge mode, progress tracking, and repetition practice.</p>
+            </div>
+          </div>
+
+          <div className="progress-card" aria-live="polite">
+            <div className="progress-head">
+              <p className="progress-title">Progress Mode</p>
+              <span className="progress-level">Level {coachLevel}</span>
+            </div>
+            <div className="progress-row">
+              <span className="progress-chip">Streak: {dailyStreak.count} day{dailyStreak.count > 1 ? "s" : ""}</span>
+              <span className="progress-chip">XP: {experiencePoints}</span>
+            </div>
+            <div className="progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={levelProgressPercent}>
+              <span className="progress-fill" style={{ width: `${levelProgressPercent}%` }} />
+            </div>
+            <p className="progress-subcopy">{xpToNextLevel} XP to reach Level {coachLevel + 1}</p>
+          </div>
+
+          <div className="leaderboard-card" aria-live="polite">
+            <div className="leaderboard-head">
+              <p className="leaderboard-title">Session Leaderboard</p>
+              <span className="leaderboard-subtitle">Current session highs</span>
+            </div>
+            <div className="leaderboard-grid">
+              <div className="leaderboard-item">
+                <span className="leaderboard-label">Best Streak</span>
+                <strong>{sessionBestStreak} day{sessionBestStreak > 1 ? "s" : ""}</strong>
+              </div>
+              <div className="leaderboard-item">
+                <span className="leaderboard-label">Best XP</span>
+                <strong>{sessionBestXp}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="achievement-card">
+            <div className="achievement-head">
+              <p className="achievement-title">Badges</p>
+              <span className="achievement-subtitle">
+                {achievementCatalog.filter((achievement) => achievement.unlocked).length}/{achievementCatalog.length} unlocked
+              </span>
+            </div>
+            <div className="achievement-grid">
+              {achievementCatalog.map((achievement) => (
+                <div
+                  key={achievement.id}
+                  className={`achievement-badge ${achievement.unlocked ? "achievement-badge-unlocked" : "achievement-badge-locked"}`}
+                >
+                  <span className="achievement-badge-state">{achievement.unlocked ? "Unlocked" : "Locked"}</span>
+                  <strong>{achievement.title}</strong>
+                  <span>{achievement.description}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="interactive-card">
+            <div className="interactive-head">
+              <p className="interactive-title">Coach Wheel</p>
+              <button
+                type="button"
+                className={`interactive-button ${isWheelSpinning ? "interactive-button-spinning" : ""}`}
+                onClick={spinCoachWheel}
+                disabled={isLoading || isListening || isWheelSpinning}
+              >
+                {isWheelSpinning ? "Spinning..." : "Spin Challenge"}
+              </button>
+            </div>
+            <p className="interactive-copy">
+              {coachWheelResult || "Spin to get a random speaking challenge tailored to your selected language."}
+            </p>
+          </div>
+
+          <div className="interactive-card">
+            <div className="interactive-head">
+              <p className="interactive-title">Shadow Drill</p>
+              <button
+                type="button"
+                className="interactive-button"
+                onClick={startShadowDrill}
+                disabled={isLoading || isListening || !latestReplyForVoiceRef.current.text}
+              >
+                Start Drill
+              </button>
+            </div>
+            <p className="interactive-copy">
+              Listen to the latest coach reply, then repeat it aloud before the timer ends.
+            </p>
+            {shadowCountdown > 0 && (
+              <div className="shadow-timer" role="status" aria-live="assertive">
+                Repeat now: {shadowCountdown}s
+              </div>
+            )}
+            {shadowDrillResult && (
+              <div className="shadow-score" aria-live="polite">
+                <p className="shadow-score-title">Voice Match: {shadowDrillResult.score}%</p>
+                <p className="shadow-score-grade">{shadowDrillResult.grade}</p>
+                <p className="shadow-score-copy">
+                  {shadowDrillResult.spokenText
+                    ? `Heard: "${shadowDrillResult.spokenText}"`
+                    : "No speech detected in this attempt."}
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+      )}
     </main>
   );
 }

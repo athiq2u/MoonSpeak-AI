@@ -109,11 +109,13 @@ function buildEnrichmentTail(userText, languageId, history = []) {
   const normalizedText = trimmedText.toLowerCase();
 
   if (languageId !== "en-US" && languageId !== "en-IN") {
-    return pickVariant(trimmedText, [
-      getLanguageConfig(languageId).fallback.help,
-      getLanguageConfig(languageId).fallback.question,
-      getLanguageConfig(languageId).fallback.generic.replace("{text}", trimmedText || "a short response")
-    ], recentAiReplies);
+    const langConf = getLanguageConfig(languageId);
+    const tails = langConf.enrichmentTails ?? [
+      langConf.fallback.help,
+      langConf.fallback.question,
+      langConf.fallback.generic.replace("{text}", trimmedText || "a short response")
+    ];
+    return pickVariant(trimmedText, tails, recentAiReplies);
   }
 
   if (isTinyGreeting(trimmedText)) {

@@ -135,6 +135,9 @@ Alternative AI provider:
 Optional backend variables:
 
 - `MURF_STREAM_URL`
+- `MURF_DEFAULT_VOICE_ID` (default `Natalie`, a multilingual Murf voice)
+- `MURF_VOICE_MAP` (JSON map of language id to Murf voice id, for example `{"hi-IN":"Aarav","ja-JP":"Sakura"}`)
+- `MURF_VOICE_<LANGUAGE_ID>` overrides, for example `MURF_VOICE_HI_IN=Aarav`
 - `OPENAI_MODEL` (default `gpt-4o-mini`)
 - `GEMINI_MODEL` (default `gemini-2.0-flash`)
 
@@ -156,7 +159,16 @@ OPENAI_API_KEY=
 OPENAI_MODEL=gpt-4o-mini
 MURF_API_KEY=your_real_murf_key_here
 MURF_STREAM_URL=
+MURF_DEFAULT_VOICE_ID=Natalie
+MURF_VOICE_MAP={}
 ```
+
+## Multilingual TTS Notes
+
+- Murf requires a `voiceId` for speech generation.
+- MoonSpeak AI now uses a multilingual Murf voice by default instead of an English-only voice id.
+- You can assign different Murf voices per supported app language using `MURF_VOICE_MAP` or `MURF_VOICE_<LANGUAGE_ID>` environment variables.
+- If a selected voice does not support the requested locale, MoonSpeak AI still falls back safely to the default English voice path.
 
 Render environment variables template:
 

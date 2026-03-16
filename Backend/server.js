@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import { fileURLToPath } from "url";
 
 import { downloadGeneratedAudio, generateVoice, streamVoice } from "./murfService.js";
 import { generateReply } from "./aiService.js";
@@ -8,7 +9,6 @@ import { getLanguageConfig, normalizeLanguage } from "./languageConfig.js";
 
 dotenv.config({ path: "./.env" });
 
-const app = express();
 const MAX_TEXT_LENGTH = 500;
 const PORT = Number(process.env.PORT) || 5000;
 
@@ -32,19 +32,28 @@ function buildAssistantNotice(aiResult) {
   return `${unavailableProviders} is temporarily unavailable, so built-in coaching is active.`;
 }
 
-app.set("trust proxy", 1);
-app.use(cors());
-app.use(express.json({ limit: "32kb" }));
+export function createApp() {
+  const app = express();
 
-app.get("/", (_req, res) => {
-  res.json({ status: "ok", message: "MoonSpeak AI API running" });
-});
+  app.set("trust proxy", 1);
+  app.use(cors());
+  app.use(express.json({ limit: "32kb" }));
 
-app.get("/healthz", (_req, res) => {
-  res.status(200).json({ status: "ok" });
-});
+  app.get("/", (_req, res) => {
+    res.json({ status: "ok", message: "MoonSpeak AI API running" });
+  });
 
-app.get("/tts-stream", async (req, res) => {
+  app.get("/healthz", (_req, res) => {
+    res.status(200).json({
+      status: "ok",
+      checks: {
+        murfConfigured: Boolean(process.env.MURF_API_KEY),
+        aiConfigured: Boolean(process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY)
+      }
+    });
+  });
+
+  app.get("/tts-stream", async (req, res) => {
   const text = typeof req.query.text === "string" ? req.query.text.trim().slice(0, MAX_TEXT_LENGTH) : "";
   const legacyMode = typeof req.query.mode === "string" ? req.query.mode : "";
   const requestedLanguage = typeof req.query.language === "string"
@@ -84,9 +93,9 @@ app.get("/tts-stream", async (req, res) => {
       res.status(500).json({ error: "Voice streaming failed." });
     }
   }
-});
+  });
 
-app.post("/speak", async (req, res) => {
+  app.post("/speak", async (req, res) => {
 
   const { text, history, mode, language } = req.body;
 
@@ -148,8 +157,17 @@ app.post("/speak", async (req, res) => {
 
   }
 
-});
+  });
 
-app.listen(PORT, () => {
-  console.log(`MoonSpeak AI API running on port ${PORT}`);
-});
+  return app;
+}
+
+export const app = createApp();
+
+const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+
+if (isDirectRun) {
+  app.listen(PORT, () => {
+    console.log(`MoonSpeak AI API running on port ${PORT}`);
+  });
+}
