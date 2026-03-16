@@ -48,7 +48,11 @@ export function createApp() {
       status: "ok",
       checks: {
         murfConfigured: Boolean(process.env.MURF_API_KEY),
-        aiConfigured: Boolean(process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY)
+        aiConfigured: Boolean(
+          process.env.OPENAI_API_KEY
+          || process.env.GEMINI_API_KEY
+          || process.env.OPENROUTER_API_KEY
+        )
       }
     });
   });

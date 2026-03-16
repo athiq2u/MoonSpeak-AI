@@ -7,23 +7,53 @@ dotenv.config();
 
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini";
 const AI_PROVIDER_PRIORITY = (process.env.AI_PROVIDER_PRIORITY || "gemini-first").toLowerCase();
 const OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions";
+const OPENROUTER_CHAT_URL = "https://openrouter.ai/api/v1/chat/completions";
 const genAI = process.env.GEMINI_API_KEY
   ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
   : null;
 
 function buildProviderOrder() {
+  if (AI_PROVIDER_PRIORITY === "openrouter-first") {
+    return [
+      { name: "openrouter", fn: generateWithOpenRouter },
+      { name: "gemini", fn: generateWithGemini },
+      { name: "openai", fn: generateWithOpenAI }
+    ];
+  }
+
   if (AI_PROVIDER_PRIORITY === "openai-first") {
     return [
       { name: "openai", fn: generateWithOpenAI },
+      { name: "gemini", fn: generateWithGemini },
+      { name: "openrouter", fn: generateWithOpenRouter }
+    ];
+  }
+
+  if (AI_PROVIDER_PRIORITY === "gemini-only") {
+    return [
       { name: "gemini", fn: generateWithGemini }
+    ];
+  }
+
+  if (AI_PROVIDER_PRIORITY === "openai-only") {
+    return [
+      { name: "openai", fn: generateWithOpenAI }
+    ];
+  }
+
+  if (AI_PROVIDER_PRIORITY === "openrouter-only") {
+    return [
+      { name: "openrouter", fn: generateWithOpenRouter }
     ];
   }
 
   return [
     { name: "gemini", fn: generateWithGemini },
-    { name: "openai", fn: generateWithOpenAI }
+    { name: "openai", fn: generateWithOpenAI },
+    { name: "openrouter", fn: generateWithOpenRouter }
   ];
 }
 
@@ -266,6 +296,44 @@ async function generateWithOpenAI(text, history, languageId) {
 
   if (!reply) {
     throw makeProviderError("OpenAI returned an empty response.");
+  }
+
+  return reply;
+}
+
+async function generateWithOpenRouter(text, history, languageId) {
+  if (!process.env.OPENROUTER_API_KEY) {
+    throw makeProviderError("OPENROUTER_API_KEY is missing.", 401);
+  }
+
+  const headers = {
+    Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+    "Content-Type": "application/json"
+  };
+
+  if (process.env.OPENROUTER_SITE_URL) {
+    headers["HTTP-Referer"] = process.env.OPENROUTER_SITE_URL;
+  }
+
+  if (process.env.OPENROUTER_APP_NAME) {
+    headers["X-Title"] = process.env.OPENROUTER_APP_NAME;
+  }
+
+  const response = await axios.post(
+    OPENROUTER_CHAT_URL,
+    {
+      model: OPENROUTER_MODEL,
+      messages: buildOpenAIMessages(history, text, languageId),
+      temperature: 0.7,
+      max_tokens: 320
+    },
+    { headers }
+  );
+
+  const reply = response?.data?.choices?.[0]?.message?.content?.trim();
+
+  if (!reply) {
+    throw makeProviderError("OpenRouter returned an empty response.");
   }
 
   return reply;

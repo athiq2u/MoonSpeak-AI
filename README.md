@@ -144,6 +144,7 @@ Required backend variables:
 Alternative AI provider:
 
 - `OPENAI_API_KEY` (if set, MoonSpeak AI tries OpenAI first)
+- `OPENROUTER_API_KEY` (if set, MoonSpeak AI can call online models through OpenRouter)
 
 Optional backend variables:
 
@@ -153,6 +154,10 @@ Optional backend variables:
 - `MURF_VOICE_<LANGUAGE_ID>` overrides, for example `MURF_VOICE_HI_IN=Aarav`
 - `OPENAI_MODEL` (default `gpt-4o-mini`)
 - `GEMINI_MODEL` (default `gemini-2.0-flash`)
+- `OPENROUTER_MODEL` (default `openai/gpt-4o-mini`)
+- `OPENROUTER_SITE_URL` (optional, for OpenRouter analytics and attribution)
+- `OPENROUTER_APP_NAME` (optional, default `MoonSpeak AI`)
+- `AI_PROVIDER_PRIORITY` supports: `gemini-first`, `openai-first`, `openrouter-first`, `gemini-only`, `openai-only`, `openrouter-only`
 
 Frontend variable:
 
