@@ -47,7 +47,6 @@ MoonSpeak AI gives users a voice-first tutoring loop:
 - Offline coach mode in the frontend when the backend is unavailable
 - Browser voice fallback when streamed backend audio is unavailable
 - Practice missions, coach actions, and live conversation stats for demos
-- Backend connectivity indicator with one-tap connection re-check
 
 ## Demo Flow
 
@@ -274,7 +273,7 @@ Create a Web Service in Render with these settings:
 - Root Directory: `Backend`
 - Build Command: `npm install`
 - Start Command: `npm run start`
-- Health Check Path: `/`
+- Health Check Path: `/healthz`
 
 After deploy, copy the Render service URL and set it as the GitHub Actions variable `VITE_API_BASE_URL` so GitHub Pages calls the live backend.
 
@@ -282,7 +281,11 @@ After deploy, copy the Render service URL and set it as the GitHub Actions varia
 
 ### `GET /`
 
-Health check.
+Basic service status.
+
+### `GET /healthz`
+
+Deployment health check.
 
 ### `POST /speak`
 
@@ -327,8 +330,8 @@ Focused production audit results and fixes:
 3. Added explicit health endpoint:
   - backend now exposes `GET /healthz`
   - Render blueprint health check updated to `/healthz`
-4. Reduced false-positive connection checks in frontend:
-  - frontend health checks now target `/healthz` instead of `/`
+4. Simplified frontend availability handling:
+  - frontend now relies on live request results and offline coach fallback instead of a manual connection re-check control
 5. Residual external risk:
   - if Render URL returns `404`, service is not successfully deployed yet, even if frontend is healthy
 
