@@ -21,6 +21,27 @@ const MANUAL_PLAYBACK_NOTICE = "Tap play to hear the reply on this phone. Some m
 const MAX_RENDERED_MESSAGES = 120;
 const MAX_PERSISTED_MESSAGES = 240;
 
+const OPENING_GREETING_BY_LANGUAGE = {
+  "en-US": "Welcome to MoonSpeak platform. I am Moon, your speaking coach. Let us practice and level up your confidence today.",
+  "en-IN": "Welcome to MoonSpeak platform. I am Moon, your speaking coach. Let us practice and level up your confidence today.",
+  "hi-IN": "MoonSpeak me aapka swagat hai. Main Moon hoon, aapki speaking coach. Aaj confidence ke saath practice karte hain.",
+  "es-ES": "Bienvenido a MoonSpeak. Soy Moon, tu coach de habla. Vamos a practicar y mejorar tu confianza hoy.",
+  "fr-FR": "Bienvenue sur MoonSpeak. Je suis Moon, votre coach de parole. Pratiquons et renforcons votre confiance aujourd'hui.",
+  "de-DE": "Willkommen bei MoonSpeak. Ich bin Moon, dein Sprachcoach. Lass uns uben und heute dein Selbstvertrauen starken.",
+  "it-IT": "Benvenuto su MoonSpeak. Sono Moon, la tua coach di conversazione. Facciamo pratica e aumentiamo la tua sicurezza oggi.",
+  "pt-BR": "Bem-vindo ao MoonSpeak. Eu sou Moon, sua coach de fala. Vamos praticar e aumentar sua confianca hoje.",
+  "ja-JP": "MoonSpeak e youkoso. Watashi wa Moon, anata no speaking coach desu. Kyou wa jishin wo takameru renshuu wo shimashou.",
+  "ko-KR": "MoonSpeak e osin geol hwanyeonghamnida. Jeoneun Moon, dangsinui speaking coach imnida. Oneul jasin-gameul keyeobsi dallyeobwayo.",
+  "zh-CN": "Huanying lai dao MoonSpeak. Wo shi Moon, ni de kouyu jiaolian. Women jintian yiqi lianxi bing tisheng zixin.",
+  "ar-SA": "Marhaban bik fi MoonSpeak. Ana Moon, mudarribat al-muhadatha ladayk. Haya natadarrab wa nuqawwi thiqatak alyawm.",
+  "bn-IN": "MoonSpeak e shagotom. Ami Moon, tomar speaking coach. Aaj amra practice kore confidence barabo.",
+  "ta-IN": "MoonSpeak ku varaverkiren. Naan Moon, ungal speaking coach. Inru namma practice panni ungal confidence ah uyarthalaam."
+};
+
+function getOpeningGreeting(languageId) {
+  return OPENING_GREETING_BY_LANGUAGE[languageId] || OPENING_GREETING_BY_LANGUAGE[DEFAULT_LANGUAGE_ID];
+}
+
 function getLocalDateKey() {
   const now = new Date();
   const year = now.getFullYear();
@@ -302,9 +323,106 @@ function createMessageId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
-const ChatBubble = memo(function ChatBubble({ message, tutorName }) {
+const WELCOME_CHIPS = [
+  { label: "🎤 Start practicing", prompt: "Let's start a quick speaking practice right now." },
+  { label: "🌍 What can you teach?", prompt: "What languages and skills can you help me practice?" },
+  { label: "⚡ Give me a challenge", prompt: "Give me a fun speaking challenge to try right now." },
+];
+
+const REFRESH_TASKS = [
+  {
+    lead: "Refresh Challenge",
+    task: "Describe your mood in exactly 7 words.",
+    prompt: "My mood in 7 words is:"
+  },
+  {
+    lead: "Quick Voice Drill",
+    task: "Introduce yourself like you're meeting a new teammate.",
+    prompt: "Hi, I am introducing myself to a new teammate."
+  },
+  {
+    lead: "Confidence Boost",
+    task: "Say one thing you did well today.",
+    prompt: "One thing I did well today is"
+  },
+  {
+    lead: "Speaking Sprint",
+    task: "Explain your current goal in two short sentences.",
+    prompt: "My current goal is"
+  }
+];
+
+function pickRefreshTask() {
+  return REFRESH_TASKS[Math.floor(Math.random() * REFRESH_TASKS.length)];
+}
+
+const WelcomeBubble = memo(function WelcomeBubble({ message, tutorName, onChipClick }) {
+  const [displayedText, setDisplayedText] = useState("");
+  const [isDone, setIsDone] = useState(false);
+  const [isAvatarPoked, setIsAvatarPoked] = useState(false);
+  const fullText = message.text;
+
+  useEffect(() => {
+    let i = 0;
+    const interval = setInterval(() => {
+      i++;
+      setDisplayedText(fullText.slice(0, i));
+      if (i >= fullText.length) {
+        clearInterval(interval);
+        setIsDone(true);
+      }
+    }, 22);
+    return () => clearInterval(interval);
+  }, [fullText]);
+
+  const handleAvatarTap = () => {
+    setIsAvatarPoked(true);
+    window.setTimeout(() => setIsAvatarPoked(false), 420);
+  };
+
+  return (
+    <div className="chat-message-row chat-message-row-ai">
+      <button
+        type="button"
+        className={`chat-avatar-button ${isAvatarPoked ? "chat-avatar-button-poked" : ""} ${!isDone ? "chat-avatar-button-typing" : ""}`}
+        onClick={handleAvatarTap}
+        title="Tap Moon"
+        aria-label="Tap Moon avatar"
+      >
+        <img src={chatbotAvatar} alt="" className="chat-avatar-image" />
+      </button>
+
+      <div className="chat-bubble chat-bubble-ai welcome-bubble">
+        <div className="chat-meta-row">
+          <span className="chat-role">{tutorName}</span>
+        </div>
+        <p>
+          {displayedText}
+          {!isDone && <span className="welcome-cursor" aria-hidden="true">▌</span>}
+        </p>
+        {isDone && (
+          <div className="welcome-chips">
+            {WELCOME_CHIPS.map((chip) => (
+              <button
+                key={chip.label}
+                type="button"
+                className="welcome-chip"
+                onClick={() => onChipClick(chip.prompt)}
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
+
+const ChatBubble = memo(function ChatBubble({ message, tutorName, onTaskClick }) {
   const [isAvatarPoked, setIsAvatarPoked] = useState(false);
   const isAiMessage = message.role === "ai";
+  const isRefreshTask = message.source === "refresh-task" && typeof message.taskPrompt === "string";
 
   const handleAvatarTap = () => {
     setIsAvatarPoked(true);
@@ -335,6 +453,17 @@ const ChatBubble = memo(function ChatBubble({ message, tutorName }) {
           )}
         </div>
         <p>{message.text}</p>
+        {isRefreshTask && (
+          <div className="refresh-task-actions">
+            <button
+              type="button"
+              className="welcome-chip"
+              onClick={() => onTaskClick(message.taskPrompt)}
+            >
+              Try this task
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -418,6 +547,7 @@ function App() {
   const tutorExciteTimerRef = useRef(null);
   const heroFigureRef = useRef(null);
   const heroFigureCardRef = useRef(null);
+  const hasPlayedOpenGreetingRef = useRef(false);
   const latestReplyForVoiceRef = useRef({ text: "", languageId: DEFAULT_LANGUAGE_ID });
   const wheelSpinTimerRef = useRef(null);
   const shadowCountdownTimerRef = useRef(null);
@@ -557,7 +687,7 @@ function App() {
         {
           id: createMessageId(),
           role: "ai",
-          text: "Hi, welcome to MoonSpeak AI. I am Moon, your speaking coach. Pick a language and tap Start Speaking, or type a line and I will help you sound more natural.",
+          text: "Hi there! I'm Moon, your speaking coach. I'm here to help you sound more natural and confident in any language. Where would you like to start?",
           source: "welcome",
           isFallback: false
         }
@@ -566,8 +696,30 @@ function App() {
   }, []);
 
   useEffect(() => {
+    setChat((previousChat) => {
+      const selectedTask = pickRefreshTask();
+      const withoutPreviousRefreshTask = previousChat.filter((message) => message.source !== "refresh-task");
+
+      return [
+        ...withoutPreviousRefreshTask,
+        {
+          id: createMessageId(),
+          role: "ai",
+          text: `${selectedTask.lead}: ${selectedTask.task}`,
+          source: "refresh-task",
+          taskPrompt: selectedTask.prompt,
+          isFallback: true
+        }
+      ];
+    });
+  }, []);
+
+  useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(chat.slice(-MAX_PERSISTED_MESSAGES)));
+      const persistableChat = chat
+        .filter((message) => message.source !== "refresh-task")
+        .slice(-MAX_PERSISTED_MESSAGES);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(persistableChat));
     } catch {
       // storage unavailable — ignore
     }
@@ -724,6 +876,19 @@ function App() {
     window.speechSynthesis.speak(utterance);
     return true;
   }, []);
+
+  useEffect(() => {
+    if (hasPlayedOpenGreetingRef.current) {
+      return;
+    }
+
+    hasPlayedOpenGreetingRef.current = true;
+    const didSpeak = speakWithBrowserVoice(getOpeningGreeting(selectedLanguage), selectedLanguage);
+
+    if (!didSpeak) {
+      setAssistantNotice("Welcome to MoonSpeak. Voice greeting is unavailable on this device, but coaching is ready.");
+    }
+  }, [selectedLanguage, speakWithBrowserVoice]);
 
   const attemptAudioPlayback = useCallback(async (replyText, languageId) => {
     const audio = audioRef.current;
@@ -1427,11 +1592,21 @@ function App() {
               </div>
             ) : (
               chat.map((message, index) => (
-                <ChatBubble
-                  key={message.id || `${message.role}-${index}`}
-                  message={message}
-                  tutorName={TUTOR_NAME}
-                />
+                message.source === "welcome" ? (
+                  <WelcomeBubble
+                    key={message.id || `${message.role}-${index}`}
+                    message={message}
+                    tutorName={TUTOR_NAME}
+                    onChipClick={requestReply}
+                  />
+                ) : (
+                  <ChatBubble
+                    key={message.id || `${message.role}-${index}`}
+                    message={message}
+                    tutorName={TUTOR_NAME}
+                    onTaskClick={requestReply}
+                  />
+                )
               ))
             )}
 
