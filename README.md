@@ -1,8 +1,22 @@
 # MoonSpeak AI
 
-MoonSpeak AI is a voice-first English tutor powered by Murf Falcon for low-latency speech playback. The app supports multilingual practice, browser speech recognition, AI replies through Gemini when quota is available, and localized fallback replies when Gemini is unavailable.
-
 **MoonSpeak AI — Voice English Tutor powered by Murf Falcon**
+
+> **Murf AI Voice Hackathon 2026 submission — March 18, 2026**
+
+## Live Demo
+
+| | |
+|---|---|
+| **Frontend (GitHub Pages)** | https://athiq2u.github.io/MoonSpeak-AI/ |
+| **Backend API (Render)** | https://moonspeak-ai-backend.onrender.com |
+| **Health check** | https://moonspeak-ai-backend.onrender.com/healthz |
+
+> Open the demo on your phone and tap **▶ Hear welcome** to hear Moon's voice introduction powered by Murf Falcon.
+
+---
+
+MoonSpeak AI is a voice-first English tutor powered by Murf Falcon for low-latency speech playback. The app supports multilingual practice, browser speech recognition, AI replies through Gemini when quota is available, and localized fallback replies when Gemini is unavailable.
 
 ## Hackathon Pitch
 
