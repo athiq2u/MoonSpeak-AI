@@ -1,45 +1,70 @@
 # MoonSpeak AI
 
-**MoonSpeak AI - Voice English Tutor powered by Murf Falcon**
+## Voice Tutor That Talks Back
 
-> Murf AI Voice Hackathon 2026 submission
+MoonSpeak AI is a multilingual, voice-first speaking coach that feels like a live conversation, not a worksheet.
 
-## Live Demo
+You speak. It responds with coaching. It talks back instantly using Murf Falcon.
 
-| | |
+Built for Murf AI Voice Hackathon 2026.
+
+## Live Links
+
+| Surface | URL |
 |---|---|
-| Frontend (GitHub Pages) | https://athiq2u.github.io/MoonSpeak-AI/ |
-| Backend API (Render) | https://moonspeak-ai-backend.onrender.com |
-| Health check | https://moonspeak-ai-backend.onrender.com/healthz |
+| Frontend | https://athiq2u.github.io/MoonSpeak-AI/ |
+| Backend API | https://moonspeak-ai-backend.onrender.com |
+| Health Check | https://moonspeak-ai-backend.onrender.com/healthz |
 
-## What It Does
+## 60-Second Pitch
 
-MoonSpeak AI gives learners a real-time speaking loop:
+Most language apps train typing. Real life needs speaking.
 
-1. Speak into the browser.
-2. Send text + recent context to the backend.
-3. Generate a tutor-style response with configurable AI provider priority.
-4. Stream Murf Falcon voice output back instantly.
-5. Continue conversation with feedback and practice prompts.
+MoonSpeak AI closes that gap with a real-time loop:
 
-It is built for multilingual learners who want conversation practice, not just grammar correction.
+1. User speaks in their chosen language.
+2. Browser speech recognition captures text.
+3. Backend generates a tutor-style reply via provider chain.
+4. Murf Falcon streams voice output immediately.
+5. User repeats, improves, and builds fluency.
 
-## Why Judges Care
+## Why This Feels Different
 
-- Real user value: speaking confidence through live conversation
-- Technical depth: speech recognition + AI orchestration + TTS streaming
-- Reliability: multi-provider AI fallback + TTS fallback paths
-- Demo clarity: input, coach reply, and spoken output are all visible and immediate
+- Voice first, not text first.
+- Multilingual by design, not bolted on.
+- Online AI with automatic fallback chain.
+- Spoken response latency optimized for demo flow.
+- Still works in degraded mode (AI/TTS fallbacks).
+
+## Demo Script (Judge Friendly)
+
+Use this flow during judging for maximum impact:
+
+1. Open the frontend link and select Tamil or Hindi.
+2. Speak one line naturally.
+3. Show live tutor reply and source badge.
+4. Play Murf voice response.
+5. Switch to English and repeat.
+6. Open health URL and show provider readiness.
+
+Total time: ~90 seconds.
+
+## "Crazy" Moments To Show
+
+- Language switch mid-demo without page reload.
+- Voice response that sounds like a coach, not a robotic assistant.
+- AI provider chain behavior without user interruption.
+- Speaking practice feels like roleplay, not form filling.
 
 ## Core Features
 
-- Voice-first tutoring flow
+- Voice-first tutoring loop
 - Murf Falcon streaming with generated-audio fallback
-- Multilingual support including: English, Hindi, Bengali, Telugu, Tamil, Spanish, French, German, Italian, Portuguese, Japanese, Korean, Chinese, Arabic
-- Browser speech recognition per selected language
-- Smart fallback to localized coach replies when providers fail
-- Conversation history persistence
-- Offline coach mode when backend is unavailable
+- AI provider priority modes: `openrouter-first`, `openai-first`, `gemini-first`, plus provider-only modes
+- Multilingual support: English, Hindi, Bengali, Telugu, Tamil, Spanish, French, German, Italian, Portuguese, Japanese, Korean, Chinese, Arabic
+- Browser speech recognition by selected language
+- Localized coach fallback replies when providers fail
+- Offline-capable fallback UX when backend is unavailable
 
 ## Architecture
 
@@ -62,40 +87,31 @@ flowchart LR
   I --> A
 ```
 
-## Tech Stack
+## Stack
 
 - Frontend: React + Vite
 - Backend: Node.js + Express
-- AI: OpenRouter, OpenAI, Gemini (priority configurable)
+- AI: OpenRouter + OpenAI + Gemini (priority configurable)
 - Voice: Murf Falcon stream first, generated-audio fallback second
 
-## Project Structure
+## Quick Start (Local)
 
-```text
-Backend/
-  aiService.js
-  languageConfig.js
-  murfService.js
-  server.js
-Frontend/
-  lingualive-ui/
-```
-
-## Requirements
-
-- Node.js 20+
-- MURF_API_KEY
-- At least one AI provider key: OPENROUTER_API_KEY or OPENAI_API_KEY or GEMINI_API_KEY
-
-## Environment Setup
-
-Copy backend env template:
+### 1. Install
 
 ```powershell
-Copy-Item Backend/.env.example Backend/.env
+Set-Location Backend
+npm install
+Set-Location ..\Frontend\lingualive-ui
+npm install
 ```
 
-Recommended backend variables:
+### 2. Configure Backend
+
+```powershell
+Copy-Item ..\..\Backend\.env.example ..\..\Backend\.env
+```
+
+Recommended `Backend/.env`:
 
 ```env
 MURF_API_KEY=your_real_murf_key_here
@@ -106,41 +122,18 @@ OPENROUTER_APP_NAME=MoonSpeak AI
 GEMINI_API_KEY=your_real_gemini_key_here
 OPENAI_API_KEY=
 AI_PROVIDER_PRIORITY=openrouter-first
-GEMINI_MODEL=gemini-2.0-flash
-OPENAI_MODEL=gpt-4o-mini
-MURF_STREAM_URL=
-MURF_DEFAULT_VOICE_ID=Natalie
-MURF_VOICE_MAP={}
 ```
 
-Frontend variable:
+### 3. Run
 
-- VITE_API_BASE_URL (example: http://localhost:5000 in local dev, or your deployed backend URL)
-
-## Local Run
-
-Install backend:
-
-```powershell
-Set-Location Backend
-npm install
-```
-
-Install frontend:
-
-```powershell
-Set-Location Frontend/lingualive-ui
-npm install
-```
-
-Run backend:
+Backend terminal:
 
 ```powershell
 Set-Location Backend
 npm run start
 ```
 
-Run frontend (new terminal):
+Frontend terminal:
 
 ```powershell
 Set-Location Frontend/lingualive-ui
@@ -154,47 +147,36 @@ Defaults:
 
 ## Deploy
 
-### GitHub Pages (Frontend)
+### Frontend (GitHub Pages)
 
-This repo includes .github/workflows/deploy-pages.yml to deploy on push to main.
+Push to `main` to trigger pages deploy via workflow.
 
-One-time setup:
+### Backend (Render)
 
-1. Enable GitHub Pages source as GitHub Actions.
-2. Add Actions variable VITE_API_BASE_URL.
-3. Set VITE_API_BASE_URL to your backend URL.
+Use `render.yaml` blueprint or create a manual web service with:
 
-### Render (Backend)
+- Root Directory: `Backend`
+- Build Command: `npm install`
+- Start Command: `npm run start`
+- Health Path: `/healthz`
 
-This repo includes render.yaml for Blueprint deploy.
+Required env vars on Render:
 
-Required Render env vars:
+- `MURF_API_KEY`
+- At least one AI key: `OPENROUTER_API_KEY` or `OPENAI_API_KEY` or `GEMINI_API_KEY`
+- Recommended: `AI_PROVIDER_PRIORITY=openrouter-first`
 
-- MURF_API_KEY
-- one or more AI keys: OPENROUTER_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY
-- recommended: AI_PROVIDER_PRIORITY=openrouter-first
-- optional: OPENROUTER_MODEL, OPENROUTER_SITE_URL, OPENROUTER_APP_NAME, OPENAI_MODEL, GEMINI_MODEL, MURF_STREAM_URL
+## API Reference
 
-Manual service settings if not using Blueprint:
+### `GET /`
 
-- Root Directory: Backend
-- Build Command: npm install
-- Start Command: npm run start
-- Health Check Path: /healthz
+Basic status check.
 
-## API
+### `GET /healthz`
 
-### GET /
+Provider and service readiness.
 
-Basic service status.
-
-### GET /healthz
-
-Deployment health and provider configuration.
-
-### POST /speak
-
-Request body:
+### `POST /speak`
 
 ```json
 {
@@ -204,45 +186,37 @@ Request body:
 }
 ```
 
-### GET /tts-stream
+### `GET /tts-stream`
 
-Query params:
+Query params: `text`, `language`
 
-- text
-- language
+## Reliability Model
 
-## Fallback Behavior
+- Providers are tried in `AI_PROVIDER_PRIORITY` order.
+- If one fails, the next provider is used automatically.
+- If all fail, localized tutor fallback responses are returned.
+- If Murf stream fails, generated-audio path is attempted.
 
-- AI providers are tried in AI_PROVIDER_PRIORITY order.
-- If one provider fails, the next provider is attempted.
-- If all providers fail, localized tutor-style fallback replies are returned.
-- If Murf streaming fails, generated-audio fallback is attempted.
-- If backend is unavailable, frontend can switch to offline coach mode.
+## Production Snapshot (March 2026)
 
-## Production Status (March 2026)
-
-- Frontend: https://athiq2u.github.io/MoonSpeak-AI/
-- Backend: https://moonspeak-ai-backend.onrender.com
-- Health: status ok
-- Provider mode: openrouter-first
-- Verified live: /speak returns replySource=openrouter and isFallback=false for English and Tamil
+- Frontend live on GitHub Pages
+- Backend live on Render
+- Health endpoint returns `status: ok`
+- Verified `replySource=openrouter` and `isFallback=false` for English and Tamil
 
 ## Troubleshooting
 
-Frontend shows JSON/HTML errors:
+No live AI replies:
 
-- Verify VITE_API_BASE_URL points to a live backend.
+- Confirm backend URL is reachable.
+- Confirm at least one AI key is configured.
+- Check `/healthz` provider flags.
 
-Frontend loads but no live AI response:
+Voice inconsistency across browsers:
 
-- Verify at least one AI key is set in Render.
-- Check /healthz provider flags.
+- Use Chrome-based browsers for best speech recognition.
+- Device voice availability impacts browser fallback output.
 
-Voice inconsistencies across browsers:
+---
 
-- Use Chrome-based browsers for best speech recognition behavior.
-- Browser voice fallback depends on installed device voices.
-
-## Positioning
-
-**MoonSpeak AI - Voice English Tutor powered by Murf Falcon**
+**MoonSpeak AI: Speak. Get coached. Hear it back. Repeat.**
