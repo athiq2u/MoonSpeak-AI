@@ -325,6 +325,40 @@ function createMessageId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
+function buildSmartFollowUps(messageText, languageLabel) {
+  const text = (messageText || "").toLowerCase();
+
+  if (/interview|hr|role|recruiter|experience|strength|weakness/.test(text)) {
+    return [
+      "Give me one stronger version of my interview answer.",
+      "Ask me a follow-up interview question.",
+      "Score my answer for confidence and clarity."
+    ];
+  }
+
+  if (/story|describe|daily|day|weekend|travel|meeting|project/.test(text)) {
+    return [
+      "Help me say this more naturally.",
+      "Give me 2 better vocabulary alternatives.",
+      "Ask me a follow-up so I can continue speaking."
+    ];
+  }
+
+  if (/grammar|correct|mistake|improve|natural|fluency/.test(text)) {
+    return [
+      "Give me one corrected version and one casual version.",
+      "Give me a short pronunciation tip for this.",
+      "Now challenge me with a harder speaking prompt."
+    ];
+  }
+
+  return [
+    `Give me a short speaking challenge in ${languageLabel}.`,
+    "Ask me one natural follow-up question.",
+    "Give me one better way to say my last response."
+  ];
+}
+
 const WELCOME_CHIPS = [
   { label: "🎤 Start practicing", prompt: "Let's start a quick speaking practice right now." },
   { label: "🌍 What can you teach?", prompt: "What languages and skills can you help me practice?" },
@@ -726,6 +760,13 @@ function App() {
         ? "speaking"
         : "ready";
   const latestAiMessage = [...chat].reverse().find((message) => message.role === "ai") || null;
+  const smartFollowUps = useMemo(() => {
+    if (!latestAiMessage) {
+      return [];
+    }
+
+    return buildSmartFollowUps(latestAiMessage.text, activeLanguage.label);
+  }, [latestAiMessage, activeLanguage.label]);
   const aiStatusTone = latestAiMessage?.isFallback
     ? "warning"
     : backendStatus === "online"
@@ -2023,6 +2064,25 @@ function App() {
               ))}
             </div>
           </div>
+
+          {smartFollowUps.length > 0 && (
+            <div className="smart-followups-card" aria-label="AI smart follow-ups">
+              <p className="smart-followups-title">Smart Reply Suggestions</p>
+              <div className="smart-followups-grid">
+                {smartFollowUps.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    className="smart-followup-btn"
+                    onClick={() => requestReply(suggestion)}
+                    disabled={isLoading || isListening}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <textarea
             id="practice-input"

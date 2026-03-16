@@ -1319,6 +1319,54 @@
   text-transform: uppercase;
   color: rgba(241, 245, 255, 0.55);
 }
+.smart-followups-card {
+  margin-bottom: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(104, 210, 255, 0.1), rgba(143, 255, 230, 0.08));
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.smart-followups-title {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #bfefff;
+}
+
+.smart-followups-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.smart-followup-btn {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(242, 246, 255, 0.92);
+  border-radius: 12px;
+  min-height: 42px;
+  padding: 10px 12px;
+  text-align: left;
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+}
+
+.smart-followup-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(255, 255, 255, 0.26);
+  transform: translateY(-1px);
+}
+
+.smart-followup-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 
 .chat-bubble-user .chat-role {
   color: rgba(34, 21, 13, 0.6);
