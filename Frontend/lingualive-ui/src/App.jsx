@@ -9,7 +9,6 @@ const resolvedApiBaseUrl = import.meta.env.VITE_API_BASE_URL
   || (isLocalDevHost ? "/api" : DEFAULT_PRODUCTION_API_BASE_URL);
 const API_BASE_URL = resolvedApiBaseUrl.replace(/\/$/, "");
 const API_URL = `${API_BASE_URL}/speak`;
-const API_HEALTH_URL = `${API_BASE_URL}/healthz`;
 const MAX_CHARS = 500;
 const API_TIMEOUT_MS = 12000;
 const STORAGE_KEY = "lingualive_chat";
@@ -500,7 +499,7 @@ function App() {
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [assistantNotice, setAssistantNotice] = useState("");
   const [isTutorExcited, setIsTutorExcited] = useState(false);
-  const [backendStatus, setBackendStatus] = useState(isLocalDevHost ? "checking" : "offline");
+  const [backendStatus, setBackendStatus] = useState("offline");
   const [needsManualPlayback, setNeedsManualPlayback] = useState(false);
   const [dailyStreak, setDailyStreak] = useState(() => {
     try {
@@ -1035,33 +1034,6 @@ function App() {
     }
   }, [audioUrl, streamAudio]);
 
-  const checkBackendConnection = useCallback(async () => {
-    setBackendStatus("checking");
-
-    try {
-      const controller = new AbortController();
-      const timeoutId = window.setTimeout(() => controller.abort(), 5000);
-      const response = await fetch(API_HEALTH_URL, { signal: controller.signal });
-      window.clearTimeout(timeoutId);
-
-      const contentType = response.headers.get("content-type") || "";
-      if (response.ok && contentType.includes("application/json")) {
-        setBackendStatus("online");
-        return true;
-      }
-
-      setBackendStatus("offline");
-      return false;
-    } catch {
-      setBackendStatus("offline");
-      return false;
-    }
-  }, []);
-
-  useEffect(() => {
-    checkBackendConnection();
-  }, [checkBackendConnection]);
-
   const requestReply = async (message) => {
     const trimmedMessage = message.trim();
     if (!trimmedMessage) {
@@ -1461,14 +1433,6 @@ function App() {
               <span className={`status-pill status-pill-muted ${isActive ? "status-pill-active" : ""}`}>
                 {isListening ? "🎙 Listening…" : isLoading ? "⏳ Thinking…" : isSpeaking ? "🔊 Speaking…" : "Ready"}
               </span>
-              <button
-                type="button"
-                className="status-check-button"
-                onClick={checkBackendConnection}
-                disabled={backendStatus === "checking"}
-              >
-                {backendStatus === "checking" ? "Checking..." : "Check Status"}
-              </button>
               <div className={`signal-bars ${isActive ? "signal-bars-active" : ""}`} aria-hidden="true">
                 <span /><span /><span /><span />
               </div>
