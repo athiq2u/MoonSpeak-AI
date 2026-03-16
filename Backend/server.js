@@ -44,6 +44,13 @@ export function createApp() {
   });
 
   app.get("/healthz", (_req, res) => {
+    const aiProviders = {
+      geminiConfigured: Boolean(process.env.GEMINI_API_KEY),
+      openaiConfigured: Boolean(process.env.OPENAI_API_KEY),
+      openrouterConfigured: Boolean(process.env.OPENROUTER_API_KEY),
+      priority: (process.env.AI_PROVIDER_PRIORITY || "gemini-first").toLowerCase()
+    };
+
     res.status(200).json({
       status: "ok",
       checks: {
@@ -52,7 +59,8 @@ export function createApp() {
           process.env.OPENAI_API_KEY
           || process.env.GEMINI_API_KEY
           || process.env.OPENROUTER_API_KEY
-        )
+        ),
+        aiProviders
       }
     });
   });

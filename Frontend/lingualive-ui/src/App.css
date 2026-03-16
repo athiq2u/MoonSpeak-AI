@@ -1398,6 +1398,18 @@
   color: #b7ffcd;
 }
 
+.chat-source-badge-openai {
+  background: rgba(104, 210, 255, 0.14);
+  border: 1px solid rgba(104, 210, 255, 0.24);
+  color: #c8eeff;
+}
+
+.chat-source-badge-openrouter {
+  background: rgba(193, 132, 255, 0.16);
+  border: 1px solid rgba(193, 132, 255, 0.28);
+  color: #e8d1ff;
+}
+
 .chat-source-badge-fallback {
   background: rgba(255, 184, 107, 0.14);
   border: 1px solid rgba(255, 184, 107, 0.22);

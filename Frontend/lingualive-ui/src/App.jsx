@@ -505,10 +505,31 @@ const WelcomeBubble = memo(function WelcomeBubble({
   );
 });
 
+function getSourceBadge(message) {
+  if (message.isFallback) {
+    return { label: "Built-in Coach", tone: "fallback" };
+  }
+
+  if (message.source === "openrouter") {
+    return { label: "OpenRouter AI", tone: "openrouter" };
+  }
+
+  if (message.source === "openai") {
+    return { label: "OpenAI", tone: "openai" };
+  }
+
+  if (message.source === "gemini") {
+    return { label: "Gemini", tone: "gemini" };
+  }
+
+  return { label: "AI Coach", tone: "gemini" };
+}
+
 const ChatBubble = memo(function ChatBubble({ message, tutorName, onTaskClick }) {
   const [isAvatarPoked, setIsAvatarPoked] = useState(false);
   const isAiMessage = message.role === "ai";
   const isRefreshTask = message.source === "refresh-task" && typeof message.taskPrompt === "string";
+  const sourceBadge = getSourceBadge(message);
 
   const handleAvatarTap = () => {
     setIsAvatarPoked(true);
@@ -533,8 +554,8 @@ const ChatBubble = memo(function ChatBubble({ message, tutorName, onTaskClick })
         <div className="chat-meta-row">
           <span className="chat-role">{message.role === "user" ? "You" : tutorName}</span>
           {isAiMessage && (
-            <span className={`chat-source-badge ${message.isFallback ? "chat-source-badge-fallback" : "chat-source-badge-gemini"}`}>
-              {message.isFallback ? "Built-in Coach" : "AI Coach"}
+            <span className={`chat-source-badge chat-source-badge-${sourceBadge.tone}`}>
+              {sourceBadge.label}
             </span>
           )}
         </div>
