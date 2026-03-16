@@ -355,7 +355,7 @@ function pickRefreshTask() {
   return REFRESH_TASKS[Math.floor(Math.random() * REFRESH_TASKS.length)];
 }
 
-const WelcomeBubble = memo(function WelcomeBubble({ message, tutorName, onChipClick }) {
+const WelcomeBubble = memo(function WelcomeBubble({ message, tutorName, onChipClick, onAvatarTap }) {
   const [displayedText, setDisplayedText] = useState("");
   const [isDone, setIsDone] = useState(false);
   const [isAvatarPoked, setIsAvatarPoked] = useState(false);
@@ -377,6 +377,7 @@ const WelcomeBubble = memo(function WelcomeBubble({ message, tutorName, onChipCl
   const handleAvatarTap = () => {
     setIsAvatarPoked(true);
     window.setTimeout(() => setIsAvatarPoked(false), 420);
+    onAvatarTap?.();
   };
 
   return (
@@ -547,6 +548,7 @@ function App() {
   const heroFigureRef = useRef(null);
   const heroFigureCardRef = useRef(null);
   const hasPlayedOpenGreetingRef = useRef(false);
+  const openGreetingTimeoutRef = useRef(null);
   const latestReplyForVoiceRef = useRef({ text: "", languageId: DEFAULT_LANGUAGE_ID });
   const wheelSpinTimerRef = useRef(null);
   const shadowCountdownTimerRef = useRef(null);
@@ -779,6 +781,9 @@ function App() {
       if (shadowCountdownTimerRef.current) {
         clearInterval(shadowCountdownTimerRef.current);
       }
+      if (openGreetingTimeoutRef.current) {
+        clearTimeout(openGreetingTimeoutRef.current);
+      }
       if (shadowRecognitionRef.current) {
         shadowRecognitionRef.current.stop();
       }
@@ -858,6 +863,64 @@ function App() {
     }
   }, []);
 
+  const playOpeningGreeting = useCallback((languageId, { fromUserGesture = false } = {}) => new Promise((resolve) => {
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      resolve(false);
+      return;
+    }
+
+    if (openGreetingTimeoutRef.current) {
+      clearTimeout(openGreetingTimeoutRef.current);
+      openGreetingTimeoutRef.current = null;
+    }
+
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(getOpeningGreeting(languageId));
+    utterance.lang = getLanguage(languageId).recognition || languageId;
+    utterance.rate = 1;
+    utterance.pitch = 1;
+
+    let settled = false;
+    const finish = (didStart) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+
+      if (openGreetingTimeoutRef.current) {
+        clearTimeout(openGreetingTimeoutRef.current);
+        openGreetingTimeoutRef.current = null;
+      }
+
+      if (didStart) {
+        hasPlayedOpenGreetingRef.current = true;
+        setAssistantNotice((currentNotice) => (
+          currentNotice === "Tap Moon to hear the welcome voice on this phone." ? "" : currentNotice
+        ));
+      } else if (fromUserGesture) {
+        setAssistantNotice("Welcome voice is unavailable on this phone, but coaching is ready.");
+      }
+
+      resolve(didStart);
+    };
+
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+      finish(true);
+    };
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      finish(false);
+    };
+
+    utteranceRef.current = utterance;
+    window.speechSynthesis.speak(utterance);
+    openGreetingTimeoutRef.current = window.setTimeout(() => finish(false), fromUserGesture ? 1500 : 900);
+  }), []);
+
   const speakWithBrowserVoice = useCallback((replyText, languageId) => {
     if (typeof window === "undefined" || !window.speechSynthesis || !replyText) {
       return false;
@@ -881,13 +944,34 @@ function App() {
       return;
     }
 
-    hasPlayedOpenGreetingRef.current = true;
-    const didSpeak = speakWithBrowserVoice(getOpeningGreeting(selectedLanguage), selectedLanguage);
+    let cancelled = false;
 
-    if (!didSpeak) {
-      setAssistantNotice("Welcome to MoonSpeak. Voice greeting is unavailable on this device, but coaching is ready.");
+    void playOpeningGreeting(selectedLanguage).then((didSpeak) => {
+      if (!cancelled && !didSpeak && !hasPlayedOpenGreetingRef.current) {
+        setAssistantNotice("Tap Moon to hear the welcome voice on this phone.");
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedLanguage, playOpeningGreeting]);
+
+  const handleTutorAvatarTap = useCallback(() => {
+    triggerTutorExcitement();
+
+    if (!hasPlayedOpenGreetingRef.current) {
+      void playOpeningGreeting(selectedLanguage, { fromUserGesture: true });
     }
-  }, [selectedLanguage, speakWithBrowserVoice]);
+  }, [playOpeningGreeting, selectedLanguage]);
+
+  const handleLanguageChange = useCallback((languageId) => {
+    setSelectedLanguage(languageId);
+
+    if (!hasPlayedOpenGreetingRef.current) {
+      void playOpeningGreeting(languageId, { fromUserGesture: true });
+    }
+  }, [playOpeningGreeting]);
 
   const attemptAudioPlayback = useCallback(async (replyText, languageId) => {
     const audio = audioRef.current;
@@ -1540,7 +1624,7 @@ function App() {
                     id="language-picker-empty"
                     className="language-select"
                     value={selectedLanguage}
-                    onChange={(event) => setSelectedLanguage(event.target.value)}
+                    onChange={(event) => handleLanguageChange(event.target.value)}
                   >
                     {LANGUAGE_OPTIONS.map((language) => (
                       <option key={language.id} value={language.id}>{language.label}</option>
@@ -1562,6 +1646,7 @@ function App() {
                     message={message}
                     tutorName={TUTOR_NAME}
                     onChipClick={requestReply}
+                    onAvatarTap={handleTutorAvatarTap}
                   />
                 ) : (
                   <ChatBubble
@@ -1611,7 +1696,7 @@ function App() {
               <button
                 type="button"
                 className="tutor-fab"
-                onClick={triggerTutorExcitement}
+                onClick={handleTutorAvatarTap}
                 title="Tap Moon"
                 aria-label="Tap tutor avatar"
               >
@@ -1643,7 +1728,7 @@ function App() {
               id="language-picker-composer"
               className="language-select"
               value={selectedLanguage}
-              onChange={(event) => setSelectedLanguage(event.target.value)}
+              onChange={(event) => handleLanguageChange(event.target.value)}
             >
               {LANGUAGE_OPTIONS.map((language) => (
                 <option key={language.id} value={language.id}>{language.label}</option>
