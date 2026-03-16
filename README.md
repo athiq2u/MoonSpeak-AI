@@ -36,7 +36,7 @@ MoonSpeak AI closes that gap with a real-time loop:
 - Spoken response latency optimized for demo flow.
 - Still works in degraded mode (AI/TTS fallbacks).
 
-## Demo Script (Judge Friendly)
+## Demo Script (Hackathon Friendly)
 
 Use this flow during judging for maximum impact:
 
