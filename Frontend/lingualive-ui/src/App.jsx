@@ -63,12 +63,14 @@ function calculateShadowAccuracy(expectedText, spokenText) {
   const spokenWords = normalizeSpeechText(spokenText);
 
   if (expectedWords.length === 0 || spokenWords.length === 0) {
-    return 0;
+    return { score: 0, wordResults: [] };
   }
 
   const spokenSet = new Set(spokenWords);
-  const matchedWords = expectedWords.filter((word) => spokenSet.has(word)).length;
-  return Math.min(100, Math.round((matchedWords / expectedWords.length) * 100));
+  const wordResults = expectedWords.map((word) => ({ word, matched: spokenSet.has(word) }));
+  const matchedCount = wordResults.filter((wr) => wr.matched).length;
+  const score = Math.min(100, Math.round((matchedCount / expectedWords.length) * 100));
+  return { score, wordResults };
 }
 
 const LANGUAGE_OPTIONS = [
@@ -356,6 +358,38 @@ function pickRefreshTask() {
   return REFRESH_TASKS[Math.floor(Math.random() * REFRESH_TASKS.length)];
 }
 
+const SCENARIO_CARDS = [
+  {
+    id: "interview",
+    icon: "💼",
+    title: "Job Interview",
+    prompt: "Let's run a mock job interview. Ask me one HR question, then coach my answer with better structure and confident vocabulary."
+  },
+  {
+    id: "travel",
+    icon: "✈️",
+    title: "Travel Talk",
+    prompt: "Help me practice real travel English — at the airport, booking a hotel, or ordering food at a restaurant."
+  },
+  {
+    id: "story",
+    icon: "📖",
+    title: "Storytelling",
+    prompt: "Help me tell a short personal story in a natural, engaging way with smooth transitions and confident delivery."
+  },
+  {
+    id: "debate",
+    icon: "🎤",
+    title: "Debate Club",
+    prompt: "Give me a strong opinion topic to argue. Then help me structure my point clearly and speak with conviction."
+  }
+];
+
+function formatPracticeTime(totalSeconds) {
+  if (totalSeconds < 60) { return `${totalSeconds}s`; }
+  return `${Math.floor(totalSeconds / 60)}m ${totalSeconds % 60}s`;
+}
+
 const WelcomeBubble = memo(function WelcomeBubble({
   message,
   tutorName,
@@ -556,6 +590,10 @@ function App() {
       return [];
     }
   });
+  const [voiceTurns, setVoiceTurns] = useState(0);
+  const [bestShadowScore, setBestShadowScore] = useState(0);
+  const [languagesUsed, setLanguagesUsed] = useState(() => new Set([DEFAULT_LANGUAGE_ID]));
+  const [practiceSeconds, setPracticeSeconds] = useState(0);
 
   const chatEndRef = useRef(null);
   const audioRef = useRef(null);
@@ -574,6 +612,8 @@ function App() {
   const shadowRecognitionRef = useRef(null);
   const shadowTranscriptRef = useRef("");
   const shadowExpectedTextRef = useRef("");
+  const sessionTimerRef = useRef(null);
+  const hasStartedPracticeRef = useRef(false);
   const activeLanguage = getLanguage(selectedLanguage);
   const practiceMissions = useMemo(() => ([
     {
@@ -652,6 +692,24 @@ function App() {
         title: "Century Sprint",
         description: "Earn 100 XP in a single session.",
         unlocked: sessionXp >= 100
+      },
+      {
+        id: "voice-5",
+        title: "Voice First",
+        description: "Complete 5 turns using voice input.",
+        unlocked: voiceTurns >= 5
+      },
+      {
+        id: "shadow-master",
+        title: "Shadow Master",
+        description: "Score 90% or higher on a Shadow Drill.",
+        unlocked: bestShadowScore >= 90
+      },
+      {
+        id: "explorer",
+        title: "Language Explorer",
+        description: "Practice in 3 or more different languages.",
+        unlocked: languagesUsed.size >= 3
       }
     ];
 
@@ -659,7 +717,7 @@ function App() {
       ...achievement,
       unlocked: achievement.unlocked || unlockedAchievementIds.includes(achievement.id)
     }));
-  }, [chatStats.turns, dailyStreak.count, sessionXp, unlockedAchievementIds]);
+  }, [chatStats.turns, dailyStreak.count, sessionXp, voiceTurns, bestShadowScore, languagesUsed, unlockedAchievementIds]);
   const tutorState = isListening
     ? "listening"
     : isLoading
@@ -836,6 +894,9 @@ function App() {
       }
       if (mediaSourceUrlRef.current) {
         URL.revokeObjectURL(mediaSourceUrlRef.current);
+      }
+      if (sessionTimerRef.current) {
+        clearInterval(sessionTimerRef.current);
       }
       if (typeof window !== "undefined" && window.speechSynthesis) {
         window.speechSynthesis.cancel();
@@ -1102,6 +1163,7 @@ function App() {
 
   const handleLanguageChange = useCallback((languageId) => {
     setSelectedLanguage(languageId);
+    setLanguagesUsed((prev) => new Set([...prev, languageId]));
 
     if (!hasPlayedOpenGreetingRef.current) {
       void playOpeningGreeting(languageId, { fromUserGesture: true });
@@ -1269,6 +1331,13 @@ function App() {
     const trimmedMessage = message.trim();
     if (!trimmedMessage) {
       return;
+    }
+
+    if (!hasStartedPracticeRef.current) {
+      hasStartedPracticeRef.current = true;
+      sessionTimerRef.current = setInterval(() => {
+        setPracticeSeconds((s) => s + 1);
+      }, 1000);
     }
 
     setDailyStreak((previousStreak) => {
@@ -1562,13 +1631,14 @@ function App() {
           }
 
           const spokenText = shadowTranscriptRef.current.trim();
-          const score = calculateShadowAccuracy(shadowExpectedTextRef.current, spokenText);
+          const { score, wordResults } = calculateShadowAccuracy(shadowExpectedTextRef.current, spokenText);
           const grade = score >= 85 ? "Excellent" : score >= 65 ? "Good" : score >= 40 ? "Keep going" : "Needs another try";
-
+          setBestShadowScore((prev) => Math.max(prev, score));
           setShadowDrillResult({
             score,
             spokenText,
-            grade
+            grade,
+            wordResults
           });
           setAssistantNotice(
             spokenText
@@ -1601,6 +1671,7 @@ function App() {
     recognition.onresult = (event) => {
       const speechText = event.results[0][0].transcript;
       setText(speechText);
+      setVoiceTurns((v) => v + 1);
       requestReply(speechText);
     };
     recognition.onerror = () => {
@@ -1754,10 +1825,31 @@ function App() {
             </div>
           </div>
 
+          <div className="scenario-row" aria-label="Practice scenarios">
+            {SCENARIO_CARDS.map((scenario) => (
+              <button
+                key={scenario.id}
+                type="button"
+                className="scenario-card"
+                onClick={() => {
+                  triggerTutorExcitement();
+                  requestReply(scenario.prompt);
+                }}
+                disabled={isLoading || isListening}
+              >
+                <span className="scenario-icon" aria-hidden="true">{scenario.icon}</span>
+                <span className="scenario-title">{scenario.title}</span>
+              </button>
+            ))}
+          </div>
+
           <div className="stats-strip" aria-live="polite">
             <span className="stats-chip">Turns: {chatStats.turns}</span>
             <span className="stats-chip">AI replies: {chatStats.aiReplies}</span>
             <span className="stats-chip">Avg words/reply: {chatStats.avgAiWords}</span>
+            {practiceSeconds > 0 && (
+              <span className="stats-chip stats-chip-time">⏱ {formatPracticeTime(practiceSeconds)}</span>
+            )}
           </div>
 
           <div className="chat-feed">
@@ -2064,6 +2156,9 @@ function App() {
             <span className="stats-chip">Turns: {chatStats.turns}</span>
             <span className="stats-chip">Streak: {dailyStreak.count} day{dailyStreak.count > 1 ? "s" : ""}</span>
             <span className="stats-chip">XP: {experiencePoints}</span>
+            {practiceSeconds > 0 && (
+              <span className="stats-chip stats-chip-time">⏱ {formatPracticeTime(practiceSeconds)}</span>
+            )}
           </div>
 
           {latestAiMessage ? (
@@ -2192,6 +2287,19 @@ function App() {
               <div className="shadow-score" aria-live="polite">
                 <p className="shadow-score-title">Voice Match: {shadowDrillResult.score}%</p>
                 <p className="shadow-score-grade">{shadowDrillResult.grade}</p>
+                {shadowDrillResult.wordResults && shadowDrillResult.wordResults.length > 0 && (
+                  <div className="shadow-word-breakdown" aria-label="Word-level pronunciation match">
+                    {shadowDrillResult.wordResults.map(({ word, matched }, i) => (
+                      <span
+                        key={`${word}-${i}`}
+                        className={`shadow-word ${matched ? "shadow-word-hit" : "shadow-word-miss"}`}
+                        title={matched ? "✅ Matched" : "❌ Missed"}
+                      >
+                        {word}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <p className="shadow-score-copy">
                   {shadowDrillResult.spokenText
                     ? `Heard: "${shadowDrillResult.spokenText}"`
