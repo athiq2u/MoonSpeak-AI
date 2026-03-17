@@ -2,11 +2,11 @@
   font-family: Aptos, "Trebuchet MS", "Segoe UI", sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #eef2ff;
+  color: #243244;
   background:
-    radial-gradient(circle at top left, rgba(255, 135, 84, 0.22), transparent 30%),
-    radial-gradient(circle at top right, rgba(73, 162, 255, 0.18), transparent 28%),
-    linear-gradient(180deg, #07111f 0%, #0b1728 52%, #132238 100%);
+    radial-gradient(circle at top left, rgba(255, 194, 152, 0.24), transparent 36%),
+    radial-gradient(circle at top right, rgba(157, 206, 245, 0.2), transparent 34%),
+    linear-gradient(180deg, #fdfaf5 0%, #f7f3ec 52%, #f3efe7 100%);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -35,6 +35,22 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-gutter: stable;
+}
+
+body.theme-light {
+  color: #243244;
+  background:
+    radial-gradient(circle at top left, rgba(255, 194, 152, 0.24), transparent 36%),
+    radial-gradient(circle at top right, rgba(157, 206, 245, 0.2), transparent 34%),
+    linear-gradient(180deg, #fdfaf5 0%, #f7f3ec 52%, #f3efe7 100%);
+}
+
+body.theme-dark {
+  color: #eef2ff;
+  background:
+    radial-gradient(circle at top left, rgba(255, 135, 84, 0.22), transparent 30%),
+    radial-gradient(circle at top right, rgba(73, 162, 255, 0.18), transparent 28%),
+    linear-gradient(180deg, #07111f 0%, #0b1728 52%, #132238 100%);
 }
 
 #root {

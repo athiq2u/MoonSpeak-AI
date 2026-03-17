@@ -29,8 +29,21 @@
    Hero / Header Panel
    ================================ */
 .hero-panel {
+  position: relative;
   border-radius: 28px;
   padding: 32px;
+}
+
+.theme-toggle-wrap {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 5;
+}
+
+.theme-toggle-button {
+  min-height: 36px;
+  padding: 7px 12px;
 }
 
 .hero-grid {
@@ -2819,6 +2832,12 @@
 
   .hero-panel {
     padding: 18px;
+    padding-top: 62px;
+  }
+
+  .theme-toggle-wrap {
+    top: 12px;
+    right: 12px;
   }
 
   .hero-figure {
@@ -3001,4 +3020,148 @@
     justify-content: center;
     text-align: center;
   }
+}
+
+/* ================================
+   Light Theme Overrides
+   ================================ */
+.app-shell.theme-light {
+  color: #2b394c;
+}
+
+.app-shell.theme-light :is(.hero-panel, .chat-panel, .composer-panel) {
+  border: 1px solid rgba(78, 94, 119, 0.16);
+  background: rgba(255, 252, 247, 0.88);
+  box-shadow: 0 18px 48px rgba(80, 92, 112, 0.1);
+}
+
+.app-shell.theme-light .hero-panel h1 {
+  background: linear-gradient(135deg, #2b394c 32%, #c77646);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.app-shell.theme-light :is(
+  .hero-copy,
+  .falcon-note,
+  .panel-heading p,
+  .voice-copy,
+  .language-picker-hint,
+  .progress-subcopy,
+  .interactive-copy,
+  .empty-copy,
+  .welcome-playback-hint,
+  .chat-feed-helper-copy,
+  .chat-feed-helper-hint,
+  .insight-subtitle,
+  .leaderboard-subtitle,
+  .achievement-subtitle,
+  .tools-section-header p,
+  .vocab-suggestion,
+  .pronunciation-tip,
+  .grammar-explanation,
+  .practice-goal-copy,
+  .coach-guide-item
+) {
+  color: rgba(43, 57, 76, 0.7);
+}
+
+.app-shell.theme-light :is(
+  .insight-title,
+  .progress-title,
+  .interactive-title,
+  .leaderboard-title,
+  .achievement-title,
+  .shadow-score-title,
+  .reply-label,
+  .language-picker-label,
+  .chat-role,
+  .lab-preview-kicker,
+  .tutor-mini-status,
+  .tools-section-header h3
+) {
+  color: rgba(43, 57, 76, 0.78);
+}
+
+.app-shell.theme-light :is(
+  .use-case-pill,
+  .workspace-nav-button,
+  .status-check-button,
+  .panel-ghost-btn,
+  .quick-starter-btn,
+  .left-focus-btn,
+  .scenario-card,
+  .chip,
+  .mode-button,
+  .language-select,
+  .interactive-button,
+  .quick-action-btn,
+  .mission-btn,
+  .tutor-mini-btn,
+  .secondary-button,
+  .mic-button,
+  .chat-feed-helper-btn,
+  .smart-followup-btn
+),
+.app-shell.theme-light .reply-assistant-actions button {
+  border-color: rgba(103, 118, 141, 0.24);
+  background: rgba(255, 250, 242, 0.94);
+  color: #2b394c;
+}
+
+.app-shell.theme-light :is(
+  .hero-metric-tile,
+  .progress-card,
+  .interactive-card,
+  .leaderboard-card,
+  .achievement-card,
+  .insight-card,
+  .leaderboard-item,
+  .achievement-badge,
+  .left-focus-card,
+  .smart-followups-card,
+  .chat-feed-helper,
+  .voice-launch-card,
+  .practice-progress-card,
+  .practice-goal-card,
+  .reply-assistant,
+  .mission-card,
+  .coach-guide-card,
+  .tools-section-group,
+  .audio-card,
+  .empty-state
+) {
+  border-color: rgba(103, 118, 141, 0.2);
+  background: rgba(255, 251, 245, 0.78);
+}
+
+.app-shell.theme-light .composer-input {
+  border-color: rgba(103, 118, 141, 0.24);
+  background: rgba(255, 253, 249, 0.98);
+  color: #253449;
+}
+
+.app-shell.theme-light .composer-input::placeholder,
+.app-shell.theme-light .char-count {
+  color: rgba(43, 57, 76, 0.45);
+}
+
+.app-shell.theme-light .chat-bubble-ai {
+  background: #fff8ef;
+  color: #2b394c;
+  border: 1px solid rgba(123, 129, 106, 0.2);
+}
+
+.app-shell.theme-light :is(.chat-avatar-button, .reply-assistant-avatar, .left-focus-icon-wrap, .tutor-chatbot-pic) {
+  border-color: rgba(130, 156, 186, 0.36);
+  background: linear-gradient(145deg, #fffaf2, #eef4ff);
+}
+
+.app-shell.theme-light .chat-feed::-webkit-scrollbar-thumb {
+  background: rgba(98, 110, 126, 0.26);
+}
+
+.app-shell.theme-light .chat-feed::-webkit-scrollbar-thumb:hover {
+  background: rgba(98, 110, 126, 0.38);
 }
