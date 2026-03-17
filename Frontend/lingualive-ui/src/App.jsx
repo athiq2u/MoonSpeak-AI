@@ -1655,18 +1655,6 @@ function App() {
     requestReply(activeLanguage.suggestions[2] || activeLanguage.demoPrompt);
   };
 
-  const runSurprisePrompt = () => {
-    if (isLoading || isListening) {
-      return;
-    }
-
-    triggerTutorExcitement();
-    const selectedPrompt = coachWheelPrompts[Math.floor(Math.random() * coachWheelPrompts.length)] || activeLanguage.demoPrompt;
-    setCoachWheelResult(selectedPrompt);
-    setAssistantNotice("Surprise prompt launched. Keep your reply short, natural, and confident.");
-    requestReply(selectedPrompt);
-  };
-
   const spinCoachWheel = () => {
     if (isLoading || isListening || isWheelSpinning) {
       return;
@@ -2303,44 +2291,6 @@ function App() {
             ))}
           </div>
 
-          <div className="chat-feed-helper" aria-label="Continue practice ideas">
-            <p className="chat-feed-helper-title">Keep the flow going</p>
-            <p className="chat-feed-helper-copy">Use one prompt to continue speaking naturally in {activeLanguage.label}.</p>
-            <div className="chat-feed-helper-actions">
-              <button
-                type="button"
-                className="chat-feed-helper-btn chat-feed-helper-btn-accent"
-                onClick={runSurprisePrompt}
-                disabled={isLoading || isListening}
-              >
-                Surprise Me
-              </button>
-              {activeLanguage.suggestions.slice(0, 3).map((suggestion) => (
-                <button
-                  key={suggestion}
-                  type="button"
-                  className="chat-feed-helper-btn"
-                  onClick={() => requestReply(suggestion)}
-                  disabled={isLoading || isListening}
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-            {coachWheelResult ? (
-              <p className="chat-feed-helper-hint" aria-live="polite">Latest surprise: {coachWheelResult}</p>
-            ) : null}
-          </div>
-        </section>
-
-        <section className="composer-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Extras Toolbox</h2>
-              <p>All optional helpers organized by learning focus.</p>
-            </div>
-          </div>
-
           <div className="tools-section-group">
             <div className="tools-section-header">
               <h3>🎯 Choose Your Level</h3>
@@ -2368,6 +2318,37 @@ function App() {
 
           <div className="tools-section-group">
             <div className="tools-section-header">
+              <h3>🗣️ Conversation Topics</h3>
+              <p>Explore real-world speaking scenarios.</p>
+            </div>
+            <div className="conversation-topics-grid">
+              {CONVERSATION_TOPICS.map((convo) => (
+                <button
+                  key={convo.topic}
+                  type="button"
+                  className="conversation-topic-btn"
+                  onClick={() => requestReply(convo.prompt)}
+                  disabled={isLoading || isListening}
+                  title={convo.prompt}
+                >
+                  <span className="topic-emoji">{convo.emoji}</span>
+                  <span className="topic-name">{convo.topic}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="composer-panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Extras Toolbox</h2>
+              <p>All optional helpers organized by learning focus.</p>
+            </div>
+          </div>
+
+          <div className="tools-section-group">
+            <div className="tools-section-header">
               <h3>📚 Practice Missions</h3>
               <p>Focused exercises for skill building.</p>
             </div>
@@ -2384,28 +2365,6 @@ function App() {
                   disabled={isLoading || isListening}
                 >
                   {mission.title}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="tools-section-group">
-            <div className="tools-section-header">
-              <h3>🗣️ Conversation Topics</h3>
-              <p>Explore real-world speaking scenarios.</p>
-            </div>
-            <div className="conversation-topics-grid">
-              {CONVERSATION_TOPICS.map((convo) => (
-                <button
-                  key={convo.topic}
-                  type="button"
-                  className="conversation-topic-btn"
-                  onClick={() => requestReply(convo.prompt)}
-                  disabled={isLoading || isListening}
-                  title={convo.prompt}
-                >
-                  <span className="topic-emoji">{convo.emoji}</span>
-                  <span className="topic-name">{convo.topic}</span>
                 </button>
               ))}
             </div>
