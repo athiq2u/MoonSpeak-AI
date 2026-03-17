@@ -325,6 +325,32 @@ function createMessageId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
+function buildSmartFollowUps(messageText, languageLabel) {
+  const text = (messageText || "").toLowerCase();
+
+  if (/interview|hr|role|recruiter|experience|strength|weakness/.test(text)) {
+    return [
+      "Give me one stronger version of my interview answer.",
+      "Ask me a follow-up interview question.",
+      "Score my answer for confidence and clarity."
+    ];
+  }
+
+  if (/story|describe|daily|day|weekend|travel|meeting|project/.test(text)) {
+    return [
+      "Help me say this more naturally.",
+      "Give me 2 better vocabulary alternatives.",
+      "Ask me a follow-up so I can continue speaking."
+    ];
+  }
+
+  return [
+    `Give me a short speaking challenge in ${languageLabel}.`,
+    "Ask me one natural follow-up question.",
+    "Give me one better way to say my last response."
+  ];
+}
+
 const WELCOME_CHIPS = [
   { label: "🎤 Start practicing", prompt: "Let's start a quick speaking practice right now." },
   { label: "🌍 What can you teach?", prompt: "What languages and skills can you help me practice?" },
@@ -636,6 +662,43 @@ function App() {
   const sessionTimerRef = useRef(null);
   const hasStartedPracticeRef = useRef(false);
   const activeLanguage = getLanguage(selectedLanguage);
+  const practiceMissions = useMemo(() => ([
+    {
+      title: "Warm Up",
+      prompt: activeLanguage.demoPrompt
+    },
+    {
+      title: "Story Mode",
+      prompt: `Help me tell a short story in ${activeLanguage.label} with better fluency and natural transitions.`
+    },
+    {
+      title: "Interview Drill",
+      prompt: "Give me one realistic interview question, then help me improve my answer with better structure and vocabulary."
+    },
+    {
+      title: "Confidence Boost",
+      prompt: `I feel nervous while speaking ${activeLanguage.label}. Give me one confidence routine and one speaking exercise.`
+    }
+  ]), [activeLanguage]);
+  const leftPanelFocusPrompts = useMemo(() => ([
+    {
+      label: "Icebreaker",
+      prompt: `Give me one natural 2-line conversation starter in ${activeLanguage.label}.`
+    },
+    {
+      label: "Daily Talk",
+      prompt: `Help me explain my day in ${activeLanguage.label} in a natural way.`
+    },
+    {
+      label: "Interview",
+      prompt: "Ask me one interview question and improve my answer in simple, natural language."
+    }
+  ]), [activeLanguage]);
+  const coachGuideTips = useMemo(() => ([
+    `Keep answers short, clear, and natural in ${activeLanguage.label}.`,
+    "Add one real detail so your speaking sounds more human.",
+    "If you pause, restart with one simple sentence and continue calmly."
+  ]), [activeLanguage]);
   const coachWheelPrompts = useMemo(() => ([
     activeLanguage.demoPrompt,
     ...activeLanguage.suggestions,
@@ -710,6 +773,13 @@ function App() {
         ? "speaking"
         : "ready";
   const latestAiMessage = [...chat].reverse().find((message) => message.role === "ai") || null;
+  const smartFollowUps = useMemo(() => {
+    if (!latestAiMessage) {
+      return [];
+    }
+
+    return buildSmartFollowUps(latestAiMessage.text, activeLanguage.label);
+  }, [latestAiMessage, activeLanguage.label]);
   const aiStatusTone = latestAiMessage?.isFallback
     ? "warning"
     : backendStatus === "online"
@@ -1525,6 +1595,18 @@ function App() {
     requestReply(activeLanguage.suggestions[2] || activeLanguage.demoPrompt);
   };
 
+  const runSurprisePrompt = () => {
+    if (isLoading || isListening) {
+      return;
+    }
+
+    triggerTutorExcitement();
+    const selectedPrompt = coachWheelPrompts[Math.floor(Math.random() * coachWheelPrompts.length)] || activeLanguage.demoPrompt;
+    setCoachWheelResult(selectedPrompt);
+    setAssistantNotice("Surprise prompt launched. Keep your reply short, natural, and confident.");
+    requestReply(selectedPrompt);
+  };
+
   const spinCoachWheel = () => {
     if (isLoading || isListening || isWheelSpinning) {
       return;
@@ -1693,6 +1775,15 @@ function App() {
                 onClick={() => setActiveWorkspacePage("practice")}
               >
                 Practice
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeWorkspacePage === "extras"}
+                className={`workspace-nav-button ${activeWorkspacePage === "extras" ? "workspace-nav-button-active" : ""}`}
+                onClick={() => setActiveWorkspacePage("extras")}
+              >
+                Extras
               </button>
               <button
                 type="button"
@@ -2025,6 +2116,151 @@ function App() {
           hidden
           aria-hidden="true"
         />
+      </div>
+      ) : activeWorkspacePage === "extras" ? (
+      <div className="workspace-panel">
+        <section className="chat-panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Extras</h2>
+              <p>Optional quick-start and suggestion blocks.</p>
+            </div>
+          </div>
+
+          <div className="left-focus-card" aria-label="Today's speaking focus">
+            <div className="left-focus-head left-focus-head-with-icon">
+              <div className="left-focus-icon-wrap" aria-hidden="true">
+                <img className="left-focus-icon" src={chatbotAvatar} alt="" />
+              </div>
+              <div>
+                <p className="left-focus-kicker">Today's focus</p>
+                <p className="left-focus-copy">
+                  Quick warmup ideas for {activeLanguage.label}. Tap one to start instantly.
+                </p>
+              </div>
+            </div>
+            <div className="left-focus-actions">
+              {leftPanelFocusPrompts.map((item) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  className="left-focus-btn"
+                  onClick={() => requestReply(item.prompt)}
+                  disabled={isLoading || isListening}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="scenario-row" aria-label="Practice scenarios">
+            {SCENARIO_CARDS.map((scenario) => (
+              <button
+                key={scenario.id}
+                type="button"
+                className="scenario-card"
+                onClick={() => {
+                  triggerTutorExcitement();
+                  requestReply(scenario.prompt);
+                }}
+                disabled={isLoading || isListening}
+              >
+                <span className="scenario-icon" aria-hidden="true">{scenario.icon}</span>
+                <span className="scenario-title">{scenario.title}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="chat-feed-helper" aria-label="Continue practice ideas">
+            <p className="chat-feed-helper-title">Keep the flow going</p>
+            <p className="chat-feed-helper-copy">Use one prompt to continue speaking naturally in {activeLanguage.label}.</p>
+            <div className="chat-feed-helper-actions">
+              <button
+                type="button"
+                className="chat-feed-helper-btn chat-feed-helper-btn-accent"
+                onClick={runSurprisePrompt}
+                disabled={isLoading || isListening}
+              >
+                Surprise Me
+              </button>
+              {activeLanguage.suggestions.slice(0, 3).map((suggestion) => (
+                <button
+                  key={suggestion}
+                  type="button"
+                  className="chat-feed-helper-btn"
+                  onClick={() => requestReply(suggestion)}
+                  disabled={isLoading || isListening}
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+            {coachWheelResult ? (
+              <p className="chat-feed-helper-hint" aria-live="polite">Latest surprise: {coachWheelResult}</p>
+            ) : null}
+          </div>
+        </section>
+
+        <section className="composer-panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Extras Toolbox</h2>
+              <p>All optional helpers in one place.</p>
+            </div>
+          </div>
+
+          <div className="mission-card">
+            <p className="mission-title">Practice Missions</p>
+            <div className="mission-grid">
+              {practiceMissions.map((mission) => (
+                <button
+                  key={mission.title}
+                  type="button"
+                  className="mission-btn"
+                  onClick={() => {
+                    triggerTutorExcitement();
+                    requestReply(mission.prompt);
+                  }}
+                  disabled={isLoading || isListening}
+                >
+                  {mission.title}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="coach-guide-card">
+            <p className="coach-guide-title">Coach Guide</p>
+            <div className="coach-guide-list">
+              {coachGuideTips.map((tip) => (
+                <div key={tip} className="coach-guide-item">
+                  <span className="coach-guide-dot" aria-hidden="true" />
+                  <span>{tip}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {smartFollowUps.length > 0 && (
+            <div className="smart-followups-card" aria-label="AI smart follow-ups">
+              <p className="smart-followups-title">Smart Reply Suggestions</p>
+              <div className="smart-followups-grid">
+                {smartFollowUps.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    className="smart-followup-btn"
+                    onClick={() => requestReply(suggestion)}
+                    disabled={isLoading || isListening}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
       </div>
       ) : (
       <div className="workspace-panel workspace-panel-lab">
