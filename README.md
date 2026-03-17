@@ -91,6 +91,11 @@ flowchart LR
     STREAM -. fail .-> GEN --> PLAY
     GEN -. fail .-> BROWSER --> PLAY
   end
+
+  classDef dark fill:#111827,stroke:#374151,color:#E5E7EB,stroke-width:1.2px;
+  classDef decision fill:#1F2937,stroke:#6B7280,color:#F9FAFB,stroke-width:1.2px;
+  class U,FE,API,LIVE,FALL,REPLY,TTS,STREAM,GEN,BROWSER,PLAY dark;
+  class PRI decision;
 ```
 
 ## Project Structure
