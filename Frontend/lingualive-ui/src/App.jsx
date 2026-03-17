@@ -1982,6 +1982,26 @@ function App() {
               </div>
             )}
 
+            {chat.length > 0 && !isLoading && (
+              <div className="chat-feed-helper" aria-label="Continue practice ideas">
+                <p className="chat-feed-helper-title">Keep the flow going</p>
+                <p className="chat-feed-helper-copy">Use one prompt to continue speaking naturally in {activeLanguage.label}.</p>
+                <div className="chat-feed-helper-actions">
+                  {activeLanguage.suggestions.slice(0, 3).map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      className="chat-feed-helper-btn"
+                      onClick={() => requestReply(suggestion)}
+                      disabled={isListening}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div ref={chatEndRef} />
           </div>
         </section>

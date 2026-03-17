@@ -1,186 +1,184 @@
-# MoonSpeak AI
+# LinguaLive AI
 
-## Voice Tutor That Talks Back
+LinguaLive AI is a voice-first language practice app for live speaking exercises. It combines a React frontend, an Express backend, browser speech recognition, AI-generated coaching, and Murf voice playback so users can practice conversation in multiple languages.
 
-MoonSpeak AI is a multilingual, voice-first speaking coach that feels like a live conversation, not a worksheet.
+Some parts of the current codebase and deployed services still use the MoonSpeak name. This README focuses on how the project works and how to run it.
 
-You speak. It responds with coaching. It talks back instantly using Murf Falcon.
+## What It Does
 
-Built for Murf AI Voice Hackathon 2026.
+- Lets users practice spoken conversation in multiple languages
+- Uses browser speech recognition for voice input
+- Sends prompts and recent conversation history to the backend
+- Generates coaching responses through configured AI providers
+- Streams spoken replies with Murf and falls back when needed
+- Keeps local chat history and practice progress in the frontend
 
-## Live Links
+## Main Features
 
-| Surface | URL |
-|---|---|
-| Frontend | https://athiq2u.github.io/MoonSpeak-AI/ |
-| Backend API | https://moonspeak-ai-backend.onrender.com |
-| Health Check | https://moonspeak-ai-backend.onrender.com/healthz |
+- Real-time speaking practice
+- Multilingual language selection
+- AI provider fallback support
+- Text and voice reply playback
+- Localized fallback coaching when AI providers are unavailable
+- Health endpoint for backend status checks
 
-## 60-Second Pitch
+## Tech Stack
 
-Most language apps train typing. Real life needs speaking.
+- Frontend: React 19, Vite
+- Backend: Node.js, Express
+- AI providers: OpenRouter, OpenAI, Gemini
+- Voice: Murf
 
-MoonSpeak AI closes that gap with a real-time loop:
+## Project Structure
 
-1. User speaks in their chosen language.
-2. Browser speech recognition captures text.
-3. Backend generates a tutor-style reply via provider chain.
-4. Murf Falcon streams voice output immediately.
-5. User repeats, improves, and builds fluency.
-
-## Why This Feels Different
-
-- Voice first, not text first.
-- Multilingual by design, not bolted on.
-- Online AI with automatic fallback chain.
-- Spoken response latency optimized for demo flow.
-- Still works in degraded mode (AI/TTS fallbacks).
-
-## Demo Script (Hackathon Friendly)
-
-Use this flow during judging for maximum impact:
-
-1. Open the frontend link and select Tamil or Hindi.
-2. Speak one line naturally.
-3. Show live tutor reply and source badge.
-4. Play Murf voice response.
-5. Switch to English and repeat.
-6. Open health URL and show provider readiness.
-
-Total time: ~90 seconds.
-
-## "Crazy" Moments To Show
-
-- Language switch mid-demo without page reload.
-- Voice response that sounds like a coach, not a robotic assistant.
-- AI provider chain behavior without user interruption.
-- Speaking practice feels like roleplay, not form filling.
-
-## Core Features
-
-- Voice-first tutoring loop
-- Murf Falcon streaming with generated-audio fallback
-- AI provider priority modes: `openrouter-first`, `openai-first`, `gemini-first`, plus provider-only modes
-- Multilingual support: English, Hindi, Bengali, Telugu, Tamil, Spanish, French, German, Italian, Portuguese, Japanese, Korean, Chinese, Arabic
-- Browser speech recognition by selected language
-- Localized coach fallback replies when providers fail
-- Offline-capable fallback UX when backend is unavailable
-
-## Architecture
-
-```mermaid
-flowchart LR
-  A[User] --> B[React Frontend]
-  B --> C[Browser Speech Recognition]
-  C --> B
-  B -->|POST /speak| D[Express Backend]
-  D --> E[AI Provider Chain]
-  E --> D
-  D --> F[Localized Fallback]
-  F --> D
-  D -->|GET /tts-stream| G[Murf Falcon Stream]
-  G --> D
-  D --> H[Murf Generated Audio Fallback]
-  H --> D
-  D --> B
-  B --> I[Live Audio Playback]
-  I --> A
+```text
+.
+|-- Backend/
+|   |-- aiService.js
+|   |-- languageConfig.js
+|   |-- murfService.js
+|   |-- server.js
+|   `-- tests/
+|-- Frontend/
+|   `-- lingualive-ui/
+|       |-- src/
+|       |-- public/
+|       `-- vite.config.js
+|-- docs/
+|-- render.yaml
+`-- README.md
 ```
 
-## Stack
+## Requirements
 
-- Frontend: React + Vite
-- Backend: Node.js + Express
-- AI: OpenRouter + OpenAI + Gemini (priority configurable)
-- Voice: Murf Falcon stream first, generated-audio fallback second
+- Node.js 20 or newer
+- npm
+- A Murf API key
+- At least one AI provider key
 
-## Quick Start (Local)
+## Environment Variables
 
-### 1. Install
+Backend configuration lives in `Backend/.env`.
+
+Create it from the example file:
+
+```powershell
+Copy-Item Backend/.env.example Backend/.env
+```
+
+Available backend variables:
+
+```env
+GEMINI_API_KEY=
+OPENAI_API_KEY=
+OPENROUTER_API_KEY=
+AI_PROVIDER_PRIORITY=gemini-first
+OPENAI_MODEL=gpt-4o-mini
+GEMINI_MODEL=gemini-2.0-flash
+OPENROUTER_MODEL=openai/gpt-4o-mini
+OPENROUTER_SITE_URL=
+OPENROUTER_APP_NAME=MoonSpeak AI
+MURF_API_KEY=
+MURF_STREAM_URL=
+MURF_DEFAULT_VOICE_ID=Natalie
+MURF_VOICE_MAP={}
+```
+
+Frontend configuration:
+
+- `VITE_API_BASE_URL` points the frontend to the backend API
+- In local development, a typical value is `http://localhost:5000`
+
+## Installation
+
+Install backend dependencies:
 
 ```powershell
 Set-Location Backend
 npm install
+```
+
+Install frontend dependencies:
+
+```powershell
 Set-Location ..\Frontend\lingualive-ui
 npm install
 ```
 
-### 2. Configure Backend
+## Running Locally
 
-```powershell
-Copy-Item ..\..\Backend\.env.example ..\..\Backend\.env
-```
-
-Recommended `Backend/.env`:
-
-```env
-MURF_API_KEY=your_real_murf_key_here
-OPENROUTER_API_KEY=your_real_openrouter_key_here
-OPENROUTER_MODEL=openai/gpt-4o-mini
-OPENROUTER_SITE_URL=https://athiq2u.github.io/MoonSpeak-AI/
-OPENROUTER_APP_NAME=MoonSpeak AI
-GEMINI_API_KEY=your_real_gemini_key_here
-OPENAI_API_KEY=
-AI_PROVIDER_PRIORITY=openrouter-first
-```
-
-### 3. Run
-
-Backend terminal:
+Start the backend:
 
 ```powershell
 Set-Location Backend
 npm run start
 ```
 
-Frontend terminal:
+Start the frontend in a separate terminal:
 
 ```powershell
-Set-Location Frontend/lingualive-ui
+Set-Location Frontend\lingualive-ui
 npm run dev
 ```
 
-Defaults:
+Local defaults:
 
-- Frontend: http://localhost:5173
-- Backend: http://localhost:5000
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:5000`
 
-## Deploy
+## Root Scripts
 
-### Frontend (GitHub Pages)
+The root `package.json` provides convenience commands:
 
-Push to `main` to trigger pages deploy via workflow.
+```powershell
+npm run start
+npm run start:backend
+npm run dev
+npm run dev:frontend
+npm run build
+```
 
-### Backend (Render)
+## Backend Scripts
 
-Use `render.yaml` blueprint or create a manual web service with:
+From `Backend/`:
 
-- Root Directory: `Backend`
-- Build Command: `npm install`
-- Start Command: `npm run start`
-- Health Path: `/healthz`
+```powershell
+npm run dev
+npm run start
+npm run check
+npm run test
+```
 
-Required env vars on Render:
+## Frontend Scripts
 
-- `MURF_API_KEY`
-- At least one AI key: `OPENROUTER_API_KEY` or `OPENAI_API_KEY` or `GEMINI_API_KEY`
-- Recommended: `AI_PROVIDER_PRIORITY=openrouter-first`
+From `Frontend/lingualive-ui/`:
 
-## API Reference
+```powershell
+npm run dev
+npm run build
+npm run preview
+npm run lint
+```
+
+## API Endpoints
 
 ### `GET /`
 
-Basic status check.
+Returns a basic API status response.
 
 ### `GET /healthz`
 
-Provider and service readiness.
+Returns backend health information, including whether Murf and AI providers are configured.
 
 ### `POST /speak`
 
+Sends user text and recent history to the backend and returns a generated reply.
+
+Example request body:
+
 ```json
 {
-  "text": "Hello, help me practice speaking.",
+  "text": "Help me practice a short self introduction.",
   "history": [],
   "language": "en-US"
 }
@@ -188,35 +186,68 @@ Provider and service readiness.
 
 ### `GET /tts-stream`
 
-Query params: `text`, `language`
+Streams or returns generated speech audio for a text response.
 
-## Reliability Model
+Query parameters:
 
-- Providers are tried in `AI_PROVIDER_PRIORITY` order.
-- If one fails, the next provider is used automatically.
-- If all fail, localized tutor fallback responses are returned.
-- If Murf stream fails, generated-audio path is attempted.
+- `text`
+- `language`
 
-## Production Snapshot (March 2026)
+## Supported Languages
 
-- Frontend live on GitHub Pages
-- Backend live on Render
-- Health endpoint returns `status: ok`
-- Verified `replySource=openrouter` and `isFallback=false` for English and Tamil
+The frontend currently includes options for:
+
+- English (US)
+- English (India)
+- Hindi
+- Spanish
+- French
+- German
+- Italian
+- Portuguese
+- Japanese
+- Korean
+- Chinese
+- Arabic
+- Bengali
+- Tamil
+- Telugu
+
+## Deployment
+
+The backend is set up for Render through `render.yaml`.
+
+Current Render settings in the repo:
+
+- Root directory: `Backend`
+- Build command: `npm install`
+- Start command: `npm run start`
+- Health check path: `/healthz`
+
+The `docs/` folder contains a built frontend output that can be used for static hosting.
 
 ## Troubleshooting
 
-No live AI replies:
+If the frontend cannot get live replies:
 
-- Confirm backend URL is reachable.
-- Confirm at least one AI key is configured.
-- Check `/healthz` provider flags.
+- Check that the backend is running
+- Confirm `VITE_API_BASE_URL` points to the correct backend
+- Confirm at least one AI provider key is configured
+- Check `GET /healthz` for provider status
 
-Voice inconsistency across browsers:
+If voice playback fails:
 
-- Use Chrome-based browsers for best speech recognition.
-- Device voice availability impacts browser fallback output.
+- Confirm `MURF_API_KEY` is set
+- Check backend logs for TTS errors
+- Verify the browser allows audio playback
 
----
+If speech recognition behaves inconsistently:
 
-**MoonSpeak AI: Speak. Get coached. Hear it back. Repeat.**
+- Test in a Chromium-based browser
+- Confirm the selected language matches the practice language
+
+## Notes
+
+- The backend limits input text length to 500 characters per request
+- The backend trims history before sending it to providers
+- When live AI is unavailable, the app can return built-in fallback coaching
