@@ -142,24 +142,11 @@ Built-in quick actions in the tutor panel:
 ## Workspace Navigation Flowchart
 
 ```mermaid
-flowchart LR
-	PR[Practice] --> MT[More Tools]
-	PR --> CL[Coach Lab]
-	MT --> PR
-	MT --> CL
-	CL --> PR
-	CL --> MT
-
-	MT --> M1[Scenarios and Missions]
-	MT --> M2[Vocabulary / Pronunciation / Grammar]
-	MT --> M3[Smart Follow-ups / Recent Prompts]
-	CL --> C1[Lab Challenge Packs]
-	CL --> C2[Coach Wheel]
-	CL --> C3[Shadow Drill]
-	CL --> C4[Badges and Milestones]
+flowchart TD
+	IN["1. Input<br/>User Voice/Text<br/>Frontend"] --> CO["2. Coaching<br/>POST /speak<br/>Provider Priority<br/>Gemini/OpenAI/OpenRouter<br/>Built-in Coach Fallback<br/>Coach Reply"]
 
 	classDef dark fill:#111827,stroke:#374151,color:#E5E7EB,stroke-width:1.2px;
-	class PR,MT,CL,M1,M2,M3,C1,C2,C3,C4 dark;
+	class IN,CO dark;
 ```
 
 ## Troubleshooting
