@@ -34,6 +34,17 @@
   padding: 32px;
 }
 
+.hero-top-controls {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 6;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .hero-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
@@ -2820,6 +2831,14 @@
 
   .hero-panel {
     padding: 18px;
+    padding-top: 68px;
+  }
+
+  .hero-top-controls {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    justify-content: flex-end;
   }
 
   .hero-figure {

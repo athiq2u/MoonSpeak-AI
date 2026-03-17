@@ -1033,6 +1033,7 @@ function App() {
 
     const closeFeatureTour = useCallback((markSeen = true) => {
       setIsFeatureTourOpen(false);
+      setActiveWorkspacePage("practice");
 
       if (!markSeen) {
         return;
@@ -2121,6 +2122,19 @@ function App() {
   return (
     <main className={`app-shell theme-${themeMode}`}>
       <header className="hero-panel">
+        <div className="hero-top-controls" role="group" aria-label="Theme and tour controls">
+          <button type="button" className="status-check-button" onClick={openFeatureTour}>
+            ✨ Tour
+          </button>
+          <button
+            type="button"
+            className="status-check-button"
+            onClick={() => setThemeMode((currentMode) => (currentMode === "dark" ? "light" : "dark"))}
+          >
+            {themeMode === "dark" ? "☀️ Light" : "🌙 Dark"}
+          </button>
+        </div>
+
         <div className="hero-grid">
           <div className="hero-copy-panel">
             <p className="eyebrow">Powered by Murf Falcon</p>
@@ -2171,16 +2185,6 @@ function App() {
               <span className={`status-pill status-pill-muted ${isActive ? "status-pill-active" : ""}`}>
                 {isListening ? "🎙 Listening…" : isLoading ? "⏳ Thinking…" : isSpeaking ? "🔊 Speaking…" : "Ready"}
               </span>
-              <button type="button" className="status-check-button" onClick={openFeatureTour}>
-                ✨ Tour
-              </button>
-              <button
-                type="button"
-                className="status-check-button"
-                onClick={() => setThemeMode((currentMode) => (currentMode === "dark" ? "light" : "dark"))}
-              >
-                {themeMode === "dark" ? "☀️ Light" : "🌙 Dark"}
-              </button>
             </div>
 
             {assistantNotice && (
