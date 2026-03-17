@@ -17,6 +17,8 @@ const FOCUS_SECONDS_GOAL = 300;
 const STORAGE_KEY = "lingualive_chat";
 const STREAK_STORAGE_KEY = "lingualive_streak";
 const ACHIEVEMENTS_STORAGE_KEY = "lingualive_achievements";
+const FEATURE_TOUR_STORAGE_KEY = "lingualive_feature_tour_seen";
+const FEATURE_TOUR_VERSION = "2026.03.17";
 const DEFAULT_LANGUAGE_ID = "en-US";
 const TUTOR_NAME = "Moon";
 const MANUAL_PLAYBACK_NOTICE = "Tap play to hear the reply on this phone. Some mobile browsers block autoplay until you interact.";
@@ -452,6 +454,53 @@ const DIFFICULTY_LEVELS = [
   { level: "Advanced", emoji: "🔴", description: "Sophisticated vocabulary, nuanced topics, idiomatic phrases", prompt: "Challenge me with advanced-level English and sophisticated vocabulary." }
 ];
 
+const FEATURE_TOUR_STEPS = [
+  {
+    title: "What is new",
+    description: "MoonSpeak now includes a guided onboarding flow so users can quickly discover main features.",
+    points: [
+      "Voice-first practice with instant replies.",
+      "Practice and extras workspaces are easier to navigate.",
+      "Progress, streak, and challenge tools are ready out of the box."
+    ],
+    page: "practice",
+    selector: '[data-tour="workspace-nav"]'
+  },
+  {
+    title: "Voice first practice",
+    description: "Start speaking in one tap, switch language quickly, and get coach responses instantly.",
+    points: [
+      "Tap Start Speaking in Voice First.",
+      "Use Replay Last to hear the latest response.",
+      "Type in the composer anytime as backup."
+    ],
+    page: "practice",
+    selector: '[data-tour="voice-first"]'
+  },
+  {
+    title: "Extras and tools",
+    description: "Use ready-made scenarios, difficulty levels, and conversation topics to train faster.",
+    points: [
+      "Try Interview, Travel, Story, and Debate prompts.",
+      "Pick Beginner, Intermediate, or Advanced level.",
+      "Use quick tools for grammar and pronunciation practice."
+    ],
+    page: "extras",
+    selector: '[data-tour="extras-scenarios"]'
+  },
+  {
+    title: "Coach lab",
+    description: "Track progress and run challenge drills to improve confidence over time.",
+    points: [
+      "Monitor XP, goals, and streak progress.",
+      "Use Coach Wheel for random speaking tasks.",
+      "Run Shadow Drill for voice matching."
+    ],
+    page: "coach-lab",
+    selector: '[data-tour="coach-progress"]'
+  }
+];
+
 function formatPracticeTime(totalSeconds) {
   if (totalSeconds < 60) { return `${totalSeconds}s`; }
   return `${Math.floor(totalSeconds / 60)}m ${totalSeconds % 60}s`;
@@ -601,6 +650,83 @@ const ChatBubble = memo(function ChatBubble({ message, tutorName, onTaskClick })
   );
 });
 
+const FeatureTourModal = memo(function FeatureTourModal({
+  isOpen,
+  step,
+  stepIndex,
+  totalSteps,
+  isLastStep,
+  spotlightRect,
+  onBack,
+  onNext,
+  onSkip,
+  onOpenPage
+}) {
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <div className="feature-tour-overlay" role="dialog" aria-modal="true" aria-label="Feature tour">
+      {spotlightRect ? (
+        <div
+          className="feature-tour-spotlight"
+          style={{
+            top: `${spotlightRect.top}px`,
+            left: `${spotlightRect.left}px`,
+            width: `${spotlightRect.width}px`,
+            height: `${spotlightRect.height}px`
+          }}
+          aria-hidden="true"
+        />
+      ) : null}
+      <div className="feature-tour-card">
+        <p className="feature-tour-kicker">Feature Tour</p>
+        <h3>{step.title}</h3>
+        <p className="feature-tour-copy">{step.description}</p>
+        <ul className="feature-tour-points">
+          {step.points.map((point) => (
+            <li key={point}>{point}</li>
+          ))}
+        </ul>
+
+        <div className="feature-tour-progress" aria-hidden="true">
+          {Array.from({ length: totalSteps }).map((_, idx) => (
+            <span
+              key={`tour-dot-${idx + 1}`}
+              className={`feature-tour-dot ${idx === stepIndex ? "feature-tour-dot-active" : ""}`}
+            />
+          ))}
+        </div>
+
+        <div className="feature-tour-actions">
+          <button type="button" className="panel-ghost-btn" onClick={onSkip}>Skip</button>
+          {step.page ? (
+            <button
+              type="button"
+              className="panel-ghost-btn"
+              onClick={() => onOpenPage(step.page)}
+            >
+              Open section
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="panel-ghost-btn"
+            onClick={onBack}
+            disabled={stepIndex === 0}
+          >
+            Back
+          </button>
+          <button type="button" className="primary-button" onClick={onNext}>
+            {isLastStep ? "Finish" : "Next"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 function App() {
   const [text, setText] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
@@ -674,6 +800,9 @@ function App() {
   const [bestShadowScore, setBestShadowScore] = useState(0);
   const [languagesUsed, setLanguagesUsed] = useState(() => new Set([DEFAULT_LANGUAGE_ID]));
   const [practiceSeconds, setPracticeSeconds] = useState(0);
+  const [isFeatureTourOpen, setIsFeatureTourOpen] = useState(false);
+  const [featureTourStepIndex, setFeatureTourStepIndex] = useState(0);
+  const [featureTourSpotlight, setFeatureTourSpotlight] = useState(null);
 
   const chatEndRef = useRef(null);
   const audioRef = useRef(null);
@@ -860,6 +989,140 @@ function App() {
       : backendStatus === "checking"
         ? "Checking AI"
         : "Backend offline";
+    const activeFeatureTourStep = FEATURE_TOUR_STEPS[featureTourStepIndex] || FEATURE_TOUR_STEPS[0];
+    const isLastFeatureTourStep = featureTourStepIndex === FEATURE_TOUR_STEPS.length - 1;
+
+    const updateFeatureTourSpotlight = useCallback(() => {
+      if (!isFeatureTourOpen || typeof document === "undefined") {
+        setFeatureTourSpotlight(null);
+        return;
+      }
+
+      const selector = activeFeatureTourStep?.selector;
+
+      if (!selector) {
+        setFeatureTourSpotlight(null);
+        return;
+      }
+
+      const targetElement = document.querySelector(selector);
+
+      if (!targetElement) {
+        setFeatureTourSpotlight(null);
+        return;
+      }
+
+      const rect = targetElement.getBoundingClientRect();
+      const padding = 8;
+      setFeatureTourSpotlight({
+        top: Math.max(6, rect.top - padding),
+        left: Math.max(6, rect.left - padding),
+        width: Math.max(20, rect.width + (padding * 2)),
+        height: Math.max(20, rect.height + (padding * 2))
+      });
+    }, [activeFeatureTourStep, isFeatureTourOpen]);
+
+    const closeFeatureTour = useCallback((markSeen = true) => {
+      setIsFeatureTourOpen(false);
+
+      if (!markSeen) {
+        return;
+      }
+
+      try {
+        localStorage.setItem(FEATURE_TOUR_STORAGE_KEY, FEATURE_TOUR_VERSION);
+      } catch {
+        // storage unavailable - ignore
+      }
+    }, []);
+
+    const openFeatureTour = useCallback(() => {
+      setFeatureTourStepIndex(0);
+      setIsFeatureTourOpen(true);
+    }, []);
+
+    const handleFeatureTourNext = useCallback(() => {
+      if (isLastFeatureTourStep) {
+        closeFeatureTour(true);
+        return;
+      }
+
+      setFeatureTourStepIndex((currentStep) => Math.min(FEATURE_TOUR_STEPS.length - 1, currentStep + 1));
+    }, [closeFeatureTour, isLastFeatureTourStep]);
+
+    const handleFeatureTourBack = useCallback(() => {
+      setFeatureTourStepIndex((currentStep) => Math.max(0, currentStep - 1));
+    }, []);
+
+    const handleFeatureTourSkip = useCallback(() => {
+      closeFeatureTour(true);
+    }, [closeFeatureTour]);
+
+    useEffect(() => {
+      try {
+        const seenVersion = localStorage.getItem(FEATURE_TOUR_STORAGE_KEY);
+
+        if (seenVersion !== FEATURE_TOUR_VERSION) {
+          setFeatureTourStepIndex(0);
+          setIsFeatureTourOpen(true);
+        }
+      } catch {
+        setFeatureTourStepIndex(0);
+        setIsFeatureTourOpen(true);
+      }
+    }, []);
+
+    useEffect(() => {
+      if (!isFeatureTourOpen || typeof document === "undefined") {
+        return undefined;
+      }
+
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+
+      return () => {
+        document.body.style.overflow = previousOverflow;
+      };
+    }, [isFeatureTourOpen]);
+
+    useEffect(() => {
+      if (!isFeatureTourOpen || !activeFeatureTourStep?.page) {
+        return;
+      }
+
+      setActiveWorkspacePage(activeFeatureTourStep.page);
+    }, [activeFeatureTourStep, isFeatureTourOpen]);
+
+    useEffect(() => {
+      if (!isFeatureTourOpen || typeof window === "undefined") {
+        setFeatureTourSpotlight(null);
+        return undefined;
+      }
+
+      const focusTimer = window.setTimeout(() => {
+        if (typeof document === "undefined") {
+          return;
+        }
+
+        const selector = activeFeatureTourStep?.selector;
+        if (selector) {
+          const targetElement = document.querySelector(selector);
+          targetElement?.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+        }
+
+        window.setTimeout(updateFeatureTourSpotlight, 220);
+      }, 120);
+
+      const handleLayoutChange = () => updateFeatureTourSpotlight();
+      window.addEventListener("resize", handleLayoutChange);
+      window.addEventListener("scroll", handleLayoutChange, true);
+
+      return () => {
+        window.clearTimeout(focusTimer);
+        window.removeEventListener("resize", handleLayoutChange);
+        window.removeEventListener("scroll", handleLayoutChange, true);
+      };
+    }, [activeFeatureTourStep, isFeatureTourOpen, updateFeatureTourSpotlight]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -1848,7 +2111,7 @@ function App() {
               Current language: {activeLanguage.label}. If a Murf locale is unavailable, audio falls back to the default English voice.
             </p>
 
-            <div className="workspace-nav" role="tablist" aria-label="Workspace pages">
+            <div className="workspace-nav" role="tablist" aria-label="Workspace pages" data-tour="workspace-nav">
               <button
                 type="button"
                 role="tab"
@@ -1886,6 +2149,9 @@ function App() {
               <span className={`status-pill status-pill-muted ${isActive ? "status-pill-active" : ""}`}>
                 {isListening ? "🎙 Listening…" : isLoading ? "⏳ Thinking…" : isSpeaking ? "🔊 Speaking…" : "Ready"}
               </span>
+              <button type="button" className="status-check-button" onClick={openFeatureTour}>
+                ✨ Tour
+              </button>
             </div>
 
             {assistantNotice && (
@@ -2089,7 +2355,7 @@ function App() {
             <span className="language-picker-hint">{activeLanguage.summary}</span>
           </label>
 
-          <div className="voice-launch-card">
+          <div className="voice-launch-card" data-tour="voice-first">
             <p className="voice-launch-label">Primary input · {activeLanguage.label}</p>
             <button
               onClick={startListening}
@@ -2306,7 +2572,7 @@ function App() {
             </div>
           </div>
 
-          <div className="scenario-row" aria-label="Practice scenarios">
+          <div className="scenario-row" aria-label="Practice scenarios" data-tour="extras-scenarios">
             {SCENARIO_CARDS.map((scenario) => (
               <button
                 key={scenario.id}
@@ -2724,7 +2990,7 @@ function App() {
             </div>
           </div>
 
-          <div className="progress-card" aria-live="polite">
+          <div className="progress-card" aria-live="polite" data-tour="coach-progress">
             <div className="progress-head">
               <p className="progress-title">Progress Mode</p>
               <span className="progress-level">Level {coachLevel}</span>
@@ -2861,6 +3127,19 @@ function App() {
         </section>
       </div>
       )}
+
+      <FeatureTourModal
+        isOpen={isFeatureTourOpen}
+        step={activeFeatureTourStep}
+        stepIndex={featureTourStepIndex}
+        totalSteps={FEATURE_TOUR_STEPS.length}
+        isLastStep={isLastFeatureTourStep}
+        spotlightRect={featureTourSpotlight}
+        onBack={handleFeatureTourBack}
+        onNext={handleFeatureTourNext}
+        onSkip={handleFeatureTourSkip}
+        onOpenPage={setActiveWorkspacePage}
+      />
     </main>
   );
 }

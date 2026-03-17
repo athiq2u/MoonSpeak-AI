@@ -3260,3 +3260,136 @@
 .app-shell.theme-light .hero-metric-tile strong {
   color: #2b394c;
 }
+
+/* ================================
+   Feature Tour
+   ================================ */
+.feature-tour-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: rgba(5, 10, 18, 0.74);
+  backdrop-filter: blur(6px);
+}
+
+.feature-tour-spotlight {
+  position: fixed;
+  z-index: 1001;
+  border-radius: 16px;
+  border: 2px solid rgba(124, 216, 255, 0.92);
+  box-shadow:
+    0 0 0 9999px rgba(5, 10, 18, 0.42),
+    0 0 0 6px rgba(124, 216, 255, 0.18),
+    0 18px 32px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+.feature-tour-card {
+  width: min(100%, 500px);
+  position: relative;
+  z-index: 1002;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(160deg, rgba(10, 20, 38, 0.98), rgba(16, 31, 54, 0.96));
+  box-shadow: 0 26px 72px rgba(0, 0, 0, 0.45);
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.feature-tour-kicker {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9fd9ff;
+}
+
+.feature-tour-card h3 {
+  margin: 0;
+  font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+  color: #f4f8ff;
+}
+
+.feature-tour-copy {
+  margin: 0;
+  color: rgba(224, 234, 255, 0.82);
+  line-height: 1.45;
+  font-size: 0.9rem;
+}
+
+.feature-tour-points {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.feature-tour-points li {
+  border: 1px solid rgba(154, 216, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(122, 196, 255, 0.08);
+  padding: 8px 10px;
+  color: rgba(233, 241, 255, 0.9);
+  font-size: 0.82rem;
+}
+
+.feature-tour-progress {
+  display: flex;
+  gap: 6px;
+}
+
+.feature-tour-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.feature-tour-dot-active {
+  background: linear-gradient(135deg, #7cd8ff, #fda172);
+}
+
+.feature-tour-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.feature-tour-actions .primary-button {
+  min-width: 94px;
+  min-height: 34px;
+  padding: 8px 12px;
+  font-size: 0.84rem;
+}
+
+.feature-tour-actions .panel-ghost-btn {
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 640px) {
+  .feature-tour-card {
+    width: min(100%, 420px);
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .feature-tour-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .feature-tour-actions .panel-ghost-btn,
+  .feature-tour-actions .primary-button {
+    width: 100%;
+    min-height: 38px;
+  }
+}
