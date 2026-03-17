@@ -1783,7 +1783,7 @@ function App() {
                 className={`workspace-nav-button ${activeWorkspacePage === "extras" ? "workspace-nav-button-active" : ""}`}
                 onClick={() => setActiveWorkspacePage("extras")}
               >
-                More Tools
+                Extras
               </button>
               <button
                 type="button"
@@ -2011,13 +2011,6 @@ function App() {
             <p className="voice-copy">
               Speak in {activeLanguage.label}. Typing is still available as backup.
             </p>
-            <button
-              type="button"
-              className="secondary-button voice-tools-button"
-              onClick={() => setActiveWorkspacePage("extras")}
-            >
-              Open More Tools
-            </button>
           </div>
 
           <textarea
@@ -2132,13 +2125,6 @@ function App() {
               <h2>Extras</h2>
               <p>Optional quick-start and suggestion blocks.</p>
             </div>
-            <button
-              type="button"
-              className="clear-button"
-              onClick={() => setActiveWorkspacePage("practice")}
-            >
-              Back To Practice
-            </button>
           </div>
 
           <div className="left-focus-card" aria-label="Today's speaking focus">
