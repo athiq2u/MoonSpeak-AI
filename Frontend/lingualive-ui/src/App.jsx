@@ -12,8 +12,6 @@ const API_URL = `${API_BASE_URL}/speak`;
 const TTS_STREAM_URL = `${API_BASE_URL}/tts-stream`;
 const MAX_CHARS = 500;
 const API_TIMEOUT_MS = 12000;
-const DAILY_TURN_GOAL = 8;
-const FOCUS_SECONDS_GOAL = 300;
 const STORAGE_KEY = "lingualive_chat";
 const STREAK_STORAGE_KEY = "lingualive_streak";
 const ACHIEVEMENTS_STORAGE_KEY = "lingualive_achievements";
@@ -821,10 +819,6 @@ function App() {
     const xpRangeForLevel = useMemo(() => Math.max(1, nextLevelTarget - currentLevelFloor), [nextLevelTarget, currentLevelFloor]);
     const levelProgressPercent = useMemo(() => Math.min(100, Math.round((xpIntoCurrentLevel / xpRangeForLevel) * 100)), [xpIntoCurrentLevel, xpRangeForLevel]);
     const xpToNextLevel = useMemo(() => Math.max(0, nextLevelTarget - experiencePoints), [nextLevelTarget, experiencePoints]);
-    const dailyGoalTurns = useMemo(() => Math.min(DAILY_TURN_GOAL, chatStats.turns), [chatStats.turns]);
-    const dailyGoalPercent = useMemo(() => Math.round((dailyGoalTurns / DAILY_TURN_GOAL) * 100), [dailyGoalTurns]);
-    const focusGoalSeconds = useMemo(() => Math.min(FOCUS_SECONDS_GOAL, practiceSeconds), [practiceSeconds]);
-    const focusGoalPercent = useMemo(() => Math.round((focusGoalSeconds / FOCUS_SECONDS_GOAL) * 100), [focusGoalSeconds]);
 
   useEffect(() => {
       const hasConversationStarted = chat.some((message) => message.role === "user");
@@ -2064,37 +2058,6 @@ function App() {
               >
                 Replay Last
               </button>
-            </div>
-          </div>
-
-          <div className="practice-progress-card" aria-live="polite">
-            <div className="practice-progress-head">
-              <p className="practice-progress-title">Practice Progress</p>
-              <span className="practice-progress-level">Level {coachLevel}</span>
-            </div>
-            <div className="practice-progress-row">
-              <span className="practice-progress-chip">XP: {experiencePoints}</span>
-              <span className="practice-progress-chip">Next: {xpToNextLevel} XP</span>
-            </div>
-            <div className="practice-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={levelProgressPercent}>
-              <span className="practice-progress-fill" style={{ width: `${levelProgressPercent}%` }} />
-            </div>
-          </div>
-
-          <div className="practice-goals-grid" aria-live="polite">
-            <div className="practice-goal-card">
-              <p className="practice-goal-title">Daily Goal</p>
-              <p className="practice-goal-copy">Turns: {dailyGoalTurns}/{DAILY_TURN_GOAL}</p>
-              <div className="practice-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={dailyGoalPercent}>
-                <span className="practice-progress-fill" style={{ width: `${dailyGoalPercent}%` }} />
-              </div>
-            </div>
-            <div className="practice-goal-card">
-              <p className="practice-goal-title">Focus Time</p>
-              <p className="practice-goal-copy">{formatPracticeTime(practiceSeconds)} / {formatPracticeTime(FOCUS_SECONDS_GOAL)}</p>
-              <div className="practice-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={focusGoalPercent}>
-                <span className="practice-progress-fill" style={{ width: `${focusGoalPercent}%` }} />
-              </div>
             </div>
           </div>
 
