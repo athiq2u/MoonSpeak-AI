@@ -63,15 +63,34 @@ MoonSpeak-AI is a voice-first language practice app for live speaking exercises.
 
 ```mermaid
 flowchart TD
-  A[Input: user voice or text]
-  B[Coach Engine: POST /speak with provider priority]
-  C[Voice Engine: GET /tts-stream with fallbacks]
-  D[Experience: reply, audio, and progress updates]
+  subgraph S1[1. Input]
+    U[User Voice/Text]
+    FE[Frontend]
+    U --> FE
+  end
 
-  A --> B --> C --> D
+  subgraph S2[2. Coaching]
+    API[POST /speak]
+    PRI{Provider Priority}
+    LIVE[Gemini/OpenAI/OpenRouter]
+    FALL[Built-in Coach Fallback]
+    REPLY[Coach Reply]
+    FE --> API --> PRI
+    PRI --> LIVE --> REPLY
+    PRI --> FALL --> REPLY
+  end
 
-  classDef dark fill:#0F172A,stroke:#334155,color:#E2E8F0,stroke-width:1.2px;
-  class A,B,C,D dark;
+  subgraph S3[3. Voice Delivery]
+    TTS[GET /tts-stream]
+    STREAM[Murf Live Stream]
+    GEN[Murf Generated Audio]
+    BROWSER[Browser Voice]
+    PLAY[User Hears Reply]
+    REPLY --> TTS --> STREAM
+    STREAM --> PLAY
+    STREAM -. fail .-> GEN --> PLAY
+    GEN -. fail .-> BROWSER --> PLAY
+  end
 ```
 
 ## Project Structure
@@ -335,23 +354,22 @@ Built-in quick actions include:
 ## Workspace Flowchart
 
 ```mermaid
-flowchart TB
-  N[Open App]
-  P[Practice: Coach me, Challenge, Roleplay]
-  M[More Tools: missions, scenarios, tips]
-  L[Coach Lab: wheel, shadow drill, badges]
-  O[Shared Output: AI reply, voice playback, XP updates]
+flowchart LR
+  P[Practice]
+  M[More Tools]
+  C[Coach Lab]
 
-  N --> P
   P <--> M
-  P <--> L
-  M <--> L
-  P --> O
-  M --> O
-  L --> O
+  P <--> C
+  M <--> C
 
-  classDef dark fill:#111827,stroke:#374151,color:#E5E7EB,stroke-width:1.2px;
-  class N,P,M,L,O dark;
+  P --> A1[Coach me, Challenge, Roleplay]
+  M --> A2[Missions, Scenarios, Tips]
+  C --> A3[Coach Wheel, Shadow Drill, Badges]
+
+  A1 --> OUT[AI Reply + Voice Playback]
+  A2 --> OUT
+  A3 --> OUT
 ```
 
 ## Deployment
