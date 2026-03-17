@@ -601,7 +601,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [activeWorkspacePage, setActiveWorkspacePage] = useState("home");
+  const [activeWorkspacePage, setActiveWorkspacePage] = useState("practice");
   const [selectedLanguage, setSelectedLanguage] = useState(DEFAULT_LANGUAGE_ID);
   const [voiceDeliveryMode, setVoiceDeliveryMode] = useState("idle");
   const [isAudioLoading, setIsAudioLoading] = useState(false);
@@ -1603,27 +1603,16 @@ function App() {
     requestReply(activeLanguage.suggestions[2] || activeLanguage.demoPrompt);
   };
 
-  const openWorkspacePage = (nextPage) => {
-    setActiveWorkspacePage(nextPage);
-  };
-
-  const launchPracticePrompt = (prompt) => {
-    setActiveWorkspacePage("practice");
-    if (prompt) {
-      triggerTutorExcitement();
-      requestReply(prompt);
-    }
-  };
-
   const runSurprisePrompt = () => {
     if (isLoading || isListening) {
       return;
     }
 
+    triggerTutorExcitement();
     const selectedPrompt = coachWheelPrompts[Math.floor(Math.random() * coachWheelPrompts.length)] || activeLanguage.demoPrompt;
     setCoachWheelResult(selectedPrompt);
     setAssistantNotice("Surprise prompt launched. Keep your reply short, natural, and confident.");
-    launchPracticePrompt(selectedPrompt);
+    requestReply(selectedPrompt);
   };
 
   const spinCoachWheel = () => {
@@ -1795,18 +1784,9 @@ function App() {
               <button
                 type="button"
                 role="tab"
-                aria-selected={activeWorkspacePage === "home"}
-                className={`workspace-nav-button ${activeWorkspacePage === "home" ? "workspace-nav-button-active" : ""}`}
-                onClick={() => openWorkspacePage("home")}
-              >
-                Home
-              </button>
-              <button
-                type="button"
-                role="tab"
                 aria-selected={activeWorkspacePage === "practice"}
                 className={`workspace-nav-button ${activeWorkspacePage === "practice" ? "workspace-nav-button-active" : ""}`}
-                onClick={() => openWorkspacePage("practice")}
+                onClick={() => setActiveWorkspacePage("practice")}
               >
                 Practice
               </button>
@@ -1815,7 +1795,7 @@ function App() {
                 role="tab"
                 aria-selected={activeWorkspacePage === "coach-lab"}
                 className={`workspace-nav-button ${activeWorkspacePage === "coach-lab" ? "workspace-nav-button-active" : ""}`}
-                onClick={() => openWorkspacePage("coach-lab")}
+                onClick={() => setActiveWorkspacePage("coach-lab")}
               >
                 Coach Lab
               </button>
@@ -1880,63 +1860,29 @@ function App() {
         </div>
       </header>
 
-      {activeWorkspacePage === "home" ? (
-      <div className="workspace-panel workspace-panel-home">
+      {activeWorkspacePage === "practice" ? (
+      <div className="workspace-panel">
         <section className="chat-panel">
           <div className="panel-heading">
             <div>
-              <h2>Start Here</h2>
-              <p>Use the app in a simpler flow: pick a language, start practice, then open Coach Lab only when you want extra tools.</p>
+              <h2>Conversation</h2>
             </div>
+            {chat.length > 0 && (
+              <button className="clear-button" onClick={clearChat}>Clear</button>
+            )}
           </div>
 
-          <label className="language-picker language-picker-compact" htmlFor="language-picker-home">
-            <span className="language-picker-label">Practice language</span>
-            <select
-              id="language-picker-home"
-              className="language-select"
-              value={selectedLanguage}
-              onChange={(event) => handleLanguageChange(event.target.value)}
-            >
-              {LANGUAGE_OPTIONS.map((language) => (
-                <option key={language.id} value={language.id}>{language.label}</option>
-              ))}
-            </select>
-            <span className="language-picker-hint">{activeLanguage.summary}</span>
-          </label>
-
-          <div className="left-focus-card" aria-label="Quick start actions">
+          <div className="left-focus-card" aria-label="Today's speaking focus">
             <div className="left-focus-head left-focus-head-with-icon">
               <div className="left-focus-icon-wrap" aria-hidden="true">
                 <img className="left-focus-icon" src={chatbotAvatar} alt="" />
               </div>
               <div>
-                <p className="left-focus-kicker">Clean start</p>
+                <p className="left-focus-kicker">Today's focus</p>
                 <p className="left-focus-copy">
-                  Begin with one simple action instead of opening every tool at once.
+                  Quick warmup ideas for {activeLanguage.label}. Tap one to start instantly.
                 </p>
               </div>
-            </div>
-            <div className="left-focus-actions">
-              <button type="button" className="left-focus-btn" onClick={() => openWorkspacePage("practice")}>Open Practice</button>
-              <button type="button" className="left-focus-btn" onClick={runSurprisePrompt} disabled={isLoading || isListening}>Surprise Prompt</button>
-              <button type="button" className="left-focus-btn" onClick={() => openWorkspacePage("coach-lab")}>Open Coach Lab</button>
-            </div>
-          </div>
-
-          <div className="stats-strip" aria-live="polite">
-            <span className="stats-chip">Turns: {chatStats.turns}</span>
-            <span className="stats-chip">Streak: {dailyStreak.count} day{dailyStreak.count > 1 ? "s" : ""}</span>
-            <span className="stats-chip">XP: {experiencePoints}</span>
-            {practiceSeconds > 0 && (
-              <span className="stats-chip stats-chip-time">⏱ {formatPracticeTime(practiceSeconds)}</span>
-            )}
-          </div>
-
-          <div className="left-focus-card" aria-label="Quick warmups">
-            <div className="left-focus-head">
-              <p className="left-focus-kicker">Quick warmups</p>
-              <p className="left-focus-copy">Small prompts that take you straight into practice.</p>
             </div>
             <div className="left-focus-actions">
               {leftPanelFocusPrompts.map((item) => (
@@ -1944,7 +1890,7 @@ function App() {
                   key={item.label}
                   type="button"
                   className="left-focus-btn"
-                  onClick={() => launchPracticePrompt(item.prompt)}
+                  onClick={() => requestReply(item.prompt)}
                   disabled={isLoading || isListening}
                 >
                   {item.label}
@@ -1953,30 +1899,16 @@ function App() {
             </div>
           </div>
 
-          <div className="mission-card">
-            <p className="mission-title">Quick Start Missions</p>
-            <div className="mission-grid">
-              {practiceMissions.map((mission) => (
-                <button
-                  key={mission.title}
-                  type="button"
-                  className="mission-btn"
-                  onClick={() => launchPracticePrompt(mission.prompt)}
-                  disabled={isLoading || isListening}
-                >
-                  {mission.title}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="scenario-row" aria-label="Conversation scenarios">
+          <div className="scenario-row" aria-label="Practice scenarios">
             {SCENARIO_CARDS.map((scenario) => (
               <button
                 key={scenario.id}
                 type="button"
                 className="scenario-card"
-                onClick={() => launchPracticePrompt(scenario.prompt)}
+                onClick={() => {
+                  triggerTutorExcitement();
+                  requestReply(scenario.prompt);
+                }}
                 disabled={isLoading || isListening}
               >
                 <span className="scenario-icon" aria-hidden="true">{scenario.icon}</span>
@@ -1984,85 +1916,11 @@ function App() {
               </button>
             ))}
           </div>
-        </section>
-
-        <section className="composer-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Page Guide</h2>
-              <p>Each page now has one clear purpose.</p>
-            </div>
-          </div>
-
-          <div className="coach-guide-card">
-            <p className="coach-guide-title">Use it like this</p>
-            <div className="coach-guide-list">
-              <div className="coach-guide-item">
-                <span className="coach-guide-dot" aria-hidden="true" />
-                <span><strong>Home:</strong> choose language, pick a prompt, and start quickly.</span>
-              </div>
-              <div className="coach-guide-item">
-                <span className="coach-guide-dot" aria-hidden="true" />
-                <span><strong>Practice:</strong> focus only on conversation, voice input, and sending replies.</span>
-              </div>
-              <div className="coach-guide-item">
-                <span className="coach-guide-dot" aria-hidden="true" />
-                <span><strong>Coach Lab:</strong> open advanced items like badges, wheel, drill, and progress only when needed.</span>
-              </div>
-            </div>
-          </div>
-
-          {latestAiMessage ? (
-            <div className="lab-preview-card">
-              <p className="lab-preview-kicker">Latest coach reply</p>
-              <div className="chat-bubble chat-bubble-ai lab-preview-bubble">
-                <span className="chat-role">{TUTOR_NAME}</span>
-                <p>{latestAiMessage.text}</p>
-              </div>
-              <button type="button" className="secondary-button" onClick={() => openWorkspacePage("practice")}>Continue In Practice</button>
-            </div>
-          ) : (
-            <div className="empty-state empty-state-compact">
-              <p className="empty-icon">🧭</p>
-              <p className="empty-copy">Start from a mission or surprise prompt and the conversation will open in the Practice page.</p>
-            </div>
-          )}
-
-          <div className="smart-followups-card" aria-label="Suggested starts">
-            <p className="smart-followups-title">Suggested Starts</p>
-            <div className="smart-followups-grid">
-              {activeLanguage.suggestions.slice(0, 3).map((suggestion) => (
-                <button
-                  key={suggestion}
-                  type="button"
-                  className="smart-followup-btn"
-                  onClick={() => launchPracticePrompt(suggestion)}
-                  disabled={isLoading || isListening}
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-      </div>
-      ) : activeWorkspacePage === "practice" ? (
-      <div className="workspace-panel">
-        <section className="chat-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Conversation</h2>
-              <p>Your focused speaking space. Extra tools live in Coach Lab.</p>
-            </div>
-            {chat.length > 0 && (
-              <button className="clear-button" onClick={clearChat}>Clear</button>
-            )}
-          </div>
 
           <div className="stats-strip" aria-live="polite">
             <span className="stats-chip">Turns: {chatStats.turns}</span>
-            <span className="stats-chip">Language: {activeLanguage.label}</span>
-            <span className="stats-chip">Mode: {isListening ? "Listening" : isLoading ? "Thinking" : isSpeaking ? "Speaking" : "Ready"}</span>
+            <span className="stats-chip">AI replies: {chatStats.aiReplies}</span>
+            <span className="stats-chip">Avg words/reply: {chatStats.avgAiWords}</span>
             {practiceSeconds > 0 && (
               <span className="stats-chip stats-chip-time">⏱ {formatPracticeTime(practiceSeconds)}</span>
             )}
@@ -2174,8 +2032,7 @@ function App() {
         <section className="composer-panel">
           <div className="panel-heading">
             <div>
-              <h2>Practice Controls</h2>
-              <p>Just speak, type, send, and continue.</p>
+              <h2>Voice First</h2>
             </div>
           </div>
 
@@ -2240,6 +2097,57 @@ function App() {
             </p>
           </div>
 
+          <div className="mission-card">
+            <p className="mission-title">Practice Missions</p>
+            <div className="mission-grid">
+              {practiceMissions.map((mission) => (
+                <button
+                  key={mission.title}
+                  type="button"
+                  className="mission-btn"
+                  onClick={() => {
+                    triggerTutorExcitement();
+                    requestReply(mission.prompt);
+                  }}
+                  disabled={isLoading || isListening}
+                >
+                  {mission.title}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="coach-guide-card">
+            <p className="coach-guide-title">Coach Guide</p>
+            <div className="coach-guide-list">
+              {coachGuideTips.map((tip) => (
+                <div key={tip} className="coach-guide-item">
+                  <span className="coach-guide-dot" aria-hidden="true" />
+                  <span>{tip}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {smartFollowUps.length > 0 && (
+            <div className="smart-followups-card" aria-label="AI smart follow-ups">
+              <p className="smart-followups-title">Smart Reply Suggestions</p>
+              <div className="smart-followups-grid">
+                {smartFollowUps.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    className="smart-followup-btn"
+                    onClick={() => requestReply(suggestion)}
+                    disabled={isLoading || isListening}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <textarea
             id="practice-input"
             value={text}
@@ -2262,13 +2170,6 @@ function App() {
             >
               {isLoading ? <span className="btn-spinner" /> : null}
               {isLoading ? "Sending…" : "Send"}
-            </button>
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => openWorkspacePage("coach-lab")}
-            >
-              Open Coach Lab
             </button>
           </div>
 
@@ -2415,125 +2316,6 @@ function App() {
               <p>Challenge mode, progress tracking, and repetition practice.</p>
             </div>
           </div>
-
-          <div className="mission-card">
-            <p className="mission-title">Practice Missions</p>
-            <div className="mission-grid">
-              {practiceMissions.map((mission) => (
-                <button
-                  key={mission.title}
-                  type="button"
-                  className="mission-btn"
-                  onClick={() => launchPracticePrompt(mission.prompt)}
-                  disabled={isLoading || isListening}
-                >
-                  {mission.title}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="coach-guide-card">
-            <p className="coach-guide-title">Coach Guide</p>
-            <div className="coach-guide-list">
-              {coachGuideTips.map((tip) => (
-                <div key={tip} className="coach-guide-item">
-                  <span className="coach-guide-dot" aria-hidden="true" />
-                  <span>{tip}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {smartFollowUps.length > 0 && (
-            <div className="smart-followups-card" aria-label="AI smart follow-ups">
-              <p className="smart-followups-title">Smart Reply Suggestions</p>
-              <div className="smart-followups-grid">
-                {smartFollowUps.map((suggestion) => (
-                  <button
-                    key={suggestion}
-                    type="button"
-                    className="smart-followup-btn"
-                    onClick={() => launchPracticePrompt(suggestion)}
-                    disabled={isLoading || isListening}
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {audioUrl && (
-            <div className="audio-card">
-              <div className="audio-card-header">
-                <span className="reply-label">🔊 Live voice playback</span>
-                <span className={`delivery-badge delivery-badge-${voiceDeliveryMode}`}>
-                  {voiceDeliveryMode === "falcon-stream"
-                    ? "Falcon Live"
-                      : voiceDeliveryMode === "falcon-stream-default-voice"
-                        ? "English Voice Fallback"
-                    : voiceDeliveryMode === "fallback-generate"
-                      ? "Fallback Audio"
-                        : voiceDeliveryMode === "fallback-generate-default-voice"
-                          ? "Generated English Fallback"
-                            : voiceDeliveryMode === "browser-voice"
-                              ? "Browser Voice"
-                      : voiceDeliveryMode === "manual-play"
-                              ? "Tap To Play"
-                      : voiceDeliveryMode === "connecting"
-                        ? "Connecting"
-                        : voiceDeliveryMode === "error"
-                                ? "Voice Pause"
-                          : "Ready"}
-                </span>
-              </div>
-              <p className="voice-copy">
-                {isAudioLoading
-                  ? "Buffering low-latency audio..."
-                  : voiceDeliveryMode === "falcon-stream"
-                    ? "Streaming directly from Murf Falcon."
-                    : voiceDeliveryMode === "falcon-stream-default-voice"
-                      ? "The selected locale was unavailable, so playback switched to the default English voice."
-                    : voiceDeliveryMode === "fallback-generate"
-                      ? "Falcon was unavailable, so playback switched to generated audio."
-                      : voiceDeliveryMode === "fallback-generate-default-voice"
-                        ? "The selected locale and Falcon stream were unavailable, so playback switched to generated English audio."
-                      : voiceDeliveryMode === "browser-voice"
-                        ? "Backend audio is unavailable, so playback switched to the browser voice on this device."
-                      : voiceDeliveryMode === "manual-play"
-                        ? "Autoplay was blocked on this phone. Tap the play button below to hear the reply."
-                      : voiceDeliveryMode === "error"
-                        ? "Live voice paused for a moment, but coaching is still active."
-                      : "Voice playback is ready."}
-              </p>
-              {(voiceDeliveryMode === "falcon-stream-default-voice" ||
-                voiceDeliveryMode === "fallback-generate-default-voice") && (
-                <p className="tts-fallback-notice">
-                  ⚠️ <strong>{activeLanguage?.label ?? selectedLanguage}</strong> voice isn&apos;t available in your Murf plan yet — this reply played in English instead.
-                </p>
-              )}
-              <div className="audio-actions">
-                <button
-                  type="button"
-                  className="secondary-button audio-replay-button"
-                  onClick={replayLatestReply}
-                  disabled={!latestReplyForVoiceRef.current.text || isAudioLoading}
-                >
-                  {needsManualPlayback ? "Play Reply On Phone" : "Replay Reply"}
-                </button>
-              </div>
-              <audio
-                ref={audioRef}
-                controls
-                className="audio-player"
-                preload="auto"
-                onPlay={() => setIsSpeaking(true)}
-                onPause={() => setIsSpeaking(false)}
-                onEnded={() => setIsSpeaking(false)}
-              />
-            </div>
-          )}
 
           <div className="progress-card" aria-live="polite">
             <div className="progress-head">
