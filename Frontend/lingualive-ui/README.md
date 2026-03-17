@@ -157,6 +157,9 @@ flowchart LR
 	CL --> C2[Coach Wheel]
 	CL --> C3[Shadow Drill]
 	CL --> C4[Badges and Milestones]
+
+	classDef dark fill:#111827,stroke:#374151,color:#E5E7EB,stroke-width:1.2px;
+	class PR,MT,CL,M1,M2,M3,C1,C2,C3,C4 dark;
 ```
 
 ## Troubleshooting
