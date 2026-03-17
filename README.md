@@ -62,7 +62,7 @@ MoonSpeak-AI is a voice-first language practice app for live speaking exercises.
 ## System Flowchart
 
 ```mermaid
-flowchart TD
+flowchart LR
   subgraph S1[1. Input]
     U[User Voice/Text]
     FE[Frontend]
