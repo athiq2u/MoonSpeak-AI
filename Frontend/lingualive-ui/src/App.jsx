@@ -747,6 +747,24 @@ function App() {
     `Challenge me with one real-life speaking scenario in ${activeLanguage.label}.`,
     `Help me upgrade this sentence in ${activeLanguage.label}: I want to speak better every day.`
   ]), [activeLanguage]);
+  const labChallengePacks = useMemo(() => ([
+    {
+      title: "Fluency Sprint",
+      prompt: `Run a 60-second fluency sprint in ${activeLanguage.label}. Give me one prompt and then evaluate clarity, pace, and confidence.`
+    },
+    {
+      title: "Interview Pressure",
+      prompt: `Give me a tough interview question in ${activeLanguage.label}, then coach me to improve structure and impact.`
+    },
+    {
+      title: "Story Builder",
+      prompt: `Help me build a 4-step short story in ${activeLanguage.label}: setup, conflict, turning point, ending.`
+    },
+    {
+      title: "Debate Booster",
+      prompt: `Start a mini debate in ${activeLanguage.label}. Ask my opinion, challenge it once, then help me strengthen my argument.`
+    }
+  ]), [activeLanguage]);
   const chatStats = useMemo(() => {
     const userMessages = chat.filter((message) => message.role === "user");
     const aiMessages = chat.filter((message) => message.role === "ai");
@@ -2702,6 +2720,67 @@ function App() {
                 <span className="leaderboard-label">Best XP</span>
                 <strong>{sessionBestXp}</strong>
               </div>
+            </div>
+          </div>
+
+          <div className="tools-section-group">
+            <div className="tools-section-header">
+              <h3>🔥 Lab Challenge Packs</h3>
+              <p>Advanced drills for deeper practice.</p>
+            </div>
+            <div className="mission-grid">
+              {labChallengePacks.map((pack) => (
+                <button
+                  key={pack.title}
+                  type="button"
+                  className="mission-btn"
+                  onClick={() => {
+                    triggerTutorExcitement();
+                    requestReply(pack.prompt);
+                  }}
+                  disabled={isLoading || isListening}
+                >
+                  {pack.title}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="tools-section-group">
+            <div className="tools-section-header">
+              <h3>🧰 Session Controls</h3>
+              <p>Manage your flow quickly.</p>
+            </div>
+            <div className="mission-grid">
+              <button
+                type="button"
+                className="mission-btn"
+                onClick={clearChat}
+              >
+                Clear Session
+              </button>
+              <button
+                type="button"
+                className="mission-btn"
+                onClick={() => setActiveWorkspacePage("practice")}
+              >
+                Go To Practice
+              </button>
+              <button
+                type="button"
+                className="mission-btn"
+                onClick={() => setActiveWorkspacePage("extras")}
+              >
+                Go To More Tools
+              </button>
+              <button
+                type="button"
+                className="mission-btn"
+                onClick={replayLatestReply}
+                disabled={!latestReplyForVoiceRef.current.text || isAudioLoading}
+              >
+                Replay Last Reply
+              </button>
             </div>
           </div>
 
