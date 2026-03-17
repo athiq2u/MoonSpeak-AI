@@ -93,36 +93,6 @@ flowchart LR
   end
 ```
 
-## System Fallback Flow
-
-```mermaid
-flowchart TD
-  IN[User prompt arrives] --> A1{Any AI provider available?}
-  A1 -->|Yes| A2[Try provider by configured priority]
-  A1 -->|No| A5[Use built-in local coach]
-
-  A2 --> A3{Provider responded?}
-  A3 -->|Yes| A4[Return coached text reply]
-  A3 -->|No| A6[Try next provider]
-  A6 --> A7{Any provider left?}
-  A7 -->|Yes| A2
-  A7 -->|No| A5
-
-  A4 --> V1[Request Murf stream]
-  A5 --> V1
-
-  V1 --> V2{Stream success?}
-  V2 -->|Yes| V6[Play live Murf audio]
-  V2 -->|No| V3[Generate Murf audio fallback]
-  V3 --> V4{Generate success?}
-  V4 -->|Yes| V7[Play generated audio]
-  V4 -->|No| V5[Use browser voice fallback]
-
-  V6 --> OUT[User gets text + voice]
-  V7 --> OUT
-  V5 --> OUT
-```
-
 ## Project Structure
 
 ```text
