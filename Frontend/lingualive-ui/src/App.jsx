@@ -17,6 +17,7 @@ const FOCUS_SECONDS_GOAL = 300;
 const STORAGE_KEY = "lingualive_chat";
 const STREAK_STORAGE_KEY = "lingualive_streak";
 const ACHIEVEMENTS_STORAGE_KEY = "lingualive_achievements";
+const THEME_STORAGE_KEY = "lingualive_theme";
 const FEATURE_TOUR_STORAGE_KEY = "lingualive_feature_tour_seen";
 const FEATURE_TOUR_VERSION = "2026.03.17";
 const DEFAULT_LANGUAGE_ID = "en-US";
@@ -754,6 +755,14 @@ function App() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [activeWorkspacePage, setActiveWorkspacePage] = useState("practice");
   const [selectedLanguage, setSelectedLanguage] = useState(DEFAULT_LANGUAGE_ID);
+  const [themeMode, setThemeMode] = useState(() => {
+    try {
+      const saved = localStorage.getItem(THEME_STORAGE_KEY);
+      return saved === "light" ? "light" : "dark";
+    } catch {
+      return "dark";
+    }
+  });
   const [voiceDeliveryMode, setVoiceDeliveryMode] = useState("idle");
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [assistantNotice, setAssistantNotice] = useState("");
@@ -1255,6 +1264,19 @@ function App() {
       // storage unavailable - ignore
     }
   }, [unlockedAchievementIds]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, themeMode);
+    } catch {
+      // storage unavailable - ignore
+    }
+
+    if (typeof document !== "undefined") {
+      document.body.classList.toggle("theme-dark", themeMode === "dark");
+      document.body.classList.toggle("theme-light", themeMode === "light");
+    }
+  }, [themeMode]);
 
   useEffect(() => {
     setSessionBestXp((previousBest) => Math.max(previousBest, sessionXp));
@@ -2097,7 +2119,7 @@ function App() {
   const charsLeft = MAX_CHARS - text.length;
 
   return (
-    <main className="app-shell theme-dark">
+    <main className={`app-shell theme-${themeMode}`}>
       <header className="hero-panel">
         <div className="hero-grid">
           <div className="hero-copy-panel">
@@ -2151,6 +2173,13 @@ function App() {
               </span>
               <button type="button" className="status-check-button" onClick={openFeatureTour}>
                 ✨ Tour
+              </button>
+              <button
+                type="button"
+                className="status-check-button"
+                onClick={() => setThemeMode((currentMode) => (currentMode === "dark" ? "light" : "dark"))}
+              >
+                {themeMode === "dark" ? "☀️ Light" : "🌙 Dark"}
               </button>
             </div>
 
