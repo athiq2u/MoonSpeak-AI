@@ -2588,6 +2588,59 @@ function App() {
             )}
           </div>
 
+          <div className="tools-section-group">
+            <div className="tools-section-header">
+              <h3>⚡ Lab Quick Drills</h3>
+              <p>Run a focused drill instantly.</p>
+            </div>
+            <div className="mission-grid">
+              <button
+                type="button"
+                className="mission-btn"
+                onClick={runCoachPrompt}
+                disabled={isLoading || isListening}
+              >
+                Coach Me
+              </button>
+              <button
+                type="button"
+                className="mission-btn"
+                onClick={runChallengePrompt}
+                disabled={isLoading || isListening}
+              >
+                Challenge
+              </button>
+              <button
+                type="button"
+                className="mission-btn"
+                onClick={runRoleplayPrompt}
+                disabled={isLoading || isListening}
+              >
+                Roleplay
+              </button>
+              <button
+                type="button"
+                className="mission-btn"
+                onClick={() => setActiveWorkspacePage("extras")}
+              >
+                Open More Tools
+              </button>
+            </div>
+          </div>
+
+          <div className="tools-section-group" aria-live="polite">
+            <div className="tools-section-header">
+              <h3>🎯 Milestone Tracker</h3>
+              <p>See progress at a glance.</p>
+            </div>
+            <div className="stats-strip">
+              <span className="stats-chip">Daily Goal: {dailyGoalTurns}/{DAILY_TURN_GOAL} ({dailyGoalPercent}%)</span>
+              <span className="stats-chip">Focus Time: {formatPracticeTime(focusGoalSeconds)} / {formatPracticeTime(FOCUS_SECONDS_GOAL)} ({focusGoalPercent}%)</span>
+              <span className="stats-chip">Voice Turns: {voiceTurns}</span>
+              <span className="stats-chip">Best Shadow: {bestShadowScore}%</span>
+            </div>
+          </div>
+
           {latestAiMessage ? (
             <div className="lab-preview-card">
               <p className="lab-preview-kicker">Latest coach reply</p>
