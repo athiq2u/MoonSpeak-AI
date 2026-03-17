@@ -34,18 +34,6 @@
   padding: 32px;
 }
 
-.theme-toggle-wrap {
-  position: absolute;
-  top: 18px;
-  right: 18px;
-  z-index: 5;
-}
-
-.theme-toggle-button {
-  min-height: 36px;
-  padding: 7px 12px;
-}
-
 .hero-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
@@ -2832,12 +2820,6 @@
 
   .hero-panel {
     padding: 18px;
-    padding-top: 62px;
-  }
-
-  .theme-toggle-wrap {
-    top: 12px;
-    right: 12px;
   }
 
   .hero-figure {

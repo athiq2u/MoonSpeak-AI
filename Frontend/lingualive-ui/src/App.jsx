@@ -17,7 +17,6 @@ const FOCUS_SECONDS_GOAL = 300;
 const STORAGE_KEY = "lingualive_chat";
 const STREAK_STORAGE_KEY = "lingualive_streak";
 const ACHIEVEMENTS_STORAGE_KEY = "lingualive_achievements";
-const THEME_STORAGE_KEY = "lingualive_theme";
 const DEFAULT_LANGUAGE_ID = "en-US";
 const TUTOR_NAME = "Moon";
 const MANUAL_PLAYBACK_NOTICE = "Tap play to hear the reply on this phone. Some mobile browsers block autoplay until you interact.";
@@ -637,14 +636,6 @@ function App() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [activeWorkspacePage, setActiveWorkspacePage] = useState("practice");
   const [selectedLanguage, setSelectedLanguage] = useState(DEFAULT_LANGUAGE_ID);
-  const [themeMode, setThemeMode] = useState(() => {
-    try {
-      const saved = localStorage.getItem(THEME_STORAGE_KEY);
-      return saved === "dark" ? "dark" : "light";
-    } catch {
-      return "light";
-    }
-  });
   const [voiceDeliveryMode, setVoiceDeliveryMode] = useState("idle");
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [assistantNotice, setAssistantNotice] = useState("");
@@ -1009,19 +1000,6 @@ function App() {
       // storage unavailable - ignore
     }
   }, [unlockedAchievementIds]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, themeMode);
-    } catch {
-      // storage unavailable - ignore
-    }
-
-    if (typeof document !== "undefined") {
-      document.body.classList.toggle("theme-dark", themeMode === "dark");
-      document.body.classList.toggle("theme-light", themeMode === "light");
-    }
-  }, [themeMode]);
 
   useEffect(() => {
     setSessionBestXp((previousBest) => Math.max(previousBest, sessionXp));
@@ -1862,24 +1840,10 @@ function App() {
 
   const isActive = isListening || isLoading || isSpeaking;
   const charsLeft = MAX_CHARS - text.length;
-  const toggleThemeMode = () => {
-    setThemeMode((currentMode) => (currentMode === "light" ? "dark" : "light"));
-  };
 
   return (
-    <main className={`app-shell theme-${themeMode}`}>
+    <main className="app-shell theme-dark">
       <header className="hero-panel">
-        <div className="theme-toggle-wrap">
-          <button
-            type="button"
-            className="status-check-button theme-toggle-button"
-            onClick={toggleThemeMode}
-            aria-label={themeMode === "light" ? "Switch to dark mode" : "Switch to light mode"}
-            title={themeMode === "light" ? "Switch to dark mode" : "Switch to light mode"}
-          >
-            {themeMode === "light" ? "🌙 Dark mode" : "☀️ Light mode"}
-          </button>
-        </div>
         <div className="hero-grid">
           <div className="hero-copy-panel">
             <p className="eyebrow">Powered by Murf Falcon</p>
