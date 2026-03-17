@@ -1888,6 +1888,10 @@
   color: rgba(238, 242, 255, 0.62);
 }
 
+.voice-tools-button {
+  margin-top: 10px;
+}
+
 .compact-stats {
   display: flex;
   flex-wrap: wrap;
@@ -2490,12 +2494,24 @@
     gap: 8px;
   }
 
+  .workspace-nav {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+  }
+
   .status-pill,
   .stats-chip,
   .use-case-pill,
   .workspace-nav-button {
     width: 100%;
     justify-content: center;
+  }
+
+  .workspace-nav-button {
+    white-space: nowrap;
+    flex: 0 0 auto;
+    min-width: 132px;
   }
 
   .hero-figure-card {
