@@ -375,6 +375,9 @@ flowchart LR
   A1 --> OUT[AI Reply + Voice Playback]
   A2 --> OUT
   A3 --> OUT
+
+  classDef dark fill:#111827,stroke:#374151,color:#E5E7EB,stroke-width:1.2px;
+  class P,M,C,A1,A2,A3,OUT dark;
 ```
 
 ## Deployment
