@@ -780,21 +780,6 @@ function App() {
 
     return buildSmartFollowUps(latestAiMessage.text, activeLanguage.label);
   }, [latestAiMessage, activeLanguage.label]);
-  const recentUserPrompts = useMemo(() => {
-    const seen = new Set();
-    return [...chat]
-      .reverse()
-      .filter((message) => message.role === "user" && typeof message.text === "string")
-      .map((message) => message.text.trim())
-      .filter((prompt) => {
-        if (!prompt || seen.has(prompt)) {
-          return false;
-        }
-        seen.add(prompt);
-        return true;
-      })
-      .slice(0, 5);
-  }, [chat]);
   const aiStatusTone = latestAiMessage?.isFallback
     ? "warning"
     : backendStatus === "online"
@@ -1874,18 +1859,9 @@ function App() {
             <div>
               <h2>Conversation</h2>
             </div>
-            <div className="panel-heading-actions">
-              <button
-                type="button"
-                className="panel-ghost-btn"
-                onClick={() => setActiveWorkspacePage("extras")}
-              >
-                More Tools
-              </button>
-              {chat.length > 0 && (
-                <button className="clear-button" onClick={clearChat}>Clear</button>
-              )}
-            </div>
+            {chat.length > 0 && (
+              <button className="clear-button" onClick={clearChat}>Clear</button>
+            )}
           </div>
 
           <div className="stats-strip" aria-live="polite">
@@ -2042,23 +2018,6 @@ function App() {
             >
               Open More Tools
             </button>
-            <div className="quick-action-row">
-              <button
-                type="button"
-                className="quick-action-btn"
-                onClick={() => setActiveWorkspacePage("coach-lab")}
-              >
-                Coach Lab
-              </button>
-              <button
-                type="button"
-                className="quick-action-btn"
-                onClick={replayLatestReply}
-                disabled={!latestReplyForVoiceRef.current.text || isAudioLoading}
-              >
-                Replay Last
-              </button>
-            </div>
           </div>
 
           <textarea
@@ -2175,7 +2134,7 @@ function App() {
             </div>
             <button
               type="button"
-              className="panel-ghost-btn"
+              className="clear-button"
               onClick={() => setActiveWorkspacePage("practice")}
             >
               Back To Practice
@@ -2315,27 +2274,6 @@ function App() {
               </div>
             </div>
           )}
-
-          <div className="smart-followups-card" aria-label="Recent user prompts">
-            <p className="smart-followups-title">Recent Prompts</p>
-            {recentUserPrompts.length > 0 ? (
-              <div className="smart-followups-grid">
-                {recentUserPrompts.map((prompt) => (
-                  <button
-                    key={prompt}
-                    type="button"
-                    className="smart-followup-btn"
-                    onClick={() => requestReply(prompt)}
-                    disabled={isLoading || isListening}
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <p className="voice-copy">Start a few turns in Practice and your recent prompts will appear here.</p>
-            )}
-          </div>
         </section>
       </div>
       ) : (
