@@ -622,6 +622,7 @@ function App() {
       }
 
       return parsed
+        .filter((message) => message?.source !== "welcome")
         .slice(-MAX_PERSISTED_MESSAGES)
         .map((message) => ({
           ...message,
@@ -939,24 +940,6 @@ function App() {
 
   useEffect(() => {
     setChat((previousChat) => {
-      if (previousChat.length > 0) {
-        return previousChat;
-      }
-
-      return [
-        {
-          id: createMessageId(),
-          role: "ai",
-          text: "Hi there! I'm Moon, your speaking coach. I'm here to help you sound more natural and confident in any language. Where would you like to start?",
-          source: "welcome",
-          isFallback: false
-        }
-      ];
-    });
-  }, []);
-
-  useEffect(() => {
-    setChat((previousChat) => {
       const selectedTask = pickRefreshTask();
       const withoutPreviousRefreshTask = previousChat.filter((message) => message.source !== "refresh-task");
 
@@ -977,7 +960,7 @@ function App() {
   useEffect(() => {
     try {
       const persistableChat = chat
-        .filter((message) => message.source !== "refresh-task")
+        .filter((message) => message.source !== "refresh-task" && message.source !== "welcome")
         .slice(-MAX_PERSISTED_MESSAGES);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(persistableChat));
     } catch {
@@ -1999,17 +1982,7 @@ function App() {
               </div>
             ) : (
               chat.map((message, index) => (
-                message.source === "welcome" ? (
-                  <WelcomeBubble
-                    key={message.id || `${message.role}-${index}`}
-                    message={message}
-                    tutorName={TUTOR_NAME}
-                    onChipClick={requestReply}
-                    onAvatarTap={handleTutorAvatarTap}
-                    onPlayGreeting={handleTutorAvatarTap}
-                    welcomePlaybackHint={welcomePlaybackHint}
-                  />
-                ) : (
+                message.source === "welcome" ? null : (
                   <ChatBubble
                     key={message.id || `${message.role}-${index}`}
                     message={message}
