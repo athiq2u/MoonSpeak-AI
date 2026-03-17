@@ -63,11 +63,58 @@ MoonSpeak-AI is a voice-first language practice app for live speaking exercises.
 
 ```mermaid
 flowchart TD
-  A[1. Input: User voice/text to Frontend]
-  B[2. Coaching: POST /speak, provider priority, reply]
-  C[3. Voice Delivery: GET /tts-stream with fallbacks]
+  subgraph INPUT[Input Layer]
+    U[User speaks or types]
+    FE[Frontend captures input]
+    PRE[Normalize text and trim history]
+    U --> FE --> PRE
+  end
 
-  A --> B --> C
+  subgraph COACH[Coach Layer]
+    REQ[POST /speak]
+    ORDER{Provider order available}
+    LIVE[Gemini or OpenAI or OpenRouter]
+    OK{Provider response valid}
+    LOCAL[Use built-in coach fallback]
+    REPLY[Return coached reply and metadata]
+    PRE --> REQ --> ORDER
+    ORDER --> LIVE --> OK
+    OK -- Yes --> REPLY
+    OK -- No --> LOCAL --> REPLY
+  end
+
+  subgraph VOICE[Voice Layer]
+    TTS[GET /tts-stream]
+    STREAM{Murf stream success}
+    GEN{Murf generate success}
+    LIVEAUDIO[Play live Murf stream]
+    GENAUDIO[Play generated fallback audio]
+    BROWSERAUDIO[Play browser voice fallback]
+    REPLY --> TTS --> STREAM
+    STREAM -- Yes --> LIVEAUDIO
+    STREAM -- No --> GEN
+    GEN -- Yes --> GENAUDIO
+    GEN -- No --> BROWSERAUDIO
+  end
+
+  subgraph OUT[Experience Layer]
+    UI[Update chat, streak, XP, badges]
+    DONE[User hears reply and sees coaching]
+    REPLY --> UI --> DONE
+    LIVEAUDIO --> DONE
+    GENAUDIO --> DONE
+    BROWSERAUDIO --> DONE
+  end
+
+  classDef layer fill:#EEF4FF,stroke:#2563EB,stroke-width:1px;
+  classDef decision fill:#FFF7ED,stroke:#C2410C,stroke-width:1px;
+  classDef fallback fill:#FFF1F2,stroke:#BE123C,stroke-width:1px;
+  classDef result fill:#ECFDF5,stroke:#047857,stroke-width:1px;
+
+  class U,FE,PRE,REQ,LIVE,REPLY,TTS,UI layer;
+  class ORDER,OK,STREAM,GEN decision;
+  class LOCAL,GENAUDIO,BROWSERAUDIO fallback;
+  class LIVEAUDIO,DONE result;
 ```
 
 ## Project Structure
@@ -331,22 +378,53 @@ Built-in quick actions include:
 ## Workspace Flowchart
 
 ```mermaid
-flowchart LR
-  P[Practice]
-  M[More Tools]
-  C[Coach Lab]
+flowchart TB
+  subgraph NAV[Workspace Navigation]
+    HOME[Open App]
+    P[Practice]
+    M[More Tools]
+    C[Coach Lab]
+    HOME --> P
+    P <--> M
+    P <--> C
+    M <--> C
+  end
 
-  P <--> M
-  P <--> C
-  M <--> C
+  subgraph PRACTICE[Practice Steps]
+    P1[Voice or text input]
+    P2[Coach me or Challenge or Roleplay]
+    P3[Send prompt]
+  end
 
-  P --> A1[Coach me, Challenge, Roleplay]
-  M --> A2[Missions, Scenarios, Tips]
-  C --> A3[Coach Wheel, Shadow Drill, Badges]
+  subgraph TOOLS[More Tools Steps]
+    M1[Pick mission or scenario]
+    M2[Use level, vocabulary, grammar, pronunciation]
+    M3[Tap smart follow-up or recent prompt]
+  end
 
-  A1 --> OUT[AI Reply + Voice Playback]
-  A2 --> OUT
-  A3 --> OUT
+  subgraph LAB[Coach Lab Steps]
+    C1[Run challenge pack]
+    C2[Spin coach wheel]
+    C3[Start shadow drill]
+    C4[Track milestones and badges]
+  end
+
+  P --> P1 --> P2 --> P3
+  M --> M1 --> M2 --> M3
+  C --> C1 --> C2 --> C3 --> C4
+
+  P3 --> OUT[AI reply and voice playback]
+  M3 --> OUT
+  C4 --> OUT
+  OUT --> PROG[Update turns, streak, XP, leaderboard]
+
+  classDef nav fill:#F5F3FF,stroke:#6D28D9,stroke-width:1px;
+  classDef action fill:#EFF6FF,stroke:#1D4ED8,stroke-width:1px;
+  classDef outcome fill:#ECFDF5,stroke:#047857,stroke-width:1px;
+
+  class HOME,P,M,C nav;
+  class P1,P2,P3,M1,M2,M3,C1,C2,C3,C4 action;
+  class OUT,PROG outcome;
 ```
 
 ## Deployment
