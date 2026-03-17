@@ -2646,16 +2646,58 @@ function App() {
             </div>
           </div>
 
-          <div className="tools-section-group" aria-live="polite">
-            <div className="tools-section-header">
-              <h3>🎯 Milestone Tracker</h3>
-              <p>See progress at a glance.</p>
+          <div className="leaderboard-card" aria-live="polite">
+            <div className="leaderboard-head">
+              <p className="leaderboard-title">Session Leaderboard</p>
+              <span className="leaderboard-subtitle">Current session highs</span>
             </div>
-            <div className="stats-strip">
-              <span className="stats-chip">Daily Goal: {dailyGoalTurns}/{DAILY_TURN_GOAL} ({dailyGoalPercent}%)</span>
-              <span className="stats-chip">Focus Time: {formatPracticeTime(focusGoalSeconds)} / {formatPracticeTime(FOCUS_SECONDS_GOAL)} ({focusGoalPercent}%)</span>
-              <span className="stats-chip">Voice Turns: {voiceTurns}</span>
-              <span className="stats-chip">Best Shadow: {bestShadowScore}%</span>
+            <div className="leaderboard-grid">
+              <div className="leaderboard-item">
+                <span className="leaderboard-label">Best Streak</span>
+                <strong>{sessionBestStreak} day{sessionBestStreak > 1 ? "s" : ""}</strong>
+              </div>
+              <div className="leaderboard-item">
+                <span className="leaderboard-label">Best XP</span>
+                <strong>{sessionBestXp}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="tools-section-group">
+            <div className="tools-section-header">
+              <h3>🧰 Session Controls</h3>
+              <p>Manage your flow quickly.</p>
+            </div>
+            <div className="mission-grid">
+              <button
+                type="button"
+                className="mission-btn"
+                onClick={clearChat}
+              >
+                Clear Session
+              </button>
+              <button
+                type="button"
+                className="mission-btn"
+                onClick={() => setActiveWorkspacePage("practice")}
+              >
+                Go To Practice
+              </button>
+              <button
+                type="button"
+                className="mission-btn"
+                onClick={() => setActiveWorkspacePage("extras")}
+              >
+                Go To More Tools
+              </button>
+              <button
+                type="button"
+                className="mission-btn"
+                onClick={replayLatestReply}
+                disabled={!latestReplyForVoiceRef.current.text || isAudioLoading}
+              >
+                Replay Last Reply
+              </button>
             </div>
           </div>
 
@@ -2706,20 +2748,16 @@ function App() {
             <p className="progress-subcopy">{xpToNextLevel} XP to reach Level {coachLevel + 1}</p>
           </div>
 
-          <div className="leaderboard-card" aria-live="polite">
-            <div className="leaderboard-head">
-              <p className="leaderboard-title">Session Leaderboard</p>
-              <span className="leaderboard-subtitle">Current session highs</span>
+          <div className="tools-section-group" aria-live="polite">
+            <div className="tools-section-header">
+              <h3>🎯 Milestone Tracker</h3>
+              <p>See progress at a glance.</p>
             </div>
-            <div className="leaderboard-grid">
-              <div className="leaderboard-item">
-                <span className="leaderboard-label">Best Streak</span>
-                <strong>{sessionBestStreak} day{sessionBestStreak > 1 ? "s" : ""}</strong>
-              </div>
-              <div className="leaderboard-item">
-                <span className="leaderboard-label">Best XP</span>
-                <strong>{sessionBestXp}</strong>
-              </div>
+            <div className="stats-strip">
+              <span className="stats-chip">Daily Goal: {dailyGoalTurns}/{DAILY_TURN_GOAL} ({dailyGoalPercent}%)</span>
+              <span className="stats-chip">Focus Time: {formatPracticeTime(focusGoalSeconds)} / {formatPracticeTime(FOCUS_SECONDS_GOAL)} ({focusGoalPercent}%)</span>
+              <span className="stats-chip">Voice Turns: {voiceTurns}</span>
+              <span className="stats-chip">Best Shadow: {bestShadowScore}%</span>
             </div>
           </div>
 
@@ -2743,44 +2781,6 @@ function App() {
                   {pack.title}
                 </button>
               ))}
-            </div>
-          </div>
-
-          <div className="tools-section-group">
-            <div className="tools-section-header">
-              <h3>🧰 Session Controls</h3>
-              <p>Manage your flow quickly.</p>
-            </div>
-            <div className="mission-grid">
-              <button
-                type="button"
-                className="mission-btn"
-                onClick={clearChat}
-              >
-                Clear Session
-              </button>
-              <button
-                type="button"
-                className="mission-btn"
-                onClick={() => setActiveWorkspacePage("practice")}
-              >
-                Go To Practice
-              </button>
-              <button
-                type="button"
-                className="mission-btn"
-                onClick={() => setActiveWorkspacePage("extras")}
-              >
-                Go To More Tools
-              </button>
-              <button
-                type="button"
-                className="mission-btn"
-                onClick={replayLatestReply}
-                disabled={!latestReplyForVoiceRef.current.text || isAudioLoading}
-              >
-                Replay Last Reply
-              </button>
             </div>
           </div>
 
