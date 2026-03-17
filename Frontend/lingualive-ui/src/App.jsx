@@ -850,6 +850,30 @@ function App() {
       : backendStatus === "checking"
         ? "Checking AI"
         : "Backend offline";
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const checkBackend = async () => {
+      setBackendStatus("checking");
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/healthz`, {
+          signal: controller.signal,
+          cache: "no-store"
+        });
+
+        setBackendStatus(response.ok ? "online" : "offline");
+      } catch {
+        setBackendStatus("offline");
+      }
+    };
+
+    checkBackend();
+
+    return () => controller.abort();
+  }, []);
+
     const experiencePoints = useMemo(() => (
       (chatStats.turns * 12) + (dailyStreak.count * 25)
     ), [chatStats.turns, dailyStreak.count]);
@@ -2337,6 +2361,36 @@ function App() {
               ))}
             </div>
           </div>
+
+          <div className="tools-section-group">
+            <div className="tools-section-header">
+              <h3>📖 Vocabulary Upgrade</h3>
+              <p>Replace common words with stronger alternatives.</p>
+            </div>
+            <div className="vocab-tips-list">
+              {VOCABULARY_TIPS.map((vocab, idx) => (
+                <div key={idx} className="vocab-tip-item">
+                  <span className="vocab-label">{vocab.word}</span>
+                  <span className="vocab-suggestion">{vocab.tip}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="tools-section-group">
+            <div className="tools-section-header">
+              <h3>🎙️ Pronunciation Guide</h3>
+              <p>Master difficult sounds and speech patterns.</p>
+            </div>
+            <div className="pronunciation-tips-list">
+              {PRONUNCIATION_GUIDES.map((guide, idx) => (
+                <div key={idx} className="pronunciation-tip-item">
+                  <span className="pronunciation-pattern">{guide.pattern}</span>
+                  <span className="pronunciation-tip">{guide.guide}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </section>
 
         <section className="composer-panel">
@@ -2366,36 +2420,6 @@ function App() {
                 >
                   {mission.title}
                 </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="tools-section-group">
-            <div className="tools-section-header">
-              <h3>📖 Vocabulary Upgrade</h3>
-              <p>Replace common words with stronger alternatives.</p>
-            </div>
-            <div className="vocab-tips-list">
-              {VOCABULARY_TIPS.map((vocab, idx) => (
-                <div key={idx} className="vocab-tip-item">
-                  <span className="vocab-label">{vocab.word}</span>
-                  <span className="vocab-suggestion">{vocab.tip}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="tools-section-group">
-            <div className="tools-section-header">
-              <h3>🎙️ Pronunciation Guide</h3>
-              <p>Master difficult sounds and speech patterns.</p>
-            </div>
-            <div className="pronunciation-tips-list">
-              {PRONUNCIATION_GUIDES.map((guide, idx) => (
-                <div key={idx} className="pronunciation-tip-item">
-                  <span className="pronunciation-pattern">{guide.pattern}</span>
-                  <span className="pronunciation-tip">{guide.guide}</span>
-                </div>
               ))}
             </div>
           </div>
