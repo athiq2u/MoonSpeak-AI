@@ -2424,6 +2424,61 @@ function App() {
             </div>
           </div>
 
+          <div className="tools-section-group" aria-live="polite">
+            <div className="tools-section-header">
+              <h3>📊 Session Snapshot</h3>
+              <p>Track your current practice momentum.</p>
+            </div>
+            <div className="stats-strip">
+              <span className="stats-chip">Turns: {chatStats.turns}</span>
+              <span className="stats-chip">AI replies: {chatStats.aiReplies}</span>
+              <span className="stats-chip">Streak: {dailyStreak.count} day{dailyStreak.count > 1 ? "s" : ""}</span>
+              <span className="stats-chip">XP: {experiencePoints}</span>
+              {practiceSeconds > 0 && (
+                <span className="stats-chip stats-chip-time">⏱ {formatPracticeTime(practiceSeconds)}</span>
+              )}
+            </div>
+          </div>
+
+          <div className="tools-section-group">
+            <div className="tools-section-header">
+              <h3>⚡ Quick Actions</h3>
+              <p>Jump between workspaces and continue fast.</p>
+            </div>
+            <div className="mission-grid">
+              <button
+                type="button"
+                className="mission-btn"
+                onClick={() => setActiveWorkspacePage("practice")}
+              >
+                Back To Practice
+              </button>
+              <button
+                type="button"
+                className="mission-btn"
+                onClick={() => setActiveWorkspacePage("coach-lab")}
+              >
+                Open Coach Lab
+              </button>
+              <button
+                type="button"
+                className="mission-btn"
+                onClick={spinCoachWheel}
+                disabled={isLoading || isListening || isWheelSpinning}
+              >
+                {isWheelSpinning ? "Spinning..." : "Spin Challenge"}
+              </button>
+              <button
+                type="button"
+                className="mission-btn"
+                onClick={replayLatestReply}
+                disabled={!latestReplyForVoiceRef.current.text || isAudioLoading}
+              >
+                Replay Last
+              </button>
+            </div>
+          </div>
+
           <div className="tools-section-group">
             <div className="tools-section-header">
               <h3>✏️ Grammar Tips</h3>
