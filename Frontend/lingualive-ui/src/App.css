@@ -2230,6 +2230,207 @@
   box-shadow: 0 0 0 4px rgba(255, 180, 120, 0.08);
 }
 
+/* Tools Sections - Organized Learning */
+.tools-section-group {
+  margin-bottom: 18px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+}
+
+.tools-section-header {
+  margin: 0 0 12px;
+}
+
+.tools-section-header h3 {
+  margin: 0 0 4px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #a8f0e6;
+}
+
+.tools-section-header p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(238, 242, 255, 0.56);
+}
+
+/* Difficulty Level Selector */
+.difficulty-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.difficulty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(168, 220, 255, 0.24);
+  background: rgba(103, 190, 255, 0.08);
+  cursor: pointer;
+  font: inherit;
+  color: #c5e5ff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+
+.difficulty-card:hover:not(:disabled) {
+  background: rgba(103, 190, 255, 0.15);
+  border-color: rgba(168, 220, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.difficulty-card:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.difficulty-emoji {
+  font-size: 1.4rem;
+}
+
+.difficulty-name {
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Conversation Topics */
+.conversation-topics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.conversation-topic-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(218, 165, 255, 0.22);
+  background: rgba(186, 120, 255, 0.08);
+  cursor: pointer;
+  font: inherit;
+  color: #e0c3ff;
+  font-size: 0.77rem;
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+
+.conversation-topic-btn:hover:not(:disabled) {
+  background: rgba(186, 120, 255, 0.15);
+  border-color: rgba(218, 165, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+.conversation-topic-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.topic-emoji {
+  font-size: 1.3rem;
+}
+
+.topic-name {
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Vocabulary Tips */
+.vocab-tips-list {
+  display: grid;
+  gap: 10px;
+}
+
+.vocab-tip-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  border-left: 3px solid #ffd08d;
+  background: rgba(255, 208, 141, 0.05);
+}
+
+.vocab-label {
+  min-width: 120px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ffd4a7;
+}
+
+.vocab-suggestion {
+  flex: 1;
+  font-size: 0.8rem;
+  color: rgba(238, 242, 255, 0.75);
+}
+
+/* Pronunciation Guide */
+.pronunciation-tips-list {
+  display: grid;
+  gap: 10px;
+}
+
+.pronunciation-tip-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  border-left: 3px solid #7affdf;
+  background: rgba(122, 255, 223, 0.05);
+}
+
+.pronunciation-pattern {
+  min-width: 100px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #9af6de;
+}
+
+.pronunciation-tip {
+  flex: 1;
+  font-size: 0.8rem;
+  color: rgba(238, 242, 255, 0.75);
+}
+
+/* Grammar Tips */
+.grammar-tips-list {
+  display: grid;
+  gap: 10px;
+}
+
+.grammar-tip-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  border-left: 3px solid #ffb3b3;
+  background: rgba(255, 179, 179, 0.05);
+}
+
+.grammar-topic {
+  min-width: 110px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ffb3b3;
+}
+
+.grammar-explanation {
+  flex: 1;
+  font-size: 0.8rem;
+  color: rgba(238, 242, 255, 0.75);
+}
+
 .composer-input {
   width: 100%;
   min-height: 130px;

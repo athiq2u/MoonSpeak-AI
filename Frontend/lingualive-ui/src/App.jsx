@@ -413,6 +413,45 @@ const SCENARIO_CARDS = [
   }
 ];
 
+const VOCABULARY_TIPS = [
+  { word: "Instead of 'good'", tip: "Use: excellent, fantastic, outstanding, wonderful, impressive" },
+  { word: "Instead of 'bad'", tip: "Use: poor, disappointing, inadequate, unsatisfactory, weak" },
+  { word: "Instead of 'big'", tip: "Use: enormous, vast, massive, substantial, significant" },
+  { word: "Instead of 'small'", tip: "Use: tiny, minimal, compact, limited, modest" },
+  { word: "Instead of 'very'", tip: "Use: extremely, incredibly, remarkably, exceptionally, incredibly" }
+];
+
+const PRONUNCIATION_GUIDES = [
+  { pattern: "th sounds", guide: "Place tongue between teeth. 'th' in 'think' is voiceless; 'th' in 'this' is voiced." },
+  { pattern: "r vs l", guide: "R: roll tongue back. L: tongue behind top teeth. Practice: 'red' vs 'led'" },
+  { pattern: "word stress", guide: "English is stress-timed. Stress key syllables: PHO-to, pho-TOG-ra-phy" },
+  { pattern: "linking sounds", guide: "Connect words smoothly. 'Did you' → 'didja', 'want to' → 'wanna'" },
+  { pattern: "schwa sound ə", guide: "The most common vowel sound. Appears in unstressed syllables: 'about', 'across'" }
+];
+
+const GRAMMAR_TIPS = [
+  { topic: "Present Perfect", tip: "Use when action started in past and continues to now. 'I have lived here for 5 years.'" },
+  { topic: "Phrasal Verbs", tip: "Verb + preposition = new meaning. 'look up' ≠ 'look'. Master 50-100 common ones." },
+  { topic: "Conditionals", tip: "If + simple present, will + verb (future). 'If you study, you will pass.'" },
+  { topic: "Articles (a/an/the)", tip: "a/an: indefinite (one of many). the: definite (specific one). Practice with nouns." },
+  { topic: "Subject-verb agreement", tip: "Singular subject → singular verb. 'The team is strong' not 'are strong.'" }
+];
+
+const CONVERSATION_TOPICS = [
+  { emoji: "🍕", topic: "Food & Restaurants", prompt: "Let's discuss your favorite cuisines and where you love to eat." },
+  { emoji: "🎬", topic: "Movies & Entertainment", prompt: "Share what movies or shows you enjoy and why." },
+  { emoji: "✈️", topic: "Travel & Culture", prompt: "Tell me about a place you've visited or dream to visit." },
+  { emoji: "🎯", topic: "Goals & Ambitions", prompt: "What are your short-term and long-term goals?" },
+  { emoji: "👥", topic: "People & Relationships", prompt: "Talk about a meaningful person in your life." },
+  { emoji: "🎓", topic: "Learning & Skills", prompt: "What new skill would you love to learn and why?" }
+];
+
+const DIFFICULTY_LEVELS = [
+  { level: "Beginner", emoji: "🟢", description: "Simple words, short sentences, basic topics", prompt: "Let's use simple, everyday English. Ask me easy questions." },
+  { level: "Intermediate", emoji: "🟡", description: "Varied vocabulary, complex sentences, current events", prompt: "Let's speak at intermediate level with varied vocabulary." },
+  { level: "Advanced", emoji: "🔴", description: "Sophisticated vocabulary, nuanced topics, idiomatic phrases", prompt: "Challenge me with advanced-level English and sophisticated vocabulary." }
+];
+
 function formatPracticeTime(totalSeconds) {
   if (totalSeconds < 60) { return `${totalSeconds}s`; }
   return `${Math.floor(totalSeconds / 60)}m ${totalSeconds % 60}s`;
@@ -2298,12 +2337,40 @@ function App() {
           <div className="panel-heading">
             <div>
               <h2>Extras Toolbox</h2>
-              <p>All optional helpers in one place.</p>
+              <p>All optional helpers organized by learning focus.</p>
             </div>
           </div>
 
-          <div className="mission-card">
-            <p className="mission-title">Practice Missions</p>
+          <div className="tools-section-group">
+            <div className="tools-section-header">
+              <h3>🎯 Choose Your Level</h3>
+              <p>Pick a difficulty to match your practice mode.</p>
+            </div>
+            <div className="difficulty-grid">
+              {DIFFICULTY_LEVELS.map((level) => (
+                <button
+                  key={level.level}
+                  type="button"
+                  className="difficulty-card"
+                  onClick={() => {
+                    triggerTutorExcitement();
+                    requestReply(level.prompt);
+                  }}
+                  disabled={isLoading || isListening}
+                  title={level.description}
+                >
+                  <span className="difficulty-emoji">{level.emoji}</span>
+                  <span className="difficulty-name">{level.level}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="tools-section-group">
+            <div className="tools-section-header">
+              <h3>📚 Practice Missions</h3>
+              <p>Focused exercises for skill building.</p>
+            </div>
             <div className="mission-grid">
               {practiceMissions.map((mission) => (
                 <button
@@ -2322,8 +2389,78 @@ function App() {
             </div>
           </div>
 
-          <div className="coach-guide-card">
-            <p className="coach-guide-title">Coach Guide</p>
+          <div className="tools-section-group">
+            <div className="tools-section-header">
+              <h3>🗣️ Conversation Topics</h3>
+              <p>Explore real-world speaking scenarios.</p>
+            </div>
+            <div className="conversation-topics-grid">
+              {CONVERSATION_TOPICS.map((convo) => (
+                <button
+                  key={convo.topic}
+                  type="button"
+                  className="conversation-topic-btn"
+                  onClick={() => requestReply(convo.prompt)}
+                  disabled={isLoading || isListening}
+                  title={convo.prompt}
+                >
+                  <span className="topic-emoji">{convo.emoji}</span>
+                  <span className="topic-name">{convo.topic}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="tools-section-group">
+            <div className="tools-section-header">
+              <h3>📖 Vocabulary Upgrade</h3>
+              <p>Replace common words with stronger alternatives.</p>
+            </div>
+            <div className="vocab-tips-list">
+              {VOCABULARY_TIPS.map((vocab, idx) => (
+                <div key={idx} className="vocab-tip-item">
+                  <span className="vocab-label">{vocab.word}</span>
+                  <span className="vocab-suggestion">{vocab.tip}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="tools-section-group">
+            <div className="tools-section-header">
+              <h3>🎙️ Pronunciation Guide</h3>
+              <p>Master difficult sounds and speech patterns.</p>
+            </div>
+            <div className="pronunciation-tips-list">
+              {PRONUNCIATION_GUIDES.map((guide, idx) => (
+                <div key={idx} className="pronunciation-tip-item">
+                  <span className="pronunciation-pattern">{guide.pattern}</span>
+                  <span className="pronunciation-tip">{guide.guide}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="tools-section-group">
+            <div className="tools-section-header">
+              <h3>✏️ Grammar Tips</h3>
+              <p>Common grammar patterns explained simply.</p>
+            </div>
+            <div className="grammar-tips-list">
+              {GRAMMAR_TIPS.map((grammar, idx) => (
+                <div key={idx} className="grammar-tip-item">
+                  <span className="grammar-topic">{grammar.topic}</span>
+                  <span className="grammar-explanation">{grammar.tip}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="coach-guide-card tools-section-group">
+            <div className="tools-section-header">
+              <h3>🌟 Coach Guide</h3>
+              <p>Quick success tips from your coach.</p>
+            </div>
             <div className="coach-guide-list">
               {coachGuideTips.map((tip) => (
                 <div key={tip} className="coach-guide-item">
@@ -2335,8 +2472,10 @@ function App() {
           </div>
 
           {smartFollowUps.length > 0 && (
-            <div className="smart-followups-card" aria-label="AI smart follow-ups">
-              <p className="smart-followups-title">Smart Reply Suggestions</p>
+            <div className="tools-section-group">
+              <div className="tools-section-header">
+                <h3>💡 Smart Reply Suggestions</h3>
+              </div>
               <div className="smart-followups-grid">
                 {smartFollowUps.map((suggestion) => (
                   <button
@@ -2353,8 +2492,11 @@ function App() {
             </div>
           )}
 
-          <div className="smart-followups-card" aria-label="Recent user prompts">
-            <p className="smart-followups-title">Recent Prompts</p>
+          <div className="tools-section-group">
+            <div className="tools-section-header">
+              <h3>⏱️ Recent Prompts</h3>
+              <p>Quick access to your practice history.</p>
+            </div>
             {recentUserPrompts.length > 0 ? (
               <div className="smart-followups-grid">
                 {recentUserPrompts.map((prompt) => (
