@@ -462,7 +462,6 @@ const WelcomeBubble = memo(function WelcomeBubble({
   tutorName,
   onChipClick,
   onAvatarTap,
-  onPlayGreeting,
   welcomePlaybackHint
 }) {
   const [displayedText, setDisplayedText] = useState("");
@@ -511,13 +510,6 @@ const WelcomeBubble = memo(function WelcomeBubble({
         </p>
         {isDone && (
           <div className="welcome-chips">
-            <button
-              type="button"
-              className="welcome-chip welcome-chip-primary"
-              onClick={() => onPlayGreeting?.()}
-            >
-              ▶ Hear welcome
-            </button>
             {WELCOME_CHIPS.map((chip) => (
               <button
                 key={chip.label}
@@ -622,7 +614,6 @@ function App() {
       }
 
       return parsed
-        .filter((message) => message?.source !== "welcome")
         .slice(-MAX_PERSISTED_MESSAGES)
         .map((message) => ({
           ...message,
@@ -940,6 +931,24 @@ function App() {
 
   useEffect(() => {
     setChat((previousChat) => {
+      if (previousChat.length > 0) {
+        return previousChat;
+      }
+
+      return [
+        {
+          id: createMessageId(),
+          role: "ai",
+          text: "Hi there! I'm Moon, your speaking coach. I'm here to help you sound more natural and confident in any language. Where would you like to start?",
+          source: "welcome",
+          isFallback: false
+        }
+      ];
+    });
+  }, []);
+
+  useEffect(() => {
+    setChat((previousChat) => {
       const selectedTask = pickRefreshTask();
       const withoutPreviousRefreshTask = previousChat.filter((message) => message.source !== "refresh-task");
 
@@ -960,7 +969,7 @@ function App() {
   useEffect(() => {
     try {
       const persistableChat = chat
-        .filter((message) => message.source !== "refresh-task" && message.source !== "welcome")
+        .filter((message) => message.source !== "refresh-task")
         .slice(-MAX_PERSISTED_MESSAGES);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(persistableChat));
     } catch {
@@ -1311,14 +1320,14 @@ function App() {
 
   const welcomePlaybackHint = useMemo(() => {
     if (assistantNotice === "Tap Moon to hear the welcome voice on this phone.") {
-      return "Phone autoplay can be blocked. Tap Hear welcome to play the intro.";
+      return "Phone autoplay can be blocked. Tap Moon to play the intro.";
     }
 
     if (assistantNotice === "Welcome voice is unavailable on this phone, but coaching is ready.") {
       return assistantNotice;
     }
 
-    return "If the intro stays silent on your phone, tap Hear welcome.";
+    return "If the intro stays silent on your phone, tap Moon.";
   }, [assistantNotice]);
 
   const attemptAudioPlayback = useCallback(async (replyText, languageId) => {
@@ -1982,7 +1991,16 @@ function App() {
               </div>
             ) : (
               chat.map((message, index) => (
-                message.source === "welcome" ? null : (
+                message.source === "welcome" ? (
+                  <WelcomeBubble
+                    key={message.id || `${message.role}-${index}`}
+                    message={message}
+                    tutorName={TUTOR_NAME}
+                    onChipClick={requestReply}
+                    onAvatarTap={handleTutorAvatarTap}
+                    welcomePlaybackHint={welcomePlaybackHint}
+                  />
+                ) : (
                   <ChatBubble
                     key={message.id || `${message.role}-${index}`}
                     message={message}
