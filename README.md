@@ -2,11 +2,15 @@
 
 MoonSpeak-AI is a voice-first language practice app for live speaking exercises. It combines a React frontend, an Express backend, browser speech recognition, AI-generated coaching, and Murf voice playback so users can practice conversation in multiple languages.
 
+> Speak. Coach. Replay. Repeat.
+
 ## Demo Links
 
-- Frontend Demo (GitHub Pages): https://athiq2u.github.io/MoonSpeak-AI/
-- Backend API (Render): https://moonspeak-ai-backend.onrender.com
-- Backend Health Check: https://moonspeak-ai-backend.onrender.com/healthz
+| Surface | URL | Purpose |
+|---|---|---|
+| Frontend Demo | https://athiq2u.github.io/MoonSpeak-AI/ | Live UI preview |
+| Backend API | https://moonspeak-ai-backend.onrender.com | Hosted API base |
+| Health Check | https://moonspeak-ai-backend.onrender.com/healthz | Service status |
 
 ## What It Does
 
@@ -35,12 +39,25 @@ MoonSpeak-AI is a voice-first language practice app for live speaking exercises.
 - Smart follow-up suggestions and recent prompt recall
 - XP levels, daily goals, badges, and session leaderboard
 
+## At A Glance
+
+| Category | What You Get |
+|---|---|
+| Core Loop | Voice/text input -> AI coach reply -> voice playback |
+| AI Strategy | Gemini/OpenAI/OpenRouter priority with local coach fallback |
+| Voice Strategy | Murf live stream -> Murf generated audio -> browser voice fallback |
+| Learning UX | Practice + More Tools + Coach Lab workspaces |
+| Progress UX | Streak, XP level, goals, badges, leaderboard |
+
 ## Tech Stack
 
-- Frontend: React 19, Vite
-- Backend: Node.js, Express
-- AI providers: OpenRouter, OpenAI, Gemini
-- Voice: Murf
+| Layer | Technology |
+|---|---|
+| Frontend | React 19, Vite 8 |
+| Backend | Node.js, Express 5 |
+| AI Providers | Gemini, OpenAI, OpenRouter |
+| Voice | Murf |
+| Testing | Node test runner |
 
 ## System Flowchart
 
@@ -185,6 +202,19 @@ npm run dev:frontend
 npm run build
 ```
 
+## Command Matrix
+
+| Scope | Command | What It Does |
+|---|---|---|
+| Root | `npm run start` | Starts backend via root script |
+| Root | `npm run dev` | Starts frontend dev server |
+| Root | `npm run build` | Builds frontend |
+| Backend | `npm run dev` | Starts backend in watch mode |
+| Backend | `npm run test` | Runs backend tests |
+| Frontend | `npm run dev` | Starts Vite dev server |
+| Frontend | `npm run lint` | Runs ESLint |
+| Frontend | `npm run build` | Builds production frontend |
+
 ## Backend Scripts
 
 From `Backend/`:
@@ -222,6 +252,13 @@ Current test coverage includes:
 - Language config normalization and list integrity
 
 ## API Endpoints
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/` | GET | Basic API status |
+| `/healthz` | GET | Health and provider configuration snapshot |
+| `/speak` | POST | Generates coached reply from user text/history |
+| `/tts-stream` | GET | Streams or serves TTS audio |
 
 ### `GET /`
 
@@ -286,6 +323,12 @@ The frontend currently includes options for:
 - Telugu
 
 ## Practice Experience
+
+| Workspace | Focus | Highlights |
+|---|---|---|
+| Practice | Main conversation loop | Voice-first input, coach actions, live reply playback |
+| More Tools | Guided support | Missions, scenarios, level picks, vocab, grammar, smart follow-ups |
+| Coach Lab | Advanced training | Challenge packs, coach wheel, shadow drill, milestones, badges |
 
 The frontend experience is split into three workspace pages:
 
