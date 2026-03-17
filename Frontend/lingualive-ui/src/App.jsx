@@ -1603,6 +1603,18 @@ function App() {
     requestReply(activeLanguage.suggestions[2] || activeLanguage.demoPrompt);
   };
 
+  const runSurprisePrompt = () => {
+    if (isLoading || isListening) {
+      return;
+    }
+
+    triggerTutorExcitement();
+    const selectedPrompt = coachWheelPrompts[Math.floor(Math.random() * coachWheelPrompts.length)] || activeLanguage.demoPrompt;
+    setCoachWheelResult(selectedPrompt);
+    setAssistantNotice("Surprise prompt launched. Keep your reply short, natural, and confident.");
+    requestReply(selectedPrompt);
+  };
+
   const spinCoachWheel = () => {
     if (isLoading || isListening || isWheelSpinning) {
       return;
@@ -1987,18 +1999,29 @@ function App() {
                 <p className="chat-feed-helper-title">Keep the flow going</p>
                 <p className="chat-feed-helper-copy">Use one prompt to continue speaking naturally in {activeLanguage.label}.</p>
                 <div className="chat-feed-helper-actions">
+                  <button
+                    type="button"
+                    className="chat-feed-helper-btn chat-feed-helper-btn-accent"
+                    onClick={runSurprisePrompt}
+                    disabled={isLoading || isListening}
+                  >
+                    Surprise Me
+                  </button>
                   {activeLanguage.suggestions.slice(0, 3).map((suggestion) => (
                     <button
                       key={suggestion}
                       type="button"
                       className="chat-feed-helper-btn"
                       onClick={() => requestReply(suggestion)}
-                      disabled={isListening}
+                      disabled={isLoading || isListening}
                     >
                       {suggestion}
                     </button>
                   ))}
                 </div>
+                {coachWheelResult ? (
+                  <p className="chat-feed-helper-hint" aria-live="polite">Latest surprise: {coachWheelResult}</p>
+                ) : null}
               </div>
             )}
 
