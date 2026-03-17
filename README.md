@@ -62,36 +62,35 @@ MoonSpeak-AI is a voice-first language practice app for live speaking exercises.
 ## System Flowchart
 
 ```mermaid
-flowchart TD
-  U[User speaks or types] --> FE[Frontend app]
+flowchart LR
+  subgraph S1[1. Input]
+    U[User Voice/Text]
+    FE[Frontend]
+    U --> FE
+  end
 
-  FE --> S1[POST /speak]
-  S1 --> P{Live provider available?}
-  P -->|yes| L[Gemini / OpenAI / OpenRouter]
-  P -->|no| F[Built-in coach fallback]
-  L --> R[Coached text reply]
-  F --> R
+  subgraph S2[2. Coaching]
+    API[POST /speak]
+    PRI{Provider Priority}
+    LIVE[Gemini/OpenAI/OpenRouter]
+    FALL[Built-in Coach Fallback]
+    REPLY[Coach Reply]
+    FE --> API --> PRI
+    PRI --> LIVE --> REPLY
+    PRI --> FALL --> REPLY
+  end
 
-  R --> S2[GET /tts-stream]
-  S2 --> M{Murf stream works?}
-  M -->|yes| V1[Play live Murf voice]
-  M -->|no| G{Generated audio works?}
-  G -->|yes| V2[Play generated audio]
-  G -->|no| V3[Play browser voice fallback]
-
-  V1 --> DONE[User gets reply + audio]
-  V2 --> DONE
-  V3 --> DONE
-
-  classDef core fill:#EAF3FF,stroke:#2563EB,stroke-width:1px;
-  classDef decision fill:#FFF7E6,stroke:#D97706,stroke-width:1px;
-  classDef fallback fill:#FFF1F2,stroke:#E11D48,stroke-width:1px;
-  classDef success fill:#ECFDF5,stroke:#059669,stroke-width:1px;
-
-  class U,FE,S1,S2,L,R core;
-  class P,M,G decision;
-  class F,V3 fallback;
-  class V1,V2,DONE success;
+  subgraph S3[3. Voice Delivery]
+    TTS[GET /tts-stream]
+    STREAM[Murf Live Stream]
+    GEN[Murf Generated Audio]
+    BROWSER[Browser Voice]
+    PLAY[User Hears Reply]
+    REPLY --> TTS --> STREAM
+    STREAM --> PLAY
+    STREAM -. fail .-> GEN --> PLAY
+    GEN -. fail .-> BROWSER --> PLAY
+  end
 ```
 
 ## Project Structure
