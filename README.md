@@ -2,6 +2,12 @@
 
 MoonSpeak-AI is a voice-first language practice app for live speaking exercises. It combines a React frontend, an Express backend, browser speech recognition, AI-generated coaching, and Murf voice playback so users can practice conversation in multiple languages.
 
+## Demo Links
+
+- Frontend Demo (GitHub Pages): https://athiq2u.github.io/MoonSpeak-AI/
+- Backend API (Render): https://moonspeak-ai-backend.onrender.com
+- Backend Health Check: https://moonspeak-ai-backend.onrender.com/healthz
+
 ## What It Does
 
 - Lets users practice spoken conversation in multiple languages
