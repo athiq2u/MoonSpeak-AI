@@ -1,8 +1,6 @@
-# LinguaLive AI
+# MoonSpeak-AI
 
-LinguaLive AI is a voice-first language practice app for live speaking exercises. It combines a React frontend, an Express backend, browser speech recognition, AI-generated coaching, and Murf voice playback so users can practice conversation in multiple languages.
-
-Some parts of the current codebase and deployed services still use the MoonSpeak name. This README focuses on how the project works and how to run it.
+MoonSpeak-AI is a voice-first language practice app for live speaking exercises. It combines a React frontend, an Express backend, browser speech recognition, AI-generated coaching, and Murf voice playback so users can practice conversation in multiple languages.
 
 ## What It Does
 
@@ -21,6 +19,15 @@ Some parts of the current codebase and deployed services still use the MoonSpeak
 - Text and voice reply playback
 - Localized fallback coaching when AI providers are unavailable
 - Health endpoint for backend status checks
+- Local progress and streak tracking in browser storage
+- Multi-workspace UI: Practice, More Tools, and Coach Lab
+- Quick coaching actions: Coach me, Challenge, Roleplay
+- Scenario and mission flows for interview, storytelling, debate, and fluency drills
+- Coach Wheel random challenge picker
+- Shadow Drill with countdown and word-level match scoring
+- Difficulty levels, conversation topics, vocabulary, pronunciation, and grammar support
+- Smart follow-up suggestions and recent prompt recall
+- XP levels, daily goals, badges, and session leaderboard
 
 ## Tech Stack
 
@@ -28,6 +35,31 @@ Some parts of the current codebase and deployed services still use the MoonSpeak
 - Backend: Node.js, Express
 - AI providers: OpenRouter, OpenAI, Gemini
 - Voice: Murf
+
+## System Flowchart
+
+```mermaid
+flowchart TD
+  U[User Speaks or Types] --> F[Frontend React App]
+  F -->|POST /speak| B[Backend Express API]
+  B --> A{AI Provider Order}
+  A --> G[Gemini]
+  A --> O[OpenAI]
+  A --> R[OpenRouter]
+  G --> C[Coach Reply]
+  O --> C
+  R --> C
+  A -->|all unavailable| L[Local Fallback Coach]
+  L --> C
+  C -->|reply + metadata| F
+  F -->|GET /tts-stream| T[Murf TTS Stream]
+  T -->|stream ok| V[Live Voice Playback]
+  T -->|stream fail| TG[Murf Generate Fallback]
+  TG -->|generate ok| V
+  TG -->|generate fail| BV[Browser Voice Fallback]
+  V --> U
+  BV --> U
+```
 
 ## Project Structure
 
@@ -82,12 +114,20 @@ MURF_API_KEY=
 MURF_STREAM_URL=
 MURF_DEFAULT_VOICE_ID=Natalie
 MURF_VOICE_MAP={}
+MURF_REQUEST_TIMEOUT_MS=15000
 ```
+
+Additional optional voice overrides supported by the backend:
+
+- `MURF_VOICE_<LANGUAGE_ID>` (for example: `MURF_VOICE_EN_US`, `MURF_VOICE_HI_IN`)
+- These take priority over `MURF_VOICE_MAP`
 
 Frontend configuration:
 
 - `VITE_API_BASE_URL` points the frontend to the backend API
-- In local development, a typical value is `http://localhost:5000`
+- If not set:
+  - On local hosts (`localhost`/`127.0.0.1`), the frontend uses `/api` and Vite proxy forwards to `http://localhost:5000`
+  - On non-local hosts, the frontend defaults to `https://moonspeak-ai-backend.onrender.com`
 
 ## Installation
 
@@ -125,6 +165,7 @@ Local defaults:
 
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:5000`
+- Frontend API route in dev: `/api` (proxied to backend)
 
 ## Root Scripts
 
@@ -160,6 +201,20 @@ npm run preview
 npm run lint
 ```
 
+## Tests
+
+Run backend tests:
+
+```powershell
+Set-Location Backend
+npm run test
+```
+
+Current test coverage includes:
+
+- Health and status routes (`GET /`, `GET /healthz`)
+- Language config normalization and list integrity
+
 ## API Endpoints
 
 ### `GET /`
@@ -184,6 +239,16 @@ Example request body:
 }
 ```
 
+Typical response fields:
+
+- `reply`
+- `audioFile` / `audioStreamUrl`
+- `audioMode`
+- `replySource`
+- `isFallback`, `fallbackReason`, `fallbackDetails`
+- `language`, `languageLabel`
+- `assistantNotice`
+
 ### `GET /tts-stream`
 
 Streams or returns generated speech audio for a text response.
@@ -192,6 +257,7 @@ Query parameters:
 
 - `text`
 - `language`
+- `mode` (legacy compatibility; `bilingual` maps to Hindi when `language` is not supplied)
 
 ## Supported Languages
 
@@ -213,6 +279,41 @@ The frontend currently includes options for:
 - Tamil
 - Telugu
 
+## Practice Experience
+
+The frontend experience is split into three workspace pages:
+
+- Practice: core conversation flow with voice-first input and live coaching replies
+- More Tools: focused helpers such as quick-start prompts, scenarios, difficulty picks, vocabulary, pronunciation, grammar, and smart follow-ups
+- Coach Lab: advanced drills, milestone tracking, challenge packs, coach wheel, shadow drill, badges, and session controls
+
+Built-in quick actions include:
+
+- Coach me
+- Challenge
+- Roleplay
+
+## Workspace Flowchart
+
+```mermaid
+flowchart LR
+  P[Practice Page] --> M[More Tools Page]
+  P --> CL[Coach Lab Page]
+  M --> P
+  M --> CL
+  CL --> P
+  CL --> M
+
+  P --> Q1[Coach me / Challenge / Roleplay]
+  M --> Q2[Scenarios / Missions / Topics / Tips]
+  CL --> Q3[Coach Wheel / Shadow Drill / Badges]
+
+  Q1 --> S[Send Prompt]
+  Q2 --> S
+  Q3 --> S
+  S --> RPY[AI Reply + Voice Playback]
+```
+
 ## Deployment
 
 The backend is set up for Render through `render.yaml`.
@@ -225,6 +326,11 @@ Current Render settings in the repo:
 - Health check path: `/healthz`
 
 The `docs/` folder contains a built frontend output that can be used for static hosting.
+
+Frontend build notes:
+
+- Vite is configured with base path `/MoonSpeak-AI/` during build
+- If deployed to a different path, update `Frontend/lingualive-ui/vite.config.js`
 
 ## Troubleshooting
 
