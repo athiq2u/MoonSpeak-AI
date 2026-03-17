@@ -3158,10 +3158,123 @@
   background: linear-gradient(145deg, #fffaf2, #eef4ff);
 }
 
+.app-shell.theme-light .hero-metric-tile {
+  color: #2b394c;
+  background: rgba(250, 244, 234, 0.96);
+}
+
+.app-shell.theme-light .hero-metric-label {
+  color: rgba(43, 57, 76, 0.72);
+}
+
+.app-shell.theme-light :is(.status-pill, .status-pill-muted, .status-pill-neutral) {
+  color: #2f3f55;
+  background: rgba(252, 246, 238, 0.95);
+  border-color: rgba(118, 129, 145, 0.26);
+}
+
+.app-shell.theme-light .status-pill-active {
+  color: #8a4f2b;
+  background: rgba(245, 205, 178, 0.7);
+  border-color: rgba(199, 128, 86, 0.32);
+}
+
+.app-shell.theme-light .status-dot-neutral {
+  background: #5d6d86;
+}
+
+.app-shell.theme-light .stats-chip {
+  color: #304157;
+  background: rgba(239, 248, 246, 0.95);
+  border-color: rgba(101, 140, 133, 0.26);
+}
+
+.app-shell.theme-light .stats-chip-time {
+  color: #8b4f2a;
+  background: rgba(245, 218, 196, 0.84);
+  border-color: rgba(207, 145, 106, 0.34);
+}
+
+.app-shell.theme-light .tutor-mini-title,
+.app-shell.theme-light .practice-progress-title,
+.app-shell.theme-light .practice-progress-level,
+.app-shell.theme-light .practice-goal-title,
+.app-shell.theme-light .compact-stat,
+.app-shell.theme-light .voice-launch-label,
+.app-shell.theme-light .coach-guide-title,
+.app-shell.theme-light .mission-title,
+.app-shell.theme-light .smart-followups-title,
+.app-shell.theme-light .chat-feed-helper-title,
+.app-shell.theme-light .insight-item,
+.app-shell.theme-light .leaderboard-label,
+.app-shell.theme-light .shadow-score-copy,
+.app-shell.theme-light .grammar-topic,
+.app-shell.theme-light .pronunciation-pattern,
+.app-shell.theme-light .vocab-label {
+  color: #2f3f55;
+}
+
+.app-shell.theme-light .welcome-chip,
+.app-shell.theme-light .chip,
+.app-shell.theme-light .refresh-task-actions .welcome-chip,
+.app-shell.theme-light .chat-feed-helper-btn,
+.app-shell.theme-light .smart-followup-btn,
+.app-shell.theme-light .conversation-topic-btn,
+.app-shell.theme-light .difficulty-card,
+.app-shell.theme-light .practice-progress-chip,
+.app-shell.theme-light .compact-stat {
+  color: #2f4462;
+}
+
+.app-shell.theme-light .welcome-chip {
+  border-color: rgba(94, 141, 196, 0.42);
+  background: rgba(236, 245, 255, 0.92);
+}
+
+.app-shell.theme-light .welcome-chip-primary {
+  color: #5f351f;
+  border-color: rgba(203, 127, 86, 0.46);
+  background: linear-gradient(135deg, rgba(245, 197, 165, 0.62), rgba(206, 228, 251, 0.72));
+}
+
+.app-shell.theme-light .practice-progress-row,
+.app-shell.theme-light .practice-progress-row .practice-progress-chip,
+.app-shell.theme-light .practice-progress-card .practice-progress-chip {
+  color: #2d4361;
+}
+
+.app-shell.theme-light .delivery-badge-fallback-generate,
+.app-shell.theme-light .chat-source-badge-fallback,
+.app-shell.theme-light .chat-source-badge-openrouter,
+.app-shell.theme-light .chat-source-badge-openai,
+.app-shell.theme-light .chat-source-badge-gemini {
+  color: #2f4462;
+}
+
 .app-shell.theme-light .chat-feed::-webkit-scrollbar-thumb {
   background: rgba(98, 110, 126, 0.26);
 }
 
 .app-shell.theme-light .chat-feed::-webkit-scrollbar-thumb:hover {
   background: rgba(98, 110, 126, 0.38);
+}
+
+.app-shell.theme-light .eyebrow {
+  color: #8f4d2a;
+}
+
+.app-shell.theme-light .hero-figure-card {
+  border-color: rgba(103, 118, 141, 0.26);
+  background: linear-gradient(155deg, rgba(255, 250, 243, 0.96), rgba(246, 242, 236, 0.9));
+  box-shadow: 0 22px 52px rgba(79, 92, 113, 0.16);
+}
+
+.app-shell.theme-light .hero-figure-badge {
+  color: #2f4462;
+  background: rgba(228, 246, 239, 0.9);
+  border-color: rgba(103, 168, 149, 0.34);
+}
+
+.app-shell.theme-light .hero-metric-tile strong {
+  color: #2b394c;
 }
