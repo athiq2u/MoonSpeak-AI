@@ -63,9 +63,9 @@ MoonSpeak-AI is a voice-first language practice app for live speaking exercises.
 
 ```mermaid
 flowchart TD
-  A[1) Input<br/>User voice/text -> Frontend]
-  B[2) Coaching<br/>POST /speak -> Provider priority -> Reply]
-  C[3) Voice Delivery<br/>GET /tts-stream -> Stream/Generate/Browser fallback]
+  A[1. Input: User voice/text to Frontend]
+  B[2. Coaching: POST /speak, provider priority, reply]
+  C[3. Voice Delivery: GET /tts-stream with fallbacks]
 
   A --> B --> C
 ```
