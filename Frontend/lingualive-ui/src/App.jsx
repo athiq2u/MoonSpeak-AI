@@ -2137,7 +2137,7 @@ function App() {
                 type="button"
                 role="tab"
                 aria-selected={activeWorkspacePage === "practice"}
-                className={`workspace-nav-button ${activeWorkspacePage === "practice" ? "workspace-nav-button-active" : ""}`}
+                className={`workspace-nav-button workspace-nav-button-practice ${activeWorkspacePage === "practice" ? "workspace-nav-button-active" : ""}`}
                 onClick={() => setActiveWorkspacePage("practice")}
               >
                 Practice
@@ -2146,7 +2146,7 @@ function App() {
                 type="button"
                 role="tab"
                 aria-selected={activeWorkspacePage === "extras"}
-                className={`workspace-nav-button ${activeWorkspacePage === "extras" ? "workspace-nav-button-active" : ""}`}
+                className={`workspace-nav-button workspace-nav-button-extras ${activeWorkspacePage === "extras" ? "workspace-nav-button-active" : ""}`}
                 onClick={() => setActiveWorkspacePage("extras")}
               >
                 More Tools
@@ -2155,7 +2155,7 @@ function App() {
                 type="button"
                 role="tab"
                 aria-selected={activeWorkspacePage === "coach-lab"}
-                className={`workspace-nav-button ${activeWorkspacePage === "coach-lab" ? "workspace-nav-button-active" : ""}`}
+                className={`workspace-nav-button workspace-nav-button-lab ${activeWorkspacePage === "coach-lab" ? "workspace-nav-button-active" : ""}`}
                 onClick={() => setActiveWorkspacePage("coach-lab")}
               >
                 Coach Lab
