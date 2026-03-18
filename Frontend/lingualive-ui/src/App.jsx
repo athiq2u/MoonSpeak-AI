@@ -1070,20 +1070,6 @@ function App() {
     }, [closeFeatureTour]);
 
     useEffect(() => {
-      try {
-        const seenVersion = localStorage.getItem(FEATURE_TOUR_STORAGE_KEY);
-
-        if (seenVersion !== FEATURE_TOUR_VERSION) {
-          setFeatureTourStepIndex(0);
-          setIsFeatureTourOpen(true);
-        }
-      } catch {
-        setFeatureTourStepIndex(0);
-        setIsFeatureTourOpen(true);
-      }
-    }, []);
-
-    useEffect(() => {
       if (!isFeatureTourOpen || typeof document === "undefined") {
         return undefined;
       }
