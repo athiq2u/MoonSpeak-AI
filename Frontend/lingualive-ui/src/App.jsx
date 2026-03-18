@@ -2182,7 +2182,7 @@ function App() {
                 {aiStatusLabel}
               </span>
               <span className={`status-pill status-pill-muted ${isActive ? "status-pill-active" : ""}`}>
-                {isListening ? "🎙 Listening…" : isLoading ? "⏳ Thinking…" : isSpeaking ? "🔊 Speaking…" : "Ready"}
+                {isListening ? "🎙 Listening…" : isLoading ? "⏳ Thinking…" : isSpeaking ? "🔊 Speaking…" : "Idle"}
               </span>
             </div>
 
@@ -2224,7 +2224,7 @@ function App() {
                 </div>
                 <div className="hero-metric-tile">
                   <span className="hero-metric-label">Coach Mode</span>
-                  <strong>{isListening ? "Listening" : isLoading ? "Thinking" : isSpeaking ? "Speaking" : "Ready"}</strong>
+                  <strong>{isListening ? "Listening" : isLoading ? "Thinking" : isSpeaking ? "Speaking" : "Idle"}</strong>
                 </div>
               </div>
             </div>
@@ -2376,7 +2376,7 @@ function App() {
 
             <div className="tutor-mini-copy">
               <p className="tutor-mini-title">{TUTOR_NAME}</p>
-              <p className="tutor-mini-status">{isListening ? "Listening" : isLoading ? "Thinking" : isSpeaking ? "Speaking" : "Ready"}</p>
+              <p className="tutor-mini-status">{isListening ? "Listening" : isLoading ? "Thinking" : isSpeaking ? "Speaking" : "Idle"}</p>
               {!isSimpleView && (
                 <div className="tutor-mini-actions">
                   <button type="button" className="tutor-mini-btn" onClick={runCoachPrompt}>Coach me</button>
