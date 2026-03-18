@@ -3412,3 +3412,115 @@
     min-height: 38px;
   }
 }
+
+/* ================================
+   Simple View Overrides
+   ================================ */
+.app-shell.view-simple {
+  gap: 18px;
+}
+
+.app-shell.view-simple .hero-panel,
+.app-shell.view-simple .chat-panel,
+.app-shell.view-simple .composer-panel {
+  backdrop-filter: none;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
+}
+
+.app-shell.view-simple .hero-panel {
+  border-radius: 20px;
+  padding: 22px;
+}
+
+.app-shell.view-simple .hero-grid {
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.app-shell.view-simple .hero-copy {
+  max-width: 66ch;
+  font-size: 0.96rem;
+  line-height: 1.5;
+}
+
+.app-shell.view-simple .hero-figure,
+.app-shell.view-simple .falcon-note,
+.app-shell.view-simple .tutor-aura,
+.app-shell.view-simple .tutor-wave,
+.app-shell.view-simple .hero-figure-glow {
+  display: none;
+}
+
+.app-shell.view-simple .workspace-panel {
+  gap: 16px;
+}
+
+.app-shell.view-simple .chat-panel,
+.app-shell.view-simple .composer-panel {
+  min-height: 620px;
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.app-shell.view-simple .panel-heading {
+  margin-bottom: 12px;
+}
+
+.app-shell.view-simple .stats-strip,
+.app-shell.view-simple .status-row,
+.app-shell.view-simple .left-focus-actions,
+.app-shell.view-simple .mission-grid,
+.app-shell.view-simple .smart-followups-grid,
+.app-shell.view-simple .suggestion-chips,
+.app-shell.view-simple .quick-action-row,
+.app-shell.view-simple .practice-goals-grid {
+  gap: 6px;
+}
+
+.app-shell.view-simple .left-focus-card,
+.app-shell.view-simple .voice-launch-card,
+.app-shell.view-simple .practice-progress-card,
+.app-shell.view-simple .tools-section-group,
+.app-shell.view-simple .leaderboard-card,
+.app-shell.view-simple .achievement-card,
+.app-shell.view-simple .interactive-card,
+.app-shell.view-simple .progress-card,
+.app-shell.view-simple .chat-feed-helper,
+.app-shell.view-simple .audio-card {
+  border-radius: 12px;
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.app-shell.view-simple .chat-bubble {
+  border-radius: 14px;
+}
+
+.app-shell.view-simple .chat-avatar-button,
+.app-shell.view-simple .tutor-fab,
+.app-shell.view-simple .chat-avatar-button-typing,
+.app-shell.view-simple .chat-avatar-button-poked,
+.app-shell.view-simple .tutor-chatbot-pic,
+.app-shell.view-simple .tutor-chatbot-pic-thinking,
+.app-shell.view-simple .tutor-chatbot-pic-listening,
+.app-shell.view-simple .tutor-chatbot-pic-speaking {
+  animation: none;
+  transform: none;
+}
+
+.app-shell.view-simple .optional-detail-block {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .app-shell.view-simple .hero-panel {
+    padding: 14px;
+    padding-top: 58px;
+  }
+
+  .app-shell.view-simple .chat-panel,
+  .app-shell.view-simple .composer-panel {
+    padding: 14px;
+    min-height: auto;
+  }
+}

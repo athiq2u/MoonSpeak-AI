@@ -18,6 +18,7 @@ const STORAGE_KEY = "lingualive_chat";
 const STREAK_STORAGE_KEY = "lingualive_streak";
 const ACHIEVEMENTS_STORAGE_KEY = "lingualive_achievements";
 const THEME_STORAGE_KEY = "lingualive_theme";
+const SIMPLE_VIEW_STORAGE_KEY = "lingualive_simple_view";
 const FEATURE_TOUR_STORAGE_KEY = "lingualive_feature_tour_seen";
 const FEATURE_TOUR_VERSION = "2026.03.17";
 const DEFAULT_LANGUAGE_ID = "en-US";
@@ -763,6 +764,14 @@ function App() {
       return "dark";
     }
   });
+  const [isSimpleView, setIsSimpleView] = useState(() => {
+    try {
+      const saved = localStorage.getItem(SIMPLE_VIEW_STORAGE_KEY);
+      return saved !== "false";
+    } catch {
+      return true;
+    }
+  });
   const [voiceDeliveryMode, setVoiceDeliveryMode] = useState("idle");
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [assistantNotice, setAssistantNotice] = useState("");
@@ -1278,6 +1287,14 @@ function App() {
       document.body.classList.toggle("theme-light", themeMode === "light");
     }
   }, [themeMode]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIMPLE_VIEW_STORAGE_KEY, String(isSimpleView));
+    } catch {
+      // storage unavailable - ignore
+    }
+  }, [isSimpleView]);
 
   useEffect(() => {
     setSessionBestXp((previousBest) => Math.max(previousBest, sessionXp));
@@ -2120,9 +2137,16 @@ function App() {
   const charsLeft = MAX_CHARS - text.length;
 
   return (
-    <main className={`app-shell theme-${themeMode}`}>
+    <main className={`app-shell theme-${themeMode} ${isSimpleView ? "view-simple" : "view-detailed"}`}>
       <header className="hero-panel">
         <div className="hero-top-controls" role="group" aria-label="Theme and tour controls">
+          <button
+            type="button"
+            className="status-check-button"
+            onClick={() => setIsSimpleView((currentValue) => !currentValue)}
+          >
+            {isSimpleView ? "Detailed View" : "Simple View"}
+          </button>
           <button type="button" className="status-check-button" onClick={openFeatureTour}>
             ✨ Tour
           </button>
@@ -2140,12 +2164,10 @@ function App() {
             <p className="eyebrow">Powered by Murf Falcon</p>
             <h1>MoonSpeak AI</h1>
             <p className="hero-copy">
-              Meet {TUTOR_NAME}, your robot voice tutor powered by Murf Falcon. Pick a language, speak naturally, get a quick coaching reply, and hear it back instantly.
+              Practice speaking with {TUTOR_NAME}. Pick a language, talk naturally, and get quick voice + text coaching.
             </p>
 
-            <p className="falcon-note">
-              Current language: {activeLanguage.label}. If a Murf locale is unavailable, audio falls back to the default English voice.
-            </p>
+            <p className="falcon-note">Current language: {activeLanguage.label}.</p>
 
             <div className="workspace-nav" role="tablist" aria-label="Workspace pages" data-tour="workspace-nav">
               <button
@@ -2241,13 +2263,15 @@ function App() {
               <h2>Conversation</h2>
             </div>
             <div className="panel-heading-actions">
-              <button
-                type="button"
-                className="panel-ghost-btn"
-                onClick={() => setActiveWorkspacePage("extras")}
-              >
-                More Tools
-              </button>
+              {!isSimpleView && (
+                <button
+                  type="button"
+                  className="panel-ghost-btn"
+                  onClick={() => setActiveWorkspacePage("extras")}
+                >
+                  More Tools
+                </button>
+              )}
               {chat.length > 0 && (
                 <button className="clear-button" onClick={clearChat}>Clear</button>
               )}
@@ -2255,11 +2279,22 @@ function App() {
           </div>
 
           <div className="stats-strip" aria-live="polite">
-            <span className="stats-chip">Turns: {chatStats.turns}</span>
-            <span className="stats-chip">AI replies: {chatStats.aiReplies}</span>
-            <span className="stats-chip">Avg words/reply: {chatStats.avgAiWords}</span>
-            {practiceSeconds > 0 && (
-              <span className="stats-chip stats-chip-time">⏱ {formatPracticeTime(practiceSeconds)}</span>
+            {isSimpleView ? (
+              <>
+                <span className="stats-chip">Turns: {chatStats.turns}</span>
+                {practiceSeconds > 0 && (
+                  <span className="stats-chip stats-chip-time">⏱ {formatPracticeTime(practiceSeconds)}</span>
+                )}
+              </>
+            ) : (
+              <>
+                <span className="stats-chip">Turns: {chatStats.turns}</span>
+                <span className="stats-chip">AI replies: {chatStats.aiReplies}</span>
+                <span className="stats-chip">Avg words/reply: {chatStats.avgAiWords}</span>
+                {practiceSeconds > 0 && (
+                  <span className="stats-chip stats-chip-time">⏱ {formatPracticeTime(practiceSeconds)}</span>
+                )}
+              </>
             )}
           </div>
 
@@ -2280,7 +2315,7 @@ function App() {
                       <option key={language.id} value={language.id}>{language.label}</option>
                     ))}
                   </select>
-                  <span className="language-picker-hint">{activeLanguage.summary}</span>
+                  {!isSimpleView && <span className="language-picker-hint">{activeLanguage.summary}</span>}
                 </label>
                 <div className="suggestion-chips">
                   {activeLanguage.suggestions.map(s => (
@@ -2337,7 +2372,7 @@ function App() {
         <section className="composer-panel">
           <div className="panel-heading">
             <div>
-              <h2>Voice First</h2>
+              <h2>{isSimpleView ? "Voice" : "Voice First"}</h2>
             </div>
           </div>
 
@@ -2365,16 +2400,18 @@ function App() {
             <div className="tutor-mini-copy">
               <p className="tutor-mini-title">{TUTOR_NAME}</p>
               <p className="tutor-mini-status">{isListening ? "Listening" : isLoading ? "Thinking" : isSpeaking ? "Speaking" : "Ready"}</p>
-              <div className="tutor-mini-actions">
-                <button type="button" className="tutor-mini-btn" onClick={runCoachPrompt}>Coach me</button>
-                <button type="button" className="tutor-mini-btn" onClick={runChallengePrompt}>Challenge</button>
-                <button type="button" className="tutor-mini-btn" onClick={runRoleplayPrompt}>Roleplay</button>
-              </div>
+              {!isSimpleView && (
+                <div className="tutor-mini-actions">
+                  <button type="button" className="tutor-mini-btn" onClick={runCoachPrompt}>Coach me</button>
+                  <button type="button" className="tutor-mini-btn" onClick={runChallengePrompt}>Challenge</button>
+                  <button type="button" className="tutor-mini-btn" onClick={runRoleplayPrompt}>Roleplay</button>
+                </div>
+              )}
             </div>
           </aside>
 
           <label className="language-picker language-picker-compact" htmlFor="language-picker-composer">
-            <span className="language-picker-label">Practice language</span>
+            <span className="language-picker-label">{isSimpleView ? "Language" : "Practice language"}</span>
             <select
               id="language-picker-composer"
               className="language-select"
@@ -2385,11 +2422,11 @@ function App() {
                 <option key={language.id} value={language.id}>{language.label}</option>
               ))}
             </select>
-            <span className="language-picker-hint">{activeLanguage.summary}</span>
+            {!isSimpleView && <span className="language-picker-hint">{activeLanguage.summary}</span>}
           </label>
 
           <div className="voice-launch-card" data-tour="voice-first">
-            <p className="voice-launch-label">Primary input · {activeLanguage.label}</p>
+            <p className="voice-launch-label">{isSimpleView ? "Voice input" : `Primary input · ${activeLanguage.label}`}</p>
             <button
               onClick={startListening}
               className={`primary-button voice-primary-button ${isListening ? "mic-button-active" : ""}`}
@@ -2398,32 +2435,38 @@ function App() {
               {isListening ? "🔴 Listening…" : "🎙 Start Speaking"}
             </button>
             <p className="voice-copy">
-              Speak in {activeLanguage.label}. Typing is still available as backup.
+              {isSimpleView
+                ? `Speak in ${activeLanguage.label}.`
+                : `Speak in ${activeLanguage.label}. Typing is still available as backup.`}
             </p>
-            <button
-              type="button"
-              className="secondary-button voice-tools-button"
-              onClick={() => setActiveWorkspacePage("extras")}
-            >
-              Open More Tools
-            </button>
-            <div className="quick-action-row">
-              <button
-                type="button"
-                className="quick-action-btn"
-                onClick={() => setActiveWorkspacePage("coach-lab")}
-              >
-                Coach Lab
-              </button>
-              <button
-                type="button"
-                className="quick-action-btn"
-                onClick={replayLatestReply}
-                disabled={!latestReplyForVoiceRef.current.text || isAudioLoading}
-              >
-                Replay Last
-              </button>
-            </div>
+            {!isSimpleView && (
+              <>
+                <button
+                  type="button"
+                  className="secondary-button voice-tools-button"
+                  onClick={() => setActiveWorkspacePage("extras")}
+                >
+                  Open More Tools
+                </button>
+                <div className="quick-action-row">
+                  <button
+                    type="button"
+                    className="quick-action-btn"
+                    onClick={() => setActiveWorkspacePage("coach-lab")}
+                  >
+                    Coach Lab
+                  </button>
+                  <button
+                    type="button"
+                    className="quick-action-btn"
+                    onClick={replayLatestReply}
+                    disabled={!latestReplyForVoiceRef.current.text || isAudioLoading}
+                  >
+                    Replay Last
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="practice-progress-card" aria-live="polite">
@@ -2431,31 +2474,35 @@ function App() {
               <p className="practice-progress-title">Practice Progress</p>
               <span className="practice-progress-level">Level {coachLevel}</span>
             </div>
-            <div className="practice-progress-row">
-              <span className="practice-progress-chip">XP: {experiencePoints}</span>
-              <span className="practice-progress-chip">Next: {xpToNextLevel} XP</span>
-            </div>
+            {!isSimpleView && (
+              <div className="practice-progress-row">
+                <span className="practice-progress-chip">XP: {experiencePoints}</span>
+                <span className="practice-progress-chip">Next: {xpToNextLevel} XP</span>
+              </div>
+            )}
             <div className="practice-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={levelProgressPercent}>
               <span className="practice-progress-fill" style={{ width: `${levelProgressPercent}%` }} />
             </div>
           </div>
 
-          <div className="practice-goals-grid" aria-live="polite">
-            <div className="practice-goal-card">
-              <p className="practice-goal-title">Daily Goal</p>
-              <p className="practice-goal-copy">Turns: {dailyGoalTurns}/{DAILY_TURN_GOAL}</p>
-              <div className="practice-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={dailyGoalPercent}>
-                <span className="practice-progress-fill" style={{ width: `${dailyGoalPercent}%` }} />
+          {!isSimpleView && (
+            <div className="practice-goals-grid" aria-live="polite">
+              <div className="practice-goal-card">
+                <p className="practice-goal-title">Daily Goal</p>
+                <p className="practice-goal-copy">Turns: {dailyGoalTurns}/{DAILY_TURN_GOAL}</p>
+                <div className="practice-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={dailyGoalPercent}>
+                  <span className="practice-progress-fill" style={{ width: `${dailyGoalPercent}%` }} />
+                </div>
+              </div>
+              <div className="practice-goal-card">
+                <p className="practice-goal-title">Focus Time</p>
+                <p className="practice-goal-copy">{formatPracticeTime(practiceSeconds)} / {formatPracticeTime(FOCUS_SECONDS_GOAL)}</p>
+                <div className="practice-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={focusGoalPercent}>
+                  <span className="practice-progress-fill" style={{ width: `${focusGoalPercent}%` }} />
+                </div>
               </div>
             </div>
-            <div className="practice-goal-card">
-              <p className="practice-goal-title">Focus Time</p>
-              <p className="practice-goal-copy">{formatPracticeTime(practiceSeconds)} / {formatPracticeTime(FOCUS_SECONDS_GOAL)}</p>
-              <div className="practice-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={focusGoalPercent}>
-                <span className="practice-progress-fill" style={{ width: `${focusGoalPercent}%` }} />
-              </div>
-            </div>
-          </div>
+          )}
 
           <textarea
             id="practice-input"
@@ -2467,9 +2514,11 @@ function App() {
             rows={5}
             disabled={isLoading || isListening}
           />
-          <p className={`char-count ${charsLeft < 50 ? "char-count-warn" : ""}`}>
-            {charsLeft} / {MAX_CHARS}
-          </p>
+          {(!isSimpleView || charsLeft < 80) && (
+            <p className={`char-count ${charsLeft < 50 ? "char-count-warn" : ""}`}>
+              {charsLeft} / {MAX_CHARS}
+            </p>
+          )}
 
           <div className="action-row">
             <button
@@ -2670,7 +2719,7 @@ function App() {
             </div>
           </div>
 
-          <div className="tools-section-group">
+          <div className="tools-section-group optional-detail-block">
             <div className="tools-section-header">
               <h3>📖 Vocabulary Upgrade</h3>
               <p>Replace common words with stronger alternatives.</p>
@@ -2685,7 +2734,7 @@ function App() {
             </div>
           </div>
 
-          <div className="tools-section-group">
+          <div className="tools-section-group optional-detail-block">
             <div className="tools-section-header">
               <h3>🎙️ Pronunciation Guide</h3>
               <p>Master difficult sounds and speech patterns.</p>
@@ -2787,7 +2836,7 @@ function App() {
             </div>
           </div>
 
-          <div className="tools-section-group">
+          <div className="tools-section-group optional-detail-block">
             <div className="tools-section-header">
               <h3>✏️ Grammar Tips</h3>
               <p>Common grammar patterns explained simply.</p>
@@ -2802,7 +2851,7 @@ function App() {
             </div>
           </div>
 
-          <div className="coach-guide-card tools-section-group">
+          <div className="coach-guide-card tools-section-group optional-detail-block">
             <div className="tools-section-header">
               <h3>🌟 Coach Guide</h3>
               <p>Quick success tips from your coach.</p>
@@ -2838,7 +2887,7 @@ function App() {
             </div>
           )}
 
-          <div className="tools-section-group">
+          <div className="tools-section-group optional-detail-block">
             <div className="tools-section-header">
               <h3>⏱️ Recent Prompts</h3>
               <p>Quick access to your practice history.</p>
@@ -2936,7 +2985,7 @@ function App() {
             </div>
           </div>
 
-          <div className="leaderboard-card" aria-live="polite">
+          <div className="leaderboard-card optional-detail-block" aria-live="polite">
             <div className="leaderboard-head">
               <p className="leaderboard-title">Session Leaderboard</p>
               <span className="leaderboard-subtitle">Current session highs</span>
@@ -3038,7 +3087,7 @@ function App() {
             <p className="progress-subcopy">{xpToNextLevel} XP to reach Level {coachLevel + 1}</p>
           </div>
 
-          <div className="tools-section-group" aria-live="polite">
+          <div className="tools-section-group optional-detail-block" aria-live="polite">
             <div className="tools-section-header">
               <h3>🎯 Milestone Tracker</h3>
               <p>See progress at a glance.</p>
@@ -3074,7 +3123,7 @@ function App() {
             </div>
           </div>
 
-          <div className="achievement-card">
+          <div className="achievement-card optional-detail-block">
             <div className="achievement-head">
               <p className="achievement-title">Badges</p>
               <span className="achievement-subtitle">
