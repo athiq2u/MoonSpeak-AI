@@ -758,9 +758,9 @@ function App() {
   const [themeMode, setThemeMode] = useState(() => {
     try {
       const saved = localStorage.getItem(THEME_STORAGE_KEY);
-      return saved === "light" ? "light" : "dark";
+      return saved === "dark" ? "dark" : "light";
     } catch {
-      return "dark";
+      return "light";
     }
   });
   const isSimpleView = true;
