@@ -2124,7 +2124,7 @@ function App() {
     <main className={`app-shell theme-${themeMode} ${isSimpleView ? "view-simple" : "view-detailed"}`}>
       <header className="hero-panel">
         <div className="hero-top-controls" role="group" aria-label="Theme and tour controls">
-          <button type="button" className="status-check-button" onClick={openFeatureTour}>
+          <button type="button" className="status-check-button status-check-button-tour" onClick={openFeatureTour}>
             ✨ Tour
           </button>
           <button
