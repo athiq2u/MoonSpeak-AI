@@ -40,9 +40,21 @@
   right: 16px;
   z-index: 6;
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.hero-top-controls .status-check-button {
+  min-height: 34px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+}
+
+.status-check-button-icon {
+  min-width: 34px;
+  padding: 6px 10px;
+  font-size: 0.92rem;
 }
 
 .hero-grid {
@@ -3514,6 +3526,77 @@
 
 .app-shell.view-simple .optional-detail-block {
   display: none;
+}
+
+.app-shell.theme-light.view-simple :is(
+  .left-focus-card,
+  .voice-launch-card,
+  .practice-progress-card,
+  .tools-section-group,
+  .leaderboard-card,
+  .achievement-card,
+  .interactive-card,
+  .progress-card,
+  .chat-feed-helper,
+  .audio-card,
+  .chat-panel,
+  .composer-panel,
+  .hero-panel
+) {
+  background: rgba(255, 252, 247, 0.94);
+  border-color: rgba(108, 126, 148, 0.22);
+}
+
+.app-shell.theme-light.view-simple .stats-chip {
+  color: #24415f;
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(108, 126, 148, 0.28);
+}
+
+.app-shell.theme-light.view-simple .stats-chip-time {
+  color: #8a4c27;
+  background: rgba(255, 235, 216, 0.98);
+  border-color: rgba(207, 145, 106, 0.36);
+}
+
+/* ================================
+   Dark Mode Readability Boost
+   ================================ */
+.app-shell.theme-dark :is(
+  .panel-heading p,
+  .hero-copy,
+  .falcon-note,
+  .voice-copy,
+  .language-picker-hint,
+  .progress-subcopy,
+  .interactive-copy,
+  .empty-copy,
+  .welcome-playback-hint,
+  .chat-feed-helper-copy,
+  .chat-feed-helper-hint,
+  .insight-subtitle,
+  .leaderboard-subtitle,
+  .achievement-subtitle,
+  .tools-section-header p,
+  .vocab-suggestion,
+  .pronunciation-tip,
+  .grammar-explanation,
+  .practice-goal-copy,
+  .coach-guide-item,
+  .char-count
+) {
+  color: rgba(238, 242, 255, 0.82);
+}
+
+.app-shell.theme-dark :is(
+  .chat-role,
+  .language-picker-label,
+  .reply-label,
+  .hero-metric-label,
+  .leaderboard-label,
+  .tutor-mini-status
+) {
+  color: rgba(238, 242, 255, 0.72);
 }
 
 @media (max-width: 640px) {

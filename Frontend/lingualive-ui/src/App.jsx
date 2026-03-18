@@ -2145,17 +2145,20 @@ function App() {
             className="status-check-button"
             onClick={() => setIsSimpleView((currentValue) => !currentValue)}
           >
-            {isSimpleView ? "Detailed View" : "Simple View"}
+            {isSimpleView ? "Detail" : "Simple"}
           </button>
-          <button type="button" className="status-check-button" onClick={openFeatureTour}>
-            ✨ Tour
-          </button>
+          {!isSimpleView && (
+            <button type="button" className="status-check-button" onClick={openFeatureTour}>
+              ✨ Tour
+            </button>
+          )}
           <button
             type="button"
-            className="status-check-button"
+            className="status-check-button status-check-button-icon"
             onClick={() => setThemeMode((currentMode) => (currentMode === "dark" ? "light" : "dark"))}
+            aria-label={themeMode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           >
-            {themeMode === "dark" ? "☀️ Light" : "🌙 Dark"}
+            {themeMode === "dark" ? "☀" : "🌙"}
           </button>
         </div>
 
