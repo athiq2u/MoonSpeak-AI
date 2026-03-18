@@ -3599,6 +3599,43 @@
   color: rgba(238, 242, 255, 0.72);
 }
 
+.app-shell.theme-dark .eyebrow,
+.app-shell.theme-dark .voice-launch-label {
+  color: #ffb46d;
+}
+
+.app-shell.theme-dark .workspace-nav-button-active {
+  background: rgba(255, 160, 88, 0.24);
+  border-color: rgba(255, 170, 110, 0.5);
+  color: #ffe2c6;
+}
+
+.app-shell.theme-dark .status-pill-active {
+  background: rgba(255, 146, 68, 0.24);
+  border-color: rgba(255, 170, 110, 0.5);
+  color: #ffd4a8;
+}
+
+.app-shell.theme-dark .primary-button {
+  background: linear-gradient(135deg, #ff954f, #ffc35f);
+  color: #241509;
+}
+
+.app-shell.theme-dark .primary-button:hover:not(:disabled) {
+  box-shadow: 0 8px 24px rgba(255, 154, 74, 0.42);
+}
+
+.app-shell.theme-dark .welcome-chip-primary {
+  background: linear-gradient(135deg, rgba(255, 157, 88, 0.36), rgba(112, 195, 255, 0.22));
+  border-color: rgba(255, 182, 120, 0.56);
+  color: #ffe8d4;
+}
+
+.app-shell.theme-dark .welcome-chip-primary:hover {
+  background: linear-gradient(135deg, rgba(255, 157, 88, 0.5), rgba(112, 195, 255, 0.3));
+  border-color: rgba(255, 195, 138, 0.68);
+}
+
 @media (max-width: 640px) {
   .app-shell.view-simple .hero-panel {
     padding: 14px;
