@@ -3276,6 +3276,23 @@
   color: #8f4d2a;
 }
 
+.app-shell.theme-light .hero-top-controls .status-check-button {
+  border-color: rgba(108, 126, 148, 0.34);
+  background: rgba(255, 255, 255, 0.96);
+  color: #2b394c;
+}
+
+.app-shell.theme-light .hero-top-controls .status-check-button:first-child {
+  border-color: rgba(207, 145, 106, 0.44);
+  background: rgba(255, 242, 228, 0.98);
+  color: #8b4f2a;
+}
+
+.app-shell.theme-light .hero-top-controls .status-check-button:hover:not(:disabled) {
+  background: #ffffff;
+  border-color: rgba(103, 118, 141, 0.4);
+}
+
 .app-shell.theme-light .hero-figure-card {
   border-color: rgba(103, 118, 141, 0.26);
   background: linear-gradient(155deg, rgba(255, 250, 243, 0.96), rgba(246, 242, 236, 0.9));
