@@ -18,7 +18,6 @@ const STORAGE_KEY = "lingualive_chat";
 const STREAK_STORAGE_KEY = "lingualive_streak";
 const ACHIEVEMENTS_STORAGE_KEY = "lingualive_achievements";
 const THEME_STORAGE_KEY = "lingualive_theme";
-const SIMPLE_VIEW_STORAGE_KEY = "lingualive_simple_view";
 const FEATURE_TOUR_STORAGE_KEY = "lingualive_feature_tour_seen";
 const FEATURE_TOUR_VERSION = "2026.03.17";
 const DEFAULT_LANGUAGE_ID = "en-US";
@@ -764,14 +763,7 @@ function App() {
       return "dark";
     }
   });
-  const [isSimpleView, setIsSimpleView] = useState(() => {
-    try {
-      const saved = localStorage.getItem(SIMPLE_VIEW_STORAGE_KEY);
-      return saved !== "false";
-    } catch {
-      return true;
-    }
-  });
+  const isSimpleView = true;
   const [voiceDeliveryMode, setVoiceDeliveryMode] = useState("idle");
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [assistantNotice, setAssistantNotice] = useState("");
@@ -1287,14 +1279,6 @@ function App() {
       document.body.classList.toggle("theme-light", themeMode === "light");
     }
   }, [themeMode]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(SIMPLE_VIEW_STORAGE_KEY, String(isSimpleView));
-    } catch {
-      // storage unavailable - ignore
-    }
-  }, [isSimpleView]);
 
   useEffect(() => {
     setSessionBestXp((previousBest) => Math.max(previousBest, sessionXp));
@@ -2140,25 +2124,15 @@ function App() {
     <main className={`app-shell theme-${themeMode} ${isSimpleView ? "view-simple" : "view-detailed"}`}>
       <header className="hero-panel">
         <div className="hero-top-controls" role="group" aria-label="Theme and tour controls">
+          <button type="button" className="status-check-button" onClick={openFeatureTour}>
+            ✨ Tour
+          </button>
           <button
             type="button"
             className="status-check-button"
-            onClick={() => setIsSimpleView((currentValue) => !currentValue)}
-          >
-            {isSimpleView ? "Detail" : "Simple"}
-          </button>
-          {!isSimpleView && (
-            <button type="button" className="status-check-button" onClick={openFeatureTour}>
-              ✨ Tour
-            </button>
-          )}
-          <button
-            type="button"
-            className="status-check-button status-check-button-icon"
             onClick={() => setThemeMode((currentMode) => (currentMode === "dark" ? "light" : "dark"))}
-            aria-label={themeMode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           >
-            {themeMode === "dark" ? "☀" : "🌙"}
+            {themeMode === "dark" ? "☀ Light" : "🌙 Dark"}
           </button>
         </div>
 
