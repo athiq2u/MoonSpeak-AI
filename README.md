@@ -11,6 +11,9 @@ MoonSpeak-AI is a voice-first language practice app for live speaking exercises.
 | Frontend Demo | https://athiq2u.github.io/MoonSpeak-AI/ | Live UI preview |
 | Backend API | https://moonspeak-ai-backend.onrender.com | Hosted API base |
 | Health Check | https://moonspeak-ai-backend.onrender.com/healthz | Service status |
+| Demo Video | https://docs.google.com/videos/d/1R43lT4imencyBIW6SN3DWZx5SqPXt2j1SVG-O2PecZQ/play | Video |
+| Sample PPT | https://docs.google.com/videos/d/1nuUUZGCBdwroF39ZxufYaaAq3Pq2d_PFqbP9QhFblB0/play | PPT |
+
 
 ## What It Does
 
