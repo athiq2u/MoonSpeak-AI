@@ -2625,8 +2625,12 @@ function App() {
                   type="button"
                   className="left-focus-btn"
                   onClick={() => {
-                    setPendingPrompt(item.prompt);
-                    setActiveWorkspacePage("practice");
+                    if (activeWorkspacePage === "practice") {
+                      requestReply(item.prompt);
+                    } else {
+                      setPendingPrompt(item.prompt);
+                      setActiveWorkspacePage("practice");
+                    }
                   }}
                   disabled={isLoading || isListening}
                 >
@@ -2643,8 +2647,13 @@ function App() {
                 type="button"
                 className="scenario-card"
                 onClick={() => {
-                  setPendingPrompt({ prompt: scenario.prompt, excite: true });
-                  setActiveWorkspacePage("practice");
+                  if (activeWorkspacePage === "practice") {
+                    triggerTutorExcitement();
+                    requestReply(scenario.prompt);
+                  } else {
+                    setPendingPrompt({ prompt: scenario.prompt, excite: true });
+                    setActiveWorkspacePage("practice");
+                  }
                 }}
                 disabled={isLoading || isListening}
               >
@@ -2666,8 +2675,13 @@ function App() {
                   type="button"
                   className="difficulty-card"
                   onClick={() => {
-                    setPendingPrompt({ prompt: level.prompt, excite: true });
-                    setActiveWorkspacePage("practice");
+                    if (activeWorkspacePage === "practice") {
+                      triggerTutorExcitement();
+                      requestReply(level.prompt);
+                    } else {
+                      setPendingPrompt({ prompt: level.prompt, excite: true });
+                      setActiveWorkspacePage("practice");
+                    }
                   }}
                   disabled={isLoading || isListening}
                   title={level.description}
@@ -2691,8 +2705,12 @@ function App() {
                   type="button"
                   className="conversation-topic-btn"
                   onClick={() => {
-                    setPendingPrompt(convo.prompt);
-                    setActiveWorkspacePage("practice");
+                    if (activeWorkspacePage === "practice") {
+                      requestReply(convo.prompt);
+                    } else {
+                      setPendingPrompt(convo.prompt);
+                      setActiveWorkspacePage("practice");
+                    }
                   }}
                   disabled={isLoading || isListening}
                   title={convo.prompt}
@@ -2755,8 +2773,13 @@ function App() {
                   type="button"
                   className="mission-btn"
                   onClick={() => {
-                    setPendingPrompt({ prompt: mission.prompt, excite: true });
-                    setActiveWorkspacePage("practice");
+                    if (activeWorkspacePage === "practice") {
+                      triggerTutorExcitement();
+                      requestReply(mission.prompt);
+                    } else {
+                      setPendingPrompt({ prompt: mission.prompt, excite: true });
+                      setActiveWorkspacePage("practice");
+                    }
                   }}
                   disabled={isLoading || isListening}
                 >
@@ -2863,8 +2886,12 @@ function App() {
                     type="button"
                     className="smart-followup-btn"
                     onClick={() => {
-                      setPendingPrompt(suggestion);
-                      setActiveWorkspacePage("practice");
+                      if (activeWorkspacePage === "practice") {
+                        requestReply(suggestion);
+                      } else {
+                        setPendingPrompt(suggestion);
+                        setActiveWorkspacePage("practice");
+                      }
                     }}
                     disabled={isLoading || isListening}
                   >
@@ -2888,8 +2915,12 @@ function App() {
                     type="button"
                     className="smart-followup-btn"
                     onClick={() => {
-                      setPendingPrompt(prompt);
-                      setActiveWorkspacePage("practice");
+                      if (activeWorkspacePage === "practice") {
+                        requestReply(prompt);
+                      } else {
+                        setPendingPrompt(prompt);
+                        setActiveWorkspacePage("practice");
+                      }
                     }}
                     disabled={isLoading || isListening}
                   >
