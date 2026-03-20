@@ -1,0 +1,57 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgDark" x1="56" y1="30" x2="462" y2="482" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#121923"/>
+      <stop offset="1" stop-color="#0A0F17"/>
+    </linearGradient>
+    <radialGradient id="floorGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 434) scale(148 34)">
+      <stop stop-color="#3CD5FF" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#3CD5FF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="shellDark" x1="120" y1="74" x2="380" y2="354" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7E8A95"/>
+      <stop offset="0.55" stop-color="#4F5D69"/>
+      <stop offset="1" stop-color="#2F3A44"/>
+    </linearGradient>
+    <linearGradient id="visorDark" x1="174" y1="118" x2="338" y2="268" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F141C"/>
+      <stop offset="1" stop-color="#070B12"/>
+    </linearGradient>
+    <radialGradient id="eyeBlue" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(0 0) scale(1)">
+      <stop stop-color="#6CF2FF"/>
+      <stop offset="1" stop-color="#00AFFF"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="64" fill="url(#bgDark)"/>
+  <ellipse cx="256" cy="434" rx="148" ry="34" fill="url(#floorGlow)"/>
+
+  <rect x="112" y="80" width="288" height="236" rx="98" fill="url(#shellDark)" stroke="#95A2AE" stroke-opacity="0.42" stroke-width="8"/>
+  <rect x="166" y="124" width="180" height="132" rx="52" fill="url(#visorDark)"/>
+
+  <circle cx="218" cy="192" r="30" fill="#0A111B"/>
+  <circle cx="294" cy="192" r="30" fill="#0A111B"/>
+  <circle cx="218" cy="192" r="19" fill="url(#eyeBlue)"/>
+  <circle cx="294" cy="192" r="19" fill="url(#eyeBlue)"/>
+  <circle cx="211" cy="185" r="5" fill="#D8FDFF"/>
+  <circle cx="287" cy="185" r="5" fill="#D8FDFF"/>
+
+  <rect x="150" y="332" width="212" height="126" rx="56" fill="url(#shellDark)" stroke="#95A2AE" stroke-opacity="0.36" stroke-width="8"/>
+  <rect x="196" y="362" width="120" height="58" rx="20" fill="#25313D"/>
+  <text x="256" y="398" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="22" fill="#79E7FF">MOON</text>
+
+  <rect x="114" y="344" width="48" height="100" rx="20" fill="url(#shellDark)" stroke="#95A2AE" stroke-opacity="0.36" stroke-width="8"/>
+  <rect x="350" y="344" width="48" height="100" rx="20" fill="url(#shellDark)" stroke="#95A2AE" stroke-opacity="0.36" stroke-width="8"/>
+
+  <rect x="178" y="430" width="60" height="36" rx="16" fill="#394653" stroke="#8EA0B1" stroke-opacity="0.45" stroke-width="6"/>
+  <rect x="274" y="430" width="60" height="36" rx="16" fill="#394653" stroke="#8EA0B1" stroke-opacity="0.45" stroke-width="6"/>
+
+  <rect x="60" y="152" width="56" height="112" rx="28" fill="url(#shellDark)" stroke="#95A2AE" stroke-opacity="0.42" stroke-width="8" transform="rotate(-16 60 152)"/>
+  <circle cx="128" cy="84" r="8" fill="#89DFFF"/>
+  <rect x="126" y="50" width="4" height="32" rx="2" fill="#6DBDDA"/>
+  <circle cx="384" cy="84" r="8" fill="#89DFFF"/>
+  <rect x="382" y="50" width="4" height="32" rx="2" fill="#6DBDDA"/>
+
+  <ellipse cx="144" cy="198" rx="14" ry="28" fill="#2FD5FF" fill-opacity="0.26"/>
+  <ellipse cx="368" cy="198" rx="14" ry="28" fill="#2FD5FF" fill-opacity="0.26"/>
+</svg>
