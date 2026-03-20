@@ -2261,7 +2261,7 @@ function App() {
             )}
           </div>
 
-          <div className="chat-feed">
+          <div className="chat-feed" style={{ position: 'relative' }}>
             {chat.length === 0 && !isLoading ? (
               <div className="empty-state">
                 <p className="empty-icon">💬</p>
@@ -2329,6 +2329,20 @@ function App() {
             )}
 
             <div ref={chatEndRef} />
+            {/* Back to Top Button */}
+            {chat.length > 6 && (
+              <button
+                className="back-to-top-btn"
+                aria-label="Back to Top"
+                onClick={() => {
+                  if (document.querySelector('.chat-feed')) {
+                    document.querySelector('.chat-feed').scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
+              >
+                ⬆ Back to Top
+              </button>
+            )}
           </div>
         </section>
 
