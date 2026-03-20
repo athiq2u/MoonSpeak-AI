@@ -144,7 +144,6 @@ async function tryStreamVoice(text, languageId, deliveryMode) {
         }
       );
 
-      console.log(`MURF FALCON STREAM SUCCESS: ${streamUrl} (${languageId})`);
       return {
         stream: response.data,
         contentType: response.headers["content-type"] || "audio/mpeg",
@@ -152,7 +151,6 @@ async function tryStreamVoice(text, languageId, deliveryMode) {
       };
     } catch (error) {
       lastError = error;
-      console.log(`MURF FALCON STREAM FAILED: ${streamUrl} (${languageId})`);
       console.error("MURF FALCON STREAM ERROR:", getMurfErrorSummary(error));
     }
   }
@@ -176,7 +174,6 @@ async function tryGenerateVoice(text, languageId, deliveryMode) {
     }
   );
 
-  console.log(`MURF GENERATE SUCCESS (${languageId})`);
   return {
     ...response.data,
     deliveryMode
@@ -194,11 +191,9 @@ export async function generateVoice(text, languageId = DEFAULT_LANGUAGE_ID) {
   try {
     return await tryGenerateVoice(text, safeLanguageId, "fallback-generate");
   } catch (error) {
-    console.log("===== MURF GENERATE ERROR =====");
     console.error("MURF GENERATE ERROR:", getMurfErrorSummary(error));
 
     if (safeLanguageId !== DEFAULT_LANGUAGE_ID) {
-      console.log(`MURF GENERATE FALLBACK TO DEFAULT VOICE (${DEFAULT_LANGUAGE_ID})`);
       return tryGenerateVoice(text, DEFAULT_LANGUAGE_ID, "fallback-generate-default-voice");
     }
 
