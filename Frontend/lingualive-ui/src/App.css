@@ -66,8 +66,8 @@ button, .button, [role="button"], a, .chip, .welcome-chip, .panel-ghost-btn, .pr
   border: none;
   border-radius: 999px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.18);
-  padding: 14px 22px;
-  font-size: 1.1rem;
+  padding: 8px 14px;
+  font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
   opacity: 0.92;
@@ -81,8 +81,8 @@ button, .button, [role="button"], a, .chip, .welcome-chip, .panel-ghost-btn, .pr
   .back-to-top-btn {
     right: 12px;
     bottom: 72px;
-    padding: 12px 18px;
-    font-size: 1rem;
+    padding: 7px 12px;
+    font-size: 0.85rem;
   }
 }
 /* ================================

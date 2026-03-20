@@ -2622,7 +2622,10 @@ function App() {
                   key={item.label}
                   type="button"
                   className="left-focus-btn"
-                  onClick={() => requestReply(item.prompt)}
+                  onClick={() => {
+                    setActiveWorkspacePage("practice");
+                    requestReply(item.prompt);
+                  }}
                   disabled={isLoading || isListening}
                 >
                   {item.label}
@@ -2638,6 +2641,7 @@ function App() {
                 type="button"
                 className="scenario-card"
                 onClick={() => {
+                  setActiveWorkspacePage("practice");
                   triggerTutorExcitement();
                   requestReply(scenario.prompt);
                 }}
@@ -2661,6 +2665,7 @@ function App() {
                   type="button"
                   className="difficulty-card"
                   onClick={() => {
+                    setActiveWorkspacePage("practice");
                     triggerTutorExcitement();
                     requestReply(level.prompt);
                   }}
@@ -2685,7 +2690,10 @@ function App() {
                   key={convo.topic}
                   type="button"
                   className="conversation-topic-btn"
-                  onClick={() => requestReply(convo.prompt)}
+                  onClick={() => {
+                    setActiveWorkspacePage("practice");
+                    requestReply(convo.prompt);
+                  }}
                   disabled={isLoading || isListening}
                   title={convo.prompt}
                 >
@@ -2747,6 +2755,7 @@ function App() {
                   type="button"
                   className="mission-btn"
                   onClick={() => {
+                    setActiveWorkspacePage("practice");
                     triggerTutorExcitement();
                     requestReply(mission.prompt);
                   }}
@@ -2854,7 +2863,10 @@ function App() {
                     key={suggestion}
                     type="button"
                     className="smart-followup-btn"
-                    onClick={() => requestReply(suggestion)}
+                    onClick={() => {
+                      setActiveWorkspacePage("practice");
+                      requestReply(suggestion);
+                    }}
                     disabled={isLoading || isListening}
                   >
                     {suggestion}
@@ -2876,7 +2888,10 @@ function App() {
                     key={prompt}
                     type="button"
                     className="smart-followup-btn"
-                    onClick={() => requestReply(prompt)}
+                    onClick={() => {
+                      setActiveWorkspacePage("practice");
+                      requestReply(prompt);
+                    }}
                     disabled={isLoading || isListening}
                   >
                     {prompt}
