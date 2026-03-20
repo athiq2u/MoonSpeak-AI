@@ -2340,7 +2340,7 @@ function App() {
                   }
                 }}
               >
-                ⬆ Back to Top
+                ⬆
               </button>
             )}
           </div>
