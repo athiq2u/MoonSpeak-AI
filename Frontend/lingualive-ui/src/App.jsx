@@ -2897,26 +2897,43 @@ function App() {
                     {prompt}
                   </button>
                 ))}
-              // --- useEffect to trigger pending prompt after redirect ---
-              useEffect(() => {
-                if (activeWorkspacePage === "practice" && pendingPrompt) {
-                  if (pendingPrompt.excite) triggerTutorExcitement();
-                  requestReply(pendingPrompt.prompt);
-                  setPendingPrompt(null);
-                }
-              }, [activeWorkspacePage, pendingPrompt]);
-              // --- useEffect to trigger pending prompt after redirect ---
-              useEffect(() => {
-                if (activeWorkspacePage === "practice" && pendingPrompt) {
-                  if (typeof pendingPrompt === "string") {
-                    requestReply(pendingPrompt);
-                  } else if (pendingPrompt && typeof pendingPrompt === "object" && pendingPrompt.prompt) {
-                    if (pendingPrompt.excite) triggerTutorExcitement();
-                    requestReply(pendingPrompt.prompt);
-                  }
-                  setPendingPrompt(null);
-                }
-              }, [activeWorkspacePage, pendingPrompt]);
+              {/* --- useEffect to trigger pending prompt after redirect --- */}
+            </div>
+          ) : (
+            <p className="voice-copy">Start a few turns in Practice and your recent prompts will appear here.</p>
+          )}
+        </div>
+      </section>
+    </div>
+    {/* --- useEffect to trigger pending prompt after redirect --- */}
+    {/**
+      The following useEffect hooks should be outside of the JSX return block.
+      They are now placed correctly below the component's return.
+    **/}
+  )
+}
+
+// --- useEffect to trigger pending prompt after redirect ---
+useEffect(() => {
+  if (activeWorkspacePage === "practice" && pendingPrompt) {
+    if (pendingPrompt.excite) triggerTutorExcitement();
+    requestReply(pendingPrompt.prompt);
+    setPendingPrompt(null);
+  }
+}, [activeWorkspacePage, pendingPrompt]);
+
+// --- useEffect to trigger pending prompt after redirect ---
+useEffect(() => {
+  if (activeWorkspacePage === "practice" && pendingPrompt) {
+    if (typeof pendingPrompt === "string") {
+      requestReply(pendingPrompt);
+    } else if (pendingPrompt && typeof pendingPrompt === "object" && pendingPrompt.prompt) {
+      if (pendingPrompt.excite) triggerTutorExcitement();
+      requestReply(pendingPrompt.prompt);
+    }
+    setPendingPrompt(null);
+  }
+}, [activeWorkspacePage, pendingPrompt]);
               </div>
             ) : (
               <p className="voice-copy">Start a few turns in Practice and your recent prompts will appear here.</p>
