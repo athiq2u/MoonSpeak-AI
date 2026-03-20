@@ -133,11 +133,9 @@ export function createApp() {
   try {
 
     const ts = new Date().toLocaleTimeString();
-    console.log(`[${ts}] User: "${trimmedText.slice(0, 80)}${trimmedText.length > 80 ? "…" : ""}"`);
 
     const aiResult = await generateReply(trimmedText, safeHistory, safeLanguage);
     const reply = aiResult.reply;
-    console.log(`[${ts}] AI:   "${reply.slice(0, 80)}${reply.length > 80 ? "…" : ""}"`);
 
     const isFallback = aiResult.source === "local-fallback";
     const assistantNotice = buildAssistantNotice(aiResult);
