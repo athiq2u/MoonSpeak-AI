@@ -1,4 +1,6 @@
 import { memo, useState, useRef, useEffect, useMemo, useCallback } from "react";
+// --- Pending prompt for redirect from More Tools ---
+const [pendingPrompt, setPendingPrompt] = useState(null);
 import "./App.css";
 import chatbotAvatar from "./assets/ai-chatbot.svg";
 
@@ -2623,8 +2625,8 @@ function App() {
                   type="button"
                   className="left-focus-btn"
                   onClick={() => {
+                    setPendingPrompt(item.prompt);
                     setActiveWorkspacePage("practice");
-                    requestReply(item.prompt);
                   }}
                   disabled={isLoading || isListening}
                 >
@@ -2641,9 +2643,8 @@ function App() {
                 type="button"
                 className="scenario-card"
                 onClick={() => {
+                  setPendingPrompt({ prompt: scenario.prompt, excite: true });
                   setActiveWorkspacePage("practice");
-                  triggerTutorExcitement();
-                  requestReply(scenario.prompt);
                 }}
                 disabled={isLoading || isListening}
               >
@@ -2665,9 +2666,8 @@ function App() {
                   type="button"
                   className="difficulty-card"
                   onClick={() => {
+                    setPendingPrompt({ prompt: level.prompt, excite: true });
                     setActiveWorkspacePage("practice");
-                    triggerTutorExcitement();
-                    requestReply(level.prompt);
                   }}
                   disabled={isLoading || isListening}
                   title={level.description}
@@ -2691,8 +2691,8 @@ function App() {
                   type="button"
                   className="conversation-topic-btn"
                   onClick={() => {
+                    setPendingPrompt(convo.prompt);
                     setActiveWorkspacePage("practice");
-                    requestReply(convo.prompt);
                   }}
                   disabled={isLoading || isListening}
                   title={convo.prompt}
@@ -2755,9 +2755,8 @@ function App() {
                   type="button"
                   className="mission-btn"
                   onClick={() => {
+                    setPendingPrompt({ prompt: mission.prompt, excite: true });
                     setActiveWorkspacePage("practice");
-                    triggerTutorExcitement();
-                    requestReply(mission.prompt);
                   }}
                   disabled={isLoading || isListening}
                 >
@@ -2864,8 +2863,8 @@ function App() {
                     type="button"
                     className="smart-followup-btn"
                     onClick={() => {
+                      setPendingPrompt(suggestion);
                       setActiveWorkspacePage("practice");
-                      requestReply(suggestion);
                     }}
                     disabled={isLoading || isListening}
                   >
@@ -2889,14 +2888,26 @@ function App() {
                     type="button"
                     className="smart-followup-btn"
                     onClick={() => {
+                      setPendingPrompt(prompt);
                       setActiveWorkspacePage("practice");
-                      requestReply(prompt);
                     }}
                     disabled={isLoading || isListening}
                   >
                     {prompt}
                   </button>
                 ))}
+              // --- useEffect to trigger pending prompt after redirect ---
+              useEffect(() => {
+                if (activeWorkspacePage === "practice" && pendingPrompt) {
+                  if (typeof pendingPrompt === "string") {
+                    requestReply(pendingPrompt);
+                  } else if (pendingPrompt && typeof pendingPrompt === "object" && pendingPrompt.prompt) {
+                    if (pendingPrompt.excite) triggerTutorExcitement();
+                    requestReply(pendingPrompt.prompt);
+                  }
+                  setPendingPrompt(null);
+                }
+              }, [activeWorkspacePage, pendingPrompt]);
               </div>
             ) : (
               <p className="voice-copy">Start a few turns in Practice and your recent prompts will appear here.</p>
