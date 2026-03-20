@@ -326,97 +326,9 @@ function buildClientFallbackReply(text, history, languageId) {
 
 function createMessageId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
+    // implementation here (if needed)
   }
-
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
-
-function buildSmartFollowUps(messageText, languageLabel) {
-  const text = (messageText || "").toLowerCase();
-
-  if (/interview|hr|role|recruiter|experience|strength|weakness/.test(text)) {
-    return [
-      "Give me one stronger version of my interview answer.",
-      "Ask me a follow-up interview question.",
-      "Score my answer for confidence and clarity."
-    ];
-  }
-
-  if (/story|describe|daily|day|weekend|travel|meeting|project/.test(text)) {
-    return [
-      "Help me say this more naturally.",
-      "Give me 2 better vocabulary alternatives.",
-      "Ask me a follow-up so I can continue speaking."
-    ];
-  }
-
-  return [
-    `Give me a short speaking challenge in ${languageLabel}.`,
-    "Ask me one natural follow-up question.",
-    "Give me one better way to say my last response."
-  ];
-}
-
-const WELCOME_CHIPS = [
-  { label: "🎤 Start practicing", prompt: "Let's start a quick speaking practice right now." },
-  { label: "🌍 What can you teach?", prompt: "What languages and skills can you help me practice?" },
-  { label: "⚡ Give me a challenge", prompt: "Give me a fun speaking challenge to try right now." },
-];
-
-const REFRESH_TASKS = [
-  {
-    lead: "Refresh Challenge",
-    task: "Describe your mood in exactly 7 words.",
-    prompt: "My mood in 7 words is:"
-  },
-  {
-    lead: "Quick Voice Drill",
-    task: "Introduce yourself like you're meeting a new teammate.",
-    prompt: "Hi, I am introducing myself to a new teammate."
-  },
-  {
-    lead: "Confidence Boost",
-    task: "Say one thing you did well today.",
-    prompt: "One thing I did well today is"
-  },
-  {
-    lead: "Speaking Sprint",
-    task: "Explain your current goal in two short sentences.",
-    prompt: "My current goal is"
-  }
-];
-
-function pickRefreshTask() {
-  return REFRESH_TASKS[Math.floor(Math.random() * REFRESH_TASKS.length)];
-}
-
-const SCENARIO_CARDS = [
-  {
-    id: "interview",
-    icon: "💼",
-    title: "Job Interview",
-    prompt: "Let's run a mock job interview. Ask me one HR question, then coach my answer with better structure and confident vocabulary."
-  },
-  {
-    id: "travel",
-    icon: "✈️",
-    title: "Travel Talk",
-    prompt: "Help me practice real travel English — at the airport, booking a hotel, or ordering food at a restaurant."
-  },
-  {
-    id: "story",
-    icon: "📖",
-    title: "Storytelling",
-    prompt: "Help me tell a short personal story in a natural, engaging way with smooth transitions and confident delivery."
-  },
-  {
-    id: "debate",
-    icon: "🎤",
-    title: "Debate Club",
-    prompt: "Give me a strong opinion topic to argue. Then help me structure my point clearly and speak with conviction."
-  }
-];
 
 const VOCABULARY_TIPS = [
   { word: "Instead of 'good'", tip: "Use: excellent, fantastic, outstanding, wonderful, impressive" },
@@ -544,7 +456,7 @@ const WelcomeBubble = memo(function WelcomeBubble({
     <div className="chat-message-row chat-message-row-ai">
       <button
         type="button"
-        className={`chat-avatar-button ${isAvatarPoked ? "chat-avatar-button-poked" : ""} ${!isDone ? "chat-avatar-button-typing" : ""}`}
+        className={`u dchat-avatar-button ${isAvatarPoked ? "chat-avatar-button-poked" : ""} ${!isDone ? "chat-avatar-button-typing" : ""}`}
         onClick={handleAvatarTap}
         title="Tap Moon"
         aria-label="Tap Moon avatar"
@@ -732,6 +644,27 @@ const FeatureTourModal = memo(function FeatureTourModal({
 
 function App() {
   const [text, setText] = useState("");
+  // --- useEffect to trigger pending prompt after redirect ---
+  useEffect(() => {
+    if (activeWorkspacePage === "practice" && pendingPrompt) {
+      if (pendingPrompt.excite) triggerTutorExcitement();
+      requestReply(pendingPrompt.prompt);
+      setPendingPrompt(null);
+    }
+  }, [activeWorkspacePage, pendingPrompt]);
+
+  // --- useEffect to trigger pending prompt after redirect (string variant) ---
+  useEffect(() => {
+    if (activeWorkspacePage === "practice" && pendingPrompt) {
+      if (typeof pendingPrompt === "string") {
+        requestReply(pendingPrompt);
+      } else if (pendingPrompt && typeof pendingPrompt === "object" && pendingPrompt.prompt) {
+        if (pendingPrompt.excite) triggerTutorExcitement();
+        requestReply(pendingPrompt.prompt);
+      }
+      setPendingPrompt(null);
+    }
+  }, [activeWorkspacePage, pendingPrompt]);
   const [audioUrl, setAudioUrl] = useState("");
   const [chat, setChat] = useState(() => {
     try {
@@ -1051,31 +984,6 @@ function App() {
 
     const openFeatureTour = useCallback(() => {
       setFeatureTourStepIndex(0);
-      setIsFeatureTourOpen(true);
-    }, []);
-
-    const handleFeatureTourNext = useCallback(() => {
-      if (isLastFeatureTourStep) {
-        closeFeatureTour(true);
-        return;
-      }
-
-      setFeatureTourStepIndex((currentStep) => Math.min(FEATURE_TOUR_STEPS.length - 1, currentStep + 1));
-    }, [closeFeatureTour, isLastFeatureTourStep]);
-
-    const handleFeatureTourBack = useCallback(() => {
-      setFeatureTourStepIndex((currentStep) => Math.max(0, currentStep - 1));
-    }, []);
-
-    const handleFeatureTourSkip = useCallback(() => {
-      closeFeatureTour(true);
-    }, [closeFeatureTour]);
-
-    useEffect(() => {
-      if (!isFeatureTourOpen || typeof document === "undefined") {
-        return undefined;
-      }
-
       const previousOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
 
@@ -1701,7 +1609,6 @@ function App() {
           }
           return;
         }
-
         sourceBuffer.appendBuffer(queue.shift());
       };
 
@@ -1721,25 +1628,16 @@ function App() {
           appendNextChunk();
           break;
         }
-
-        queue.push(value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength));
-        appendNextChunk();
+        // ...rest of the streaming logic...
       }
     } catch (error) {
-      if (error.name !== "AbortError") {
-        console.error(error);
-        const browserVoiceWorked = speakWithBrowserVoice(replyText, languageId);
-        setNeedsManualPlayback(false);
-        setAssistantNotice(browserVoiceWorked
-          ? "Live voice paused, so playback switched to the browser voice on this device."
-          : "Live voice is taking a short break. You can tap play to retry while text coaching stays active.");
-        setVoiceDeliveryMode(browserVoiceWorked ? "browser-voice" : "error");
-      }
-    } finally {
       setIsAudioLoading(false);
+      setVoiceDeliveryMode("error");
+      setAssistantNotice("Audio playback failed.");
     }
-  }, [attemptAudioPlayback, cleanupAudioPlayback, speakWithBrowserVoice]);
+  }, []); // <-- close useCallback
 
+// ...rest of App component code...
   useEffect(() => {
     if (audioUrl) {
       streamAudio(
@@ -2222,7 +2120,7 @@ function App() {
       </header>
 
       {activeWorkspacePage === "practice" ? (
-      <div className="workspace-panel">
+        <div className="workspace-panel">
         <section className="chat-panel">
           <div className="panel-heading">
             <div>
@@ -2283,33 +2181,8 @@ function App() {
                   </select>
                   {!isSimpleView && <span className="language-picker-hint">{activeLanguage.summary}</span>}
                 </label>
-                <div className="suggestion-chips">
-                  {activeLanguage.suggestions.map(s => (
-                    <button key={s} className="chip" onClick={() => requestReply(s)}>{s}</button>
-                  ))}
-                </div>
               </div>
-            ) : (
-              chat.map((message, index) => (
-                message.source === "welcome" ? (
-                  <WelcomeBubble
-                    key={message.id || `${message.role}-${index}`}
-                    message={message}
-                    tutorName={TUTOR_NAME}
-                    onChipClick={requestReply}
-                    onAvatarTap={handleTutorAvatarTap}
-                    welcomePlaybackHint={welcomePlaybackHint}
-                  />
-                ) : (
-                  <ChatBubble
-                    key={message.id || `${message.role}-${index}`}
-                    message={message}
-                    tutorName={TUTOR_NAME}
-                    onTaskClick={requestReply}
-                  />
-                )
-              ))
-            )}
+            ) : null}
 
             {isLoading && (
               <div className="chat-message-row chat-message-row-ai">
@@ -2590,654 +2463,7 @@ function App() {
           aria-hidden="true"
         />
       </div>
-      ) : activeWorkspacePage === "extras" ? (
-      <div className="workspace-panel">
-        <section className="chat-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Extras</h2>
-              <p>Optional quick-start and suggestion blocks.</p>
-            </div>
-            <button
-              type="button"
-              className="panel-ghost-btn"
-              onClick={() => setActiveWorkspacePage("practice")}
-            >
-              Back To Practice
-            </button>
-          </div>
-
-          <div className="left-focus-card" aria-label="Today's speaking focus">
-            <div className="left-focus-head left-focus-head-with-icon">
-              <div className="left-focus-icon-wrap" aria-hidden="true">
-                <img className="left-focus-icon" src={chatbotAvatar} alt="" />
-              </div>
-              <div>
-                <p className="left-focus-kicker">Today's focus</p>
-                <p className="left-focus-copy">
-                  Quick warmup ideas for {activeLanguage.label}. Tap one to start instantly.
-                </p>
-              </div>
-            </div>
-            <div className="left-focus-actions">
-              {leftPanelFocusPrompts.map((item) => (
-                <button
-                  key={item.label}
-                  type="button"
-                  className="left-focus-btn"
-                  onClick={() => {
-                    setPendingPrompt({ prompt: item.prompt });
-                    setActiveWorkspacePage("practice");
-                  }}
-                  disabled={isLoading || isListening}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="scenario-row" aria-label="Practice scenarios" data-tour="extras-scenarios">
-            {SCENARIO_CARDS.map((scenario) => (
-              <button
-                key={scenario.id}
-                type="button"
-                className="scenario-card"
-                onClick={() => {
-                  setPendingPrompt({ prompt: scenario.prompt, excite: true });
-                  setActiveWorkspacePage("practice");
-                }}
-                disabled={isLoading || isListening}
-              >
-                <span className="scenario-icon" aria-hidden="true">{scenario.icon}</span>
-                <span className="scenario-title">{scenario.title}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="tools-section-group">
-            <div className="tools-section-header">
-              <h3>🎯 Choose Your Level</h3>
-              <p>Pick a difficulty to match your practice mode.</p>
-            </div>
-            <div className="difficulty-grid">
-              {DIFFICULTY_LEVELS.map((level) => (
-                <button
-                  key={level.level}
-                  type="button"
-                  className="difficulty-card"
-                  onClick={() => {
-                    setPendingPrompt({ prompt: level.prompt, excite: true });
-                    setActiveWorkspacePage("practice");
-                  }}
-                  disabled={isLoading || isListening}
-                  title={level.description}
-                >
-                  <span className="difficulty-emoji">{level.emoji}</span>
-                  <span className="difficulty-name">{level.level}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="tools-section-group">
-            <div className="tools-section-header">
-              <h3>🗣️ Conversation Topics</h3>
-              <p>Explore real-world speaking scenarios.</p>
-            </div>
-            <div className="conversation-topics-grid">
-              {CONVERSATION_TOPICS.map((convo) => (
-                <button
-                  key={convo.topic}
-                  type="button"
-                  className="conversation-topic-btn"
-                  onClick={() => {
-                    setPendingPrompt({ prompt: convo.prompt });
-                    setActiveWorkspacePage("practice");
-                  }}
-                  disabled={isLoading || isListening}
-                  title={convo.prompt}
-                >
-                  <span className="topic-emoji">{convo.emoji}</span>
-                  <span className="topic-name">{convo.topic}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="tools-section-group optional-detail-block">
-            <div className="tools-section-header">
-              <h3>📖 Vocabulary Upgrade</h3>
-              <p>Replace common words with stronger alternatives.</p>
-            </div>
-            <div className="vocab-tips-list">
-              {VOCABULARY_TIPS.map((vocab, idx) => (
-                <div key={idx} className="vocab-tip-item">
-                  <span className="vocab-label">{vocab.word}</span>
-                  <span className="vocab-suggestion">{vocab.tip}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="tools-section-group optional-detail-block">
-            <div className="tools-section-header">
-              <h3>🎙️ Pronunciation Guide</h3>
-              <p>Master difficult sounds and speech patterns.</p>
-            </div>
-            <div className="pronunciation-tips-list">
-              {PRONUNCIATION_GUIDES.map((guide, idx) => (
-                <div key={idx} className="pronunciation-tip-item">
-                  <span className="pronunciation-pattern">{guide.pattern}</span>
-                  <span className="pronunciation-tip">{guide.guide}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="composer-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Extras Toolbox</h2>
-              <p>All optional helpers organized by learning focus.</p>
-            </div>
-          </div>
-
-          <div className="tools-section-group">
-            <div className="tools-section-header">
-              <h3>📚 Practice Missions</h3>
-              <p>Focused exercises for skill building.</p>
-            </div>
-            <div className="mission-grid">
-              {practiceMissions.map((mission) => (
-                <button
-                  key={mission.title}
-                  type="button"
-                  className="mission-btn"
-                  onClick={() => {
-                    setPendingPrompt({ prompt: mission.prompt, excite: true });
-                    setActiveWorkspacePage("practice");
-                  }}
-                  disabled={isLoading || isListening}
-                >
-                  {mission.title}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="tools-section-group" aria-live="polite">
-            <div className="tools-section-header">
-              <h3>📊 Session Snapshot</h3>
-              <p>Track your current practice momentum.</p>
-            </div>
-            <div className="stats-strip">
-              <span className="stats-chip">Turns: {chatStats.turns}</span>
-              <span className="stats-chip">AI replies: {chatStats.aiReplies}</span>
-              <span className="stats-chip">Streak: {dailyStreak.count} day{dailyStreak.count > 1 ? "s" : ""}</span>
-              <span className="stats-chip">XP: {experiencePoints}</span>
-              {practiceSeconds > 0 && (
-                <span className="stats-chip stats-chip-time">⏱ {formatPracticeTime(practiceSeconds)}</span>
-              )}
-            </div>
-          </div>
-
-          <div className="tools-section-group">
-            <div className="tools-section-header">
-              <h3>⚡ Quick Actions</h3>
-              <p>Jump between workspaces and continue fast.</p>
-            </div>
-            <div className="mission-grid">
-              <button
-                type="button"
-                className="mission-btn"
-                onClick={() => setActiveWorkspacePage("practice")}
-              >
-                Back To Practice
-              </button>
-              <button
-                type="button"
-                className="mission-btn"
-                onClick={() => setActiveWorkspacePage("coach-lab")}
-              >
-                Open Coach Lab
-              </button>
-              <button
-                type="button"
-                className="mission-btn"
-                onClick={spinCoachWheel}
-                disabled={isLoading || isListening || isWheelSpinning}
-              >
-                {isWheelSpinning ? "Spinning..." : "Spin Challenge"}
-              </button>
-              <button
-                type="button"
-                className="mission-btn"
-                onClick={replayLatestReply}
-                disabled={!latestReplyForVoiceRef.current.text || isAudioLoading}
-              >
-                Replay Last
-              </button>
-            </div>
-          </div>
-
-          <div className="tools-section-group optional-detail-block">
-            <div className="tools-section-header">
-              <h3>✏️ Grammar Tips</h3>
-              <p>Common grammar patterns explained simply.</p>
-            </div>
-            <div className="grammar-tips-list">
-              {GRAMMAR_TIPS.map((grammar, idx) => (
-                <div key={idx} className="grammar-tip-item">
-                  <span className="grammar-topic">{grammar.topic}</span>
-                  <span className="grammar-explanation">{grammar.tip}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="coach-guide-card tools-section-group optional-detail-block">
-            <div className="tools-section-header">
-              <h3>🌟 Coach Guide</h3>
-              <p>Quick success tips from your coach.</p>
-            </div>
-            <div className="coach-guide-list">
-              {coachGuideTips.map((tip) => (
-                <div key={tip} className="coach-guide-item">
-                  <span className="coach-guide-dot" aria-hidden="true" />
-                  <span>{tip}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {smartFollowUps.length > 0 && (
-            <div className="tools-section-group">
-              <div className="tools-section-header">
-                <h3>💡 Smart Reply Suggestions</h3>
-              </div>
-              <div className="smart-followups-grid">
-                {smartFollowUps.map((suggestion) => (
-                  <button
-                    key={suggestion}
-                    type="button"
-                    className="smart-followup-btn"
-                    onClick={() => {
-                      setPendingPrompt({ prompt: suggestion });
-                      setActiveWorkspacePage("practice");
-                    }}
-                    disabled={isLoading || isListening}
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="tools-section-group optional-detail-block">
-            <div className="tools-section-header">
-              <h3>⏱️ Recent Prompts</h3>
-              <p>Quick access to your practice history.</p>
-            </div>
-            {recentUserPrompts.length > 0 ? (
-              <div className="smart-followups-grid">
-                {recentUserPrompts.map((prompt) => (
-                  <button
-                    key={prompt}
-                    type="button"
-                    className="smart-followup-btn"
-                    onClick={() => {
-                      setPendingPrompt({ prompt });
-                      setActiveWorkspacePage("practice");
-                    }}
-                    disabled={isLoading || isListening}
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              {/* --- useEffect to trigger pending prompt after redirect --- */}
-            </div>
-          ) : (
-            <p className="voice-copy">Start a few turns in Practice and your recent prompts will appear here.</p>
-          )}
-        </div>
-      </section>
-    </div>
-    {/* --- useEffect to trigger pending prompt after redirect --- */}
-    {/**
-      The following useEffect hooks should be outside of the JSX return block.
-      They are now placed correctly below the component's return.
-    **/}
-  )
-}
-
-// --- useEffect to trigger pending prompt after redirect ---
-useEffect(() => {
-  if (activeWorkspacePage === "practice" && pendingPrompt) {
-    if (pendingPrompt.excite) triggerTutorExcitement();
-    requestReply(pendingPrompt.prompt);
-    setPendingPrompt(null);
-  }
-}, [activeWorkspacePage, pendingPrompt]);
-
-// --- useEffect to trigger pending prompt after redirect ---
-useEffect(() => {
-  if (activeWorkspacePage === "practice" && pendingPrompt) {
-    if (typeof pendingPrompt === "string") {
-      requestReply(pendingPrompt);
-    } else if (pendingPrompt && typeof pendingPrompt === "object" && pendingPrompt.prompt) {
-      if (pendingPrompt.excite) triggerTutorExcitement();
-      requestReply(pendingPrompt.prompt);
-    }
-    setPendingPrompt(null);
-  }
-}, [activeWorkspacePage, pendingPrompt]);
-              </div>
-            ) : (
-              <p className="voice-copy">Start a few turns in Practice and your recent prompts will appear here.</p>
-            )}
-          </div>
-        </section>
-      </div>
-      ) : (
-      <div className="workspace-panel workspace-panel-lab">
-        <section className="chat-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Coach Lab</h2>
-              <p>Advanced tools live here, separate from the main speaking flow.</p>
-            </div>
-          </div>
-
-          <div className="left-focus-card" aria-label="Coach lab overview">
-            <div className="left-focus-head left-focus-head-with-icon">
-              <div className="left-focus-icon-wrap" aria-hidden="true">
-                <img className="left-focus-icon" src={chatbotAvatar} alt="" />
-              </div>
-              <div>
-                <p className="left-focus-kicker">Advanced practice</p>
-                <p className="left-focus-copy">
-                  Use badges, coach wheel, shadow drill, and leaderboard here without crowding the main practice page.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="stats-strip" aria-live="polite">
-            <span className="stats-chip">Turns: {chatStats.turns}</span>
-            <span className="stats-chip">Streak: {dailyStreak.count} day{dailyStreak.count > 1 ? "s" : ""}</span>
-            <span className="stats-chip">XP: {experiencePoints}</span>
-            {practiceSeconds > 0 && (
-              <span className="stats-chip stats-chip-time">⏱ {formatPracticeTime(practiceSeconds)}</span>
-            )}
-          </div>
-
-          <div className="tools-section-group">
-            <div className="tools-section-header">
-              <h3>⚡ Lab Quick Drills</h3>
-              <p>Run a focused drill instantly.</p>
-            </div>
-            <div className="mission-grid">
-              <button
-                type="button"
-                className="mission-btn"
-                onClick={runCoachPrompt}
-                disabled={isLoading || isListening}
-              >
-                Coach Me
-              </button>
-              <button
-                type="button"
-                className="mission-btn"
-                onClick={runChallengePrompt}
-                disabled={isLoading || isListening}
-              >
-                Challenge
-              </button>
-              <button
-                type="button"
-                className="mission-btn"
-                onClick={runRoleplayPrompt}
-                disabled={isLoading || isListening}
-              >
-                Roleplay
-              </button>
-              <button
-                type="button"
-                className="mission-btn"
-                onClick={() => setActiveWorkspacePage("extras")}
-              >
-                Open More Tools
-              </button>
-            </div>
-          </div>
-
-          <div className="leaderboard-card optional-detail-block" aria-live="polite">
-            <div className="leaderboard-head">
-              <p className="leaderboard-title">Session Leaderboard</p>
-              <span className="leaderboard-subtitle">Current session highs</span>
-            </div>
-            <div className="leaderboard-grid">
-              <div className="leaderboard-item">
-                <span className="leaderboard-label">Best Streak</span>
-                <strong>{sessionBestStreak} day{sessionBestStreak > 1 ? "s" : ""}</strong>
-              </div>
-              <div className="leaderboard-item">
-                <span className="leaderboard-label">Best XP</span>
-                <strong>{sessionBestXp}</strong>
-              </div>
-            </div>
-          </div>
-
-          <div className="tools-section-group">
-            <div className="tools-section-header">
-              <h3>🧰 Session Controls</h3>
-              <p>Manage your flow quickly.</p>
-            </div>
-            <div className="mission-grid">
-              <button
-                type="button"
-                className="mission-btn"
-                onClick={clearChat}
-              >
-                Clear Session
-              </button>
-              <button
-                type="button"
-                className="mission-btn"
-                onClick={() => setActiveWorkspacePage("practice")}
-              >
-                Go To Practice
-              </button>
-              <button
-                type="button"
-                className="mission-btn"
-                onClick={() => setActiveWorkspacePage("extras")}
-              >
-                Go To More Tools
-              </button>
-              <button
-                type="button"
-                className="mission-btn"
-                onClick={replayLatestReply}
-                disabled={!latestReplyForVoiceRef.current.text || isAudioLoading}
-              >
-                Replay Last Reply
-              </button>
-            </div>
-          </div>
-
-          {latestAiMessage ? (
-            <div className="lab-preview-card">
-              <p className="lab-preview-kicker">Latest coach reply</p>
-              <div className="chat-bubble chat-bubble-ai lab-preview-bubble">
-                <span className="chat-role">{TUTOR_NAME}</span>
-                <p>{latestAiMessage.text}</p>
-              </div>
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={replayLatestReply}
-                disabled={!latestReplyForVoiceRef.current.text || isAudioLoading}
-              >
-                Replay Latest Reply
-              </button>
-            </div>
-          ) : (
-            <div className="empty-state">
-              <p className="empty-icon">🧪</p>
-              <p className="empty-copy">Start one conversation on the Practice page first, then use the Coach Lab tools here.</p>
-            </div>
-          )}
-        </section>
-
-        <section className="composer-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Lab Tools</h2>
-              <p>Challenge mode, progress tracking, and repetition practice.</p>
-            </div>
-          </div>
-
-          <div className="progress-card" aria-live="polite" data-tour="coach-progress">
-            <div className="progress-head">
-              <p className="progress-title">Progress Mode</p>
-              <span className="progress-level">Level {coachLevel}</span>
-            </div>
-            <div className="progress-row">
-              <span className="progress-chip">Streak: {dailyStreak.count} day{dailyStreak.count > 1 ? "s" : ""}</span>
-              <span className="progress-chip">XP: {experiencePoints}</span>
-            </div>
-            <div className="progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={levelProgressPercent}>
-              <span className="progress-fill" style={{ width: `${levelProgressPercent}%` }} />
-            </div>
-            <p className="progress-subcopy">{xpToNextLevel} XP to reach Level {coachLevel + 1}</p>
-          </div>
-
-          <div className="tools-section-group optional-detail-block" aria-live="polite">
-            <div className="tools-section-header">
-              <h3>🎯 Milestone Tracker</h3>
-              <p>See progress at a glance.</p>
-            </div>
-            <div className="stats-strip">
-              <span className="stats-chip">Daily Goal: {dailyGoalTurns}/{DAILY_TURN_GOAL} ({dailyGoalPercent}%)</span>
-              <span className="stats-chip">Focus Time: {formatPracticeTime(focusGoalSeconds)} / {formatPracticeTime(FOCUS_SECONDS_GOAL)} ({focusGoalPercent}%)</span>
-              <span className="stats-chip">Voice Turns: {voiceTurns}</span>
-              <span className="stats-chip">Best Shadow: {bestShadowScore}%</span>
-            </div>
-          </div>
-
-          <div className="tools-section-group">
-            <div className="tools-section-header">
-              <h3>🔥 Lab Challenge Packs</h3>
-              <p>Advanced drills for deeper practice.</p>
-            </div>
-            <div className="mission-grid">
-              {labChallengePacks.map((pack) => (
-                <button
-                  key={pack.title}
-                  type="button"
-                  className="mission-btn"
-                  onClick={() => {
-                    triggerTutorExcitement();
-                    requestReply(pack.prompt);
-                  }}
-                  disabled={isLoading || isListening}
-                >
-                  {pack.title}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="achievement-card optional-detail-block">
-            <div className="achievement-head">
-              <p className="achievement-title">Badges</p>
-              <span className="achievement-subtitle">
-                {achievementCatalog.filter((achievement) => achievement.unlocked).length}/{achievementCatalog.length} unlocked
-              </span>
-            </div>
-            <div className="achievement-grid">
-              {achievementCatalog.map((achievement) => (
-                <div
-                  key={achievement.id}
-                  className={`achievement-badge ${achievement.unlocked ? "achievement-badge-unlocked" : "achievement-badge-locked"}`}
-                >
-                  <span className="achievement-badge-state">{achievement.unlocked ? "Unlocked" : "Locked"}</span>
-                  <strong>{achievement.title}</strong>
-                  <span>{achievement.description}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="interactive-card">
-            <div className="interactive-head">
-              <p className="interactive-title">Coach Wheel</p>
-              <button
-                type="button"
-                className={`interactive-button ${isWheelSpinning ? "interactive-button-spinning" : ""}`}
-                onClick={spinCoachWheel}
-                disabled={isLoading || isListening || isWheelSpinning}
-              >
-                {isWheelSpinning ? "Spinning..." : "Spin Challenge"}
-              </button>
-            </div>
-            <p className="interactive-copy">
-              {coachWheelResult || "Spin to get a random speaking challenge tailored to your selected language."}
-            </p>
-          </div>
-
-          <div className="interactive-card">
-            <div className="interactive-head">
-              <p className="interactive-title">Shadow Drill</p>
-              <button
-                type="button"
-                className="interactive-button"
-                onClick={startShadowDrill}
-                disabled={isLoading || isListening || !latestReplyForVoiceRef.current.text}
-              >
-                Start Drill
-              </button>
-            </div>
-            <p className="interactive-copy">
-              Listen to the latest coach reply, then repeat it aloud before the timer ends.
-            </p>
-            {shadowCountdown > 0 && (
-              <div className="shadow-timer" role="status" aria-live="assertive">
-                Repeat now: {shadowCountdown}s
-              </div>
-            )}
-            {shadowDrillResult && (
-              <div className="shadow-score" aria-live="polite">
-                <p className="shadow-score-title">Voice Match: {shadowDrillResult.score}%</p>
-                <p className="shadow-score-grade">{shadowDrillResult.grade}</p>
-                {shadowDrillResult.wordResults && shadowDrillResult.wordResults.length > 0 && (
-                  <div className="shadow-word-breakdown" aria-label="Word-level pronunciation match">
-                    {shadowDrillResult.wordResults.map(({ word, matched }, i) => (
-                      <span
-                        key={`${word}-${i}`}
-                        className={`shadow-word ${matched ? "shadow-word-hit" : "shadow-word-miss"}`}
-                        title={matched ? "✅ Matched" : "❌ Missed"}
-                      >
-                        {word}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <p className="shadow-score-copy">
-                  {shadowDrillResult.spokenText
-                    ? `Heard: "${shadowDrillResult.spokenText}"`
-                    : "No speech detected in this attempt."}
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
-      </div>
-      )}
+    ) : null}
 
       <FeatureTourModal
         isOpen={isFeatureTourOpen}
