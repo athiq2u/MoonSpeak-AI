@@ -1,5 +1,5 @@
 import { memo, useState, useRef, useEffect, useMemo, useCallback } from "react";
-// --- Pending prompt for redirect from More Tools ---
+// --- Pending prompt for redirect from More Tools or Coach Lab ---
 const [pendingPrompt, setPendingPrompt] = useState(null);
 import "./App.css";
 import chatbotAvatar from "./assets/ai-chatbot.svg";
@@ -1949,19 +1949,20 @@ function App() {
       : "Voice playback is unavailable right now, but text coaching is still active.");
   };
 
+  // Robust Coach Lab prompt handlers: always redirect and set pending prompt
   const runCoachPrompt = () => {
-    triggerTutorExcitement();
-    requestReply(activeLanguage.suggestions[0] || activeLanguage.demoPrompt);
+    setPendingPrompt({ prompt: activeLanguage.suggestions[0] || activeLanguage.demoPrompt, excite: true });
+    setActiveWorkspacePage("practice");
   };
 
   const runChallengePrompt = () => {
-    triggerTutorExcitement();
-    requestReply(activeLanguage.suggestions[1] || activeLanguage.demoPrompt);
+    setPendingPrompt({ prompt: activeLanguage.suggestions[1] || activeLanguage.demoPrompt, excite: true });
+    setActiveWorkspacePage("practice");
   };
 
   const runRoleplayPrompt = () => {
-    triggerTutorExcitement();
-    requestReply(activeLanguage.suggestions[2] || activeLanguage.demoPrompt);
+    setPendingPrompt({ prompt: activeLanguage.suggestions[2] || activeLanguage.demoPrompt, excite: true });
+    setActiveWorkspacePage("practice");
   };
 
   const spinCoachWheel = () => {
@@ -2625,12 +2626,8 @@ function App() {
                   type="button"
                   className="left-focus-btn"
                   onClick={() => {
-                    if (activeWorkspacePage === "practice") {
-                      requestReply(item.prompt);
-                    } else {
-                      setPendingPrompt(item.prompt);
-                      setActiveWorkspacePage("practice");
-                    }
+                    setPendingPrompt({ prompt: item.prompt });
+                    setActiveWorkspacePage("practice");
                   }}
                   disabled={isLoading || isListening}
                 >
@@ -2647,13 +2644,8 @@ function App() {
                 type="button"
                 className="scenario-card"
                 onClick={() => {
-                  if (activeWorkspacePage === "practice") {
-                    triggerTutorExcitement();
-                    requestReply(scenario.prompt);
-                  } else {
-                    setPendingPrompt({ prompt: scenario.prompt, excite: true });
-                    setActiveWorkspacePage("practice");
-                  }
+                  setPendingPrompt({ prompt: scenario.prompt, excite: true });
+                  setActiveWorkspacePage("practice");
                 }}
                 disabled={isLoading || isListening}
               >
@@ -2675,13 +2667,8 @@ function App() {
                   type="button"
                   className="difficulty-card"
                   onClick={() => {
-                    if (activeWorkspacePage === "practice") {
-                      triggerTutorExcitement();
-                      requestReply(level.prompt);
-                    } else {
-                      setPendingPrompt({ prompt: level.prompt, excite: true });
-                      setActiveWorkspacePage("practice");
-                    }
+                    setPendingPrompt({ prompt: level.prompt, excite: true });
+                    setActiveWorkspacePage("practice");
                   }}
                   disabled={isLoading || isListening}
                   title={level.description}
@@ -2705,12 +2692,8 @@ function App() {
                   type="button"
                   className="conversation-topic-btn"
                   onClick={() => {
-                    if (activeWorkspacePage === "practice") {
-                      requestReply(convo.prompt);
-                    } else {
-                      setPendingPrompt(convo.prompt);
-                      setActiveWorkspacePage("practice");
-                    }
+                    setPendingPrompt({ prompt: convo.prompt });
+                    setActiveWorkspacePage("practice");
                   }}
                   disabled={isLoading || isListening}
                   title={convo.prompt}
@@ -2773,13 +2756,8 @@ function App() {
                   type="button"
                   className="mission-btn"
                   onClick={() => {
-                    if (activeWorkspacePage === "practice") {
-                      triggerTutorExcitement();
-                      requestReply(mission.prompt);
-                    } else {
-                      setPendingPrompt({ prompt: mission.prompt, excite: true });
-                      setActiveWorkspacePage("practice");
-                    }
+                    setPendingPrompt({ prompt: mission.prompt, excite: true });
+                    setActiveWorkspacePage("practice");
                   }}
                   disabled={isLoading || isListening}
                 >
@@ -2886,12 +2864,8 @@ function App() {
                     type="button"
                     className="smart-followup-btn"
                     onClick={() => {
-                      if (activeWorkspacePage === "practice") {
-                        requestReply(suggestion);
-                      } else {
-                        setPendingPrompt(suggestion);
-                        setActiveWorkspacePage("practice");
-                      }
+                      setPendingPrompt({ prompt: suggestion });
+                      setActiveWorkspacePage("practice");
                     }}
                     disabled={isLoading || isListening}
                   >
@@ -2915,18 +2889,22 @@ function App() {
                     type="button"
                     className="smart-followup-btn"
                     onClick={() => {
-                      if (activeWorkspacePage === "practice") {
-                        requestReply(prompt);
-                      } else {
-                        setPendingPrompt(prompt);
-                        setActiveWorkspacePage("practice");
-                      }
+                      setPendingPrompt({ prompt });
+                      setActiveWorkspacePage("practice");
                     }}
                     disabled={isLoading || isListening}
                   >
                     {prompt}
                   </button>
                 ))}
+              // --- useEffect to trigger pending prompt after redirect ---
+              useEffect(() => {
+                if (activeWorkspacePage === "practice" && pendingPrompt) {
+                  if (pendingPrompt.excite) triggerTutorExcitement();
+                  requestReply(pendingPrompt.prompt);
+                  setPendingPrompt(null);
+                }
+              }, [activeWorkspacePage, pendingPrompt]);
               // --- useEffect to trigger pending prompt after redirect ---
               useEffect(() => {
                 if (activeWorkspacePage === "practice" && pendingPrompt) {
