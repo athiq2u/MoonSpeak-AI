@@ -1523,8 +1523,16 @@ button, .button, [role="button"], a, .chip, .welcome-chip, .panel-ghost-btn, .pr
   animation: chat-avatar-poke 0.38s ease;
 }
 
+
 .chat-avatar-button-typing {
-  animation: chat-avatar-breathe 1.3s ease-in-out infinite;
+  animation: chat-avatar-breathe 1.3s ease-in-out infinite, chat-avatar-shake 0.5s cubic-bezier(.36,.07,.19,.97) infinite;
+}
+
+@keyframes chat-avatar-shake {
+  0% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+  100% { transform: translateX(0); }
 }
 
 .chat-avatar-image {
